@@ -1,0 +1,108 @@
+<!-- ============================================================
+     Navbar — CogniTrack
+     Sticky, responsive navigation with mobile drawer.
+     Styles  → static/css/style.css  § 18. NAVBAR
+     Behaviour → static/js/main.js   § 02. initNavbar()
+     ============================================================ -->
+<nav class="navbar" id="navbar" aria-label="Main navigation">
+
+  <!-- ── Top bar ─────────────────────────────────────────── -->
+  <div class="container">
+    <div class="navbar__inner">
+
+      <!-- Left: Brand -->
+      <a href="{{ url_for('index') }}"
+         class="brand"
+         aria-label="CogniTrack — go to homepage">
+        <div class="brand__icon" aria-hidden="true">
+          <i data-lucide="brain"></i>
+        </div>
+        <span class="brand__name">CogniTrack</span>
+      </a>
+
+      <!-- Center: Desktop nav links -->
+      <ul class="nav-links" role="list" aria-label="Site pages">
+        <li>
+          <a href="{{ url_for('index') }}"
+             class="nav-link {% if request.path == '/' %}is-active{% endif %}"
+             {% if request.path == '/' %}aria-current="page"{% endif %}>
+            Home
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('assessment') }}"
+             class="nav-link {% if request.path == '/assessment' %}is-active{% endif %}"
+             {% if request.path == '/assessment' %}aria-current="page"{% endif %}>
+            Assessment
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('dashboard') }}"
+             class="nav-link nav-link--dim {% if request.path == '/dashboard' %}is-active{% endif %}"
+             {% if request.path == '/dashboard' %}aria-current="page"{% endif %}>
+            Dashboard
+          </a>
+        </li>
+      </ul>
+
+      <!-- Right: Primary CTA + Hamburger -->
+      <div class="nav-actions">
+        <a href="{{ url_for('assessment') }}"
+           class="btn btn--primary btn--sm nav-cta">
+          Start Assessment
+        </a>
+
+        <button class="hamburger"
+                id="nav-toggle"
+                type="button"
+                aria-label="Open navigation menu"
+                aria-expanded="false"
+                aria-controls="mobile-menu">
+          <i data-lucide="menu" id="hamburger-icon" aria-hidden="true"></i>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Mobile drawer ────────────────────────────────────── -->
+  <div class="mobile-menu"
+       id="mobile-menu"
+       aria-hidden="true">
+    <div class="container">
+
+      <ul class="mobile-nav" role="list">
+        <li>
+          <a href="{{ url_for('index') }}"
+             class="mobile-nav__link {% if request.path == '/' %}is-active{% endif %}"
+             {% if request.path == '/' %}aria-current="page"{% endif %}>
+            Home
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('assessment') }}"
+             class="mobile-nav__link {% if request.path == '/assessment' %}is-active{% endif %}"
+             {% if request.path == '/assessment' %}aria-current="page"{% endif %}>
+            Assessment
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('dashboard') }}"
+             class="mobile-nav__link {% if request.path == '/dashboard' %}is-active{% endif %}"
+             {% if request.path == '/dashboard' %}aria-current="page"{% endif %}>
+            Dashboard
+          </a>
+        </li>
+      </ul>
+
+      <div class="mobile-menu__cta">
+        <a href="{{ url_for('assessment') }}"
+           class="btn btn--primary w-full">
+          Start Assessment
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+</nav>

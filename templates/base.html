@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="CogniTrack — Premium Healthcare Management" />
+
+  <!-- Page Title -->
+  <title>{% block title %}CogniTrack{% endblock %}</title>
+
+  <!-- Google Fonts: Inter & Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+
+  <!-- Application Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+
+  <!-- Per-page head extensions -->
+  {% block head %}{% endblock %}
+</head>
+
+<body>
+
+  <!-- Navigation -->
+  {% include 'navbar.html' %}
+
+  <!-- Primary Content -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  {% include 'footer.html' %}
+
+  <!-- Application Script -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+  <!-- Per-page script extensions -->
+  {% block scripts %}{% endblock %}
+
+</body>
+
+</html>
