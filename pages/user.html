@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}User Information — CogniTrack{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     USER INFORMATION — Step 1 of 7
+============================================================ -->
+<section class="onboarding-section" aria-label="User Information">
+  <div class="container">
+
+    <div class="onboarding-card anim-fade-up">
+
+      <!-- ── Step Indicator ──────────────────────────────────── -->
+      <div class="onboarding-card__top">
+        <span class="badge badge--primary">
+          <i data-lucide="list-ordered"></i>
+          Step 1 of 7
+        </span>
+        <div class="progress progress--sm onboarding-progress mt-3">
+          <div class="progress__bar"></div>
+        </div>
+      </div>
+
+      <!-- ── Heading ─────────────────────────────────────────── -->
+      <div class="onboarding-card__header">
+        <h1 class="onboarding-card__title">Before We Begin</h1>
+        <p class="onboarding-card__subtitle">
+          A few details help us personalise your cognitive baseline and compare
+          your results against age-matched peers across all five domains.
+        </p>
+      </div>
+
+      <!-- ── Form ────────────────────────────────────────────── -->
+      <form class="onboarding-form" action="{{ url_for('assessment') }}" method="GET" novalidate>
+
+        <div class="form-grid">
+
+          <!-- Full Name -->
+          <div class="form-group form-grid__full">
+            <label class="label label--required" for="full-name">Full Name</label>
+            <input
+              class="input"
+              type="text"
+              id="full-name"
+              name="full_name"
+              placeholder="e.g. Alex Johnson"
+              autocomplete="name"
+            />
+          </div>
+
+          <!-- Age -->
+          <div class="form-group">
+            <label class="label label--required" for="age">Age</label>
+            <input
+              class="input"
+              type="number"
+              id="age"
+              name="age"
+              placeholder="e.g. 32"
+              min="18"
+              max="99"
+            />
+          </div>
+
+          <!-- Gender -->
+          <div class="form-group">
+            <label class="label" for="gender">Gender</label>
+            <select class="select" id="gender" name="gender">
+              <option value="" disabled selected>Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="non-binary">Non-binary</option>
+              <option value="prefer-not-to-say">Prefer not to say</option>
+            </select>
+          </div>
+
+          <!-- Education Level -->
+          <div class="form-group">
+            <label class="label" for="education">Education Level</label>
+            <select class="select" id="education" name="education">
+              <option value="" disabled selected>Select education level</option>
+              <option value="high-school">High School</option>
+              <option value="some-college">Some College</option>
+              <option value="bachelors">Bachelor's Degree</option>
+              <option value="masters">Master's Degree</option>
+              <option value="doctoral">Doctoral Degree</option>
+            </select>
+          </div>
+
+          <!-- Sleep Quality -->
+          <div class="form-group">
+            <label class="label" for="sleep-quality">Sleep Quality</label>
+            <select class="select" id="sleep-quality" name="sleep_quality">
+              <option value="" disabled selected>Select sleep quality</option>
+              <option value="excellent">Excellent</option>
+              <option value="good">Good</option>
+              <option value="average">Average</option>
+              <option value="poor">Poor</option>
+            </select>
+          </div>
+
+          <!-- Dominant Hand -->
+          <div class="form-group form-grid__full">
+            <label class="label" for="dominant-hand">
+              Dominant Hand
+              <span class="user-label-optional">(optional)</span>
+            </label>
+            <select class="select" id="dominant-hand" name="dominant_hand">
+              <option value="" disabled selected>Select dominant hand</option>
+              <option value="right">Right</option>
+              <option value="left">Left</option>
+              <option value="ambidextrous">Ambidextrous</option>
+            </select>
+          </div>
+
+        </div>
+
+        <!-- ── Divider ─────────────────────────────────────── -->
+        <hr />
+
+        <!-- ── Assessment Preview ─────────────────────────── -->
+        <div class="assessment-preview">
+
+          <div class="assessment-preview__meta">
+            <i data-lucide="clock"></i>
+            <span>Estimated Assessment Time:&nbsp;<strong>15 minutes</strong></span>
+          </div>
+
+          <div class="domain-pills">
+            <span class="domain-pill domain-pill--blue">Memory</span>
+            <span class="domain-pill domain-pill--purple">Attention</span>
+            <span class="domain-pill domain-pill--emerald">Executive Function</span>
+            <span class="domain-pill domain-pill--amber">Processing Speed</span>
+            <span class="domain-pill domain-pill--cyan">Visuospatial</span>
+          </div>
+
+        </div>
+
+        <!-- ── CTA ─────────────────────────────────────────── -->
+        <div class="onboarding-card__footer">
+          <button type="submit" class="btn btn--primary btn--lg btn--pill w-full">
+            Continue
+            <i data-lucide="arrow-right"></i>
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}

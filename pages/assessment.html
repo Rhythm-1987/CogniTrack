@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Assessment Overview — CogniTrack{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/assessment.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     ASSESSMENT OVERVIEW — Step 2 of 7
+============================================================ -->
+<section class="overview-section" aria-label="Assessment Overview">
+  <div class="container">
+
+    <!-- ── Page Header ──────────────────────────────────────── -->
+    <div class="overview-header anim-fade-up">
+
+      <span class="badge badge--primary">
+        <i data-lucide="list-ordered"></i>
+        Step 2 of 7
+      </span>
+
+      <div class="progress progress--sm overview-progress mt-3">
+        <div class="progress__bar"></div>
+      </div>
+
+      <h1 class="overview-header__title">Today's Cognitive Assessment</h1>
+
+      <p class="overview-header__subtitle">
+        This assessment measures five major cognitive domains and takes approximately
+        15 minutes to complete. Each section is designed to provide accurate,
+        meaningful insights into your mental performance.
+      </p>
+
+    </div>
+
+    <!-- ── Assessment Cards ─────────────────────────────────── -->
+    <div class="overview-grid">
+
+      <div class="card overview-card scroll-reveal anim-delay-1">
+        <div class="overview-card__icon overview-card__icon--blue">
+          <i data-lucide="database"></i>
+        </div>
+        <h3 class="overview-card__title">Memory</h3>
+        <p class="overview-card__desc">Evaluate recall, recognition, and retention.</p>
+      </div>
+
+      <div class="card overview-card scroll-reveal anim-delay-2">
+        <div class="overview-card__icon overview-card__icon--purple">
+          <i data-lucide="crosshair"></i>
+        </div>
+        <h3 class="overview-card__title">Attention</h3>
+        <p class="overview-card__desc">Measure sustained focus and reaction.</p>
+      </div>
+
+      <div class="card overview-card scroll-reveal anim-delay-3">
+        <div class="overview-card__icon overview-card__icon--emerald">
+          <i data-lucide="sliders"></i>
+        </div>
+        <h3 class="overview-card__title">Executive Function</h3>
+        <p class="overview-card__desc">Assess flexibility and decision making.</p>
+      </div>
+
+      <div class="card overview-card scroll-reveal anim-delay-4">
+        <div class="overview-card__icon overview-card__icon--amber">
+          <i data-lucide="zap"></i>
+        </div>
+        <h3 class="overview-card__title">Processing Speed</h3>
+        <p class="overview-card__desc">Measure mental processing efficiency.</p>
+      </div>
+
+      <div class="card overview-card scroll-reveal anim-delay-5">
+        <div class="overview-card__icon overview-card__icon--cyan">
+          <i data-lucide="move"></i>
+        </div>
+        <h3 class="overview-card__title">Visuospatial Ability</h3>
+        <p class="overview-card__desc">Assess spatial reasoning and perception.</p>
+      </div>
+
+    </div>
+
+    <!-- ── Info Box ──────────────────────────────────────────── -->
+    <div class="overview-info scroll-reveal">
+
+      <div class="overview-info__item">
+        <i data-lucide="check-circle-2"></i>
+        <span>No special preparation required</span>
+      </div>
+
+      <div class="overview-info__divider" aria-hidden="true"></div>
+
+      <div class="overview-info__item">
+        <i data-lucide="check-circle-2"></i>
+        <span>Complete in one sitting</span>
+      </div>
+
+      <div class="overview-info__divider" aria-hidden="true"></div>
+
+      <div class="overview-info__item">
+        <i data-lucide="check-circle-2"></i>
+        <span>Results available immediately</span>
+      </div>
+
+    </div>
+
+    <!-- ── CTA ──────────────────────────────────────────────── -->
+    <div class="overview-cta scroll-reveal">
+
+      <div class="overview-cta__time">
+        <i data-lucide="clock"></i>
+        <span>Estimated Time:&nbsp;<strong>15 Minutes</strong></span>
+      </div>
+
+      <a href="/memory" class="btn btn--primary btn--lg btn--pill">
+        <i data-lucide="play"></i>
+        Begin Assessment
+      </a>
+
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}

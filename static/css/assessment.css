@@ -1,0 +1,300 @@
+/* ============================================================
+   CogniTrack — assessment.css  (Assessment Overview Page Only)
+   Depends on style.css being loaded first. No overrides of
+   global tokens — page-specific layout and components only.
+   ============================================================ */
+
+
+/* ============================================================
+   1. OVERVIEW SECTION
+   ============================================================ */
+
+.overview-section {
+  background: linear-gradient(160deg, var(--color-bg) 0%, #eff6ff 55%, var(--color-bg) 100%);
+  padding-block: var(--space-16) var(--space-20);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ambient decorative glows */
+.overview-section::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  right: -6%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle at center, rgba(37, 99, 235, 0.05) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.overview-section::after {
+  content: '';
+  position: absolute;
+  bottom: -12%;
+  left: -5%;
+  width: 440px;
+  height: 440px;
+  background: radial-gradient(circle at center, rgba(96, 165, 250, 0.04) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+
+/* ============================================================
+   2. PAGE HEADER
+   ============================================================ */
+
+.overview-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 700px;
+  margin-inline: auto;
+  margin-bottom: var(--space-12);
+  gap: var(--space-5);
+  position: relative;
+  z-index: 1;
+}
+
+
+/* ============================================================
+   3. STEP INDICATOR
+   ============================================================ */
+
+.overview-progress {
+  width: 100%;
+  max-width: 480px;
+}
+
+.overview-progress .progress__bar {
+  width: 28.57%; /* Step 2 of 7 */
+}
+
+.overview-header__title {
+  font-family: var(--font-display);
+  font-size: clamp(var(--text-2xl), 3.5vw, var(--text-3xl));
+  font-weight: var(--font-extrabold);
+  color: var(--color-text-primary);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+}
+
+.overview-header__subtitle {
+  font-size: var(--text-md);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  max-width: 580px;
+}
+
+
+/* ============================================================
+   4. ASSESSMENT CARDS GRID
+   ============================================================ */
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-5);
+  margin-bottom: var(--space-8);
+  position: relative;
+  z-index: 1;
+}
+
+/* Extend the base .card style */
+.overview-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  transition:
+    box-shadow  var(--transition-base),
+    transform   var(--transition-base),
+    border-color var(--transition-base);
+}
+
+.overview-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-border-strong);
+}
+
+
+/* ============================================================
+   5. CARD ICON
+   ============================================================ */
+
+.overview-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  transition: transform var(--transition-spring);
+}
+
+.overview-card:hover .overview-card__icon {
+  transform: scale(1.08);
+}
+
+.overview-card__icon svg {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+.overview-card__icon--blue    { background: rgba(37, 99, 235, 0.10);  color: #2563EB; }
+.overview-card__icon--purple  { background: rgba(124, 58, 237, 0.10); color: #7C3AED; }
+.overview-card__icon--emerald { background: rgba(5, 150, 105, 0.10);  color: #059669; }
+.overview-card__icon--amber   { background: rgba(217, 119, 6, 0.10);  color: #D97706; }
+.overview-card__icon--cyan    { background: rgba(8, 145, 178, 0.10);  color: #0891B2; }
+
+
+/* ============================================================
+   6. CARD CONTENT
+   ============================================================ */
+
+.overview-card__title {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  line-height: var(--leading-snug);
+}
+
+.overview-card__desc {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin: 0;
+}
+
+
+/* ============================================================
+   7. INFO BOX
+   ============================================================ */
+
+.overview-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  background-color: var(--color-success-bg);
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5) var(--space-8);
+  margin-bottom: var(--space-12);
+  position: relative;
+  z-index: 1;
+}
+
+.overview-info__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: #16A34A;
+  padding: var(--space-2) var(--space-4);
+}
+
+.overview-info__item svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+}
+
+.overview-info__divider {
+  width: 1px;
+  height: 1.25rem;
+  background-color: rgba(34, 197, 94, 0.25);
+  flex-shrink: 0;
+}
+
+
+/* ============================================================
+   8. CTA FOOTER
+   ============================================================ */
+
+.overview-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  position: relative;
+  z-index: 1;
+}
+
+.overview-cta__time {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.overview-cta__time svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+
+/* ============================================================
+   9. RESPONSIVE
+   ============================================================ */
+
+/* Tablet (< 1024px) */
+@media (max-width: 1023px) {
+  .overview-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .overview-header {
+    margin-bottom: var(--space-10);
+  }
+}
+
+/* Small tablet (< 768px) */
+@media (max-width: 767px) {
+  .overview-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .overview-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-5) var(--space-6);
+  }
+
+  .overview-info__divider {
+    display: none;
+  }
+}
+
+/* Mobile (< 640px) */
+@media (max-width: 639px) {
+  .overview-section {
+    padding-block: var(--space-12) var(--space-16);
+  }
+
+  .overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-header {
+    margin-bottom: var(--space-8);
+  }
+
+  .overview-header__subtitle {
+    font-size: var(--text-base);
+  }
+
+  .overview-cta .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
