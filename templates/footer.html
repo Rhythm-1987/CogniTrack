@@ -1,0 +1,43 @@
+<!-- ============================================================
+     Footer — CogniTrack
+     Styles → static/css/style.css  § 19. FOOTER
+     ============================================================ -->
+<footer class="footer" role="contentinfo">
+  <div class="container">
+
+    <!-- ── Top row: brand + nav ─────────────────────────────── -->
+    <div class="footer__inner">
+
+      <!-- Brand & tagline -->
+      <div class="footer__brand">
+        <a href="{{ url_for('index') }}"
+           class="brand"
+           aria-label="CogniTrack — go to homepage">
+          <div class="brand__icon" aria-hidden="true">
+            <i data-lucide="brain"></i>
+          </div>
+          <span class="brand__name">CogniTrack</span>
+        </a>
+        <p class="footer__tagline">
+          Understand your mind.<br>Before it matters most.
+        </p>
+      </div>
+
+      <!-- Footer links -->
+      <nav class="footer__nav" aria-label="Footer navigation">
+        <a href="#" class="footer__link">Privacy</a>
+        <a href="#" class="footer__link">Terms</a>
+        <a href="#" class="footer__link">Support</a>
+      </nav>
+
+    </div>
+
+    <!-- ── Bottom bar: copyright ────────────────────────────── -->
+    <div class="footer__bottom">
+      <p class="footer__copy">
+        &copy; 2025 CogniTrack. All rights reserved.
+      </p>
+    </div>
+
+  </div>
+</footer>

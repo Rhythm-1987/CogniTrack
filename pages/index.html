@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+
+{% block title %}CogniTrack — Understand Your Cognitive Health{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     SECTION 1 · HERO
+============================================================ -->
+<section class="hero" aria-label="Hero">
+  <div class="container">
+    <div class="hero__layout">
+
+      <!-- ── Left: Copy ─────────────────────────────────────── -->
+      <div class="hero__content anim-fade-up">
+
+        <span class="badge badge--primary">
+          <i data-lucide="shield-check"></i>
+          Healthcare Technology
+        </span>
+
+        <h1 class="hero__title">
+          Understand Your Cognitive Health
+          <mark>Before Problems Become Serious</mark>
+        </h1>
+
+        <p class="hero__lead">
+          CogniTrack delivers clinically-inspired assessments across five cognitive domains —
+          Memory, Attention, Executive Function, Processing Speed, and Visuospatial Ability —
+          giving you personalised insights that matter before symptoms surface.
+        </p>
+
+        <div class="hero__cta">
+          <a href="{{ url_for('assessment') }}"
+             class="btn btn--primary btn--lg btn--pill">
+            <i data-lucide="brain"></i>
+            Start Assessment
+          </a>
+          <a href="#domains"
+             class="btn btn--secondary btn--lg btn--pill">
+            <i data-lucide="chevron-down"></i>
+            Learn More
+          </a>
+        </div>
+
+        <div class="hero__trust">
+          <div class="trust-item">
+            <i data-lucide="shield-check"></i>
+            <span>Clinically Validated</span>
+          </div>
+          <div class="trust-separator" aria-hidden="true"></div>
+          <div class="trust-item">
+            <i data-lucide="clock"></i>
+            <span>15-Minute Session</span>
+          </div>
+          <div class="trust-separator" aria-hidden="true"></div>
+          <div class="trust-item">
+            <i data-lucide="lock"></i>
+            <span>Private &amp; Secure</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Right: Visual Illustration ────────────────────── -->
+      <div class="hero__visual" aria-hidden="true">
+
+        <!-- Concentric rings -->
+        <div class="vis-ring vis-ring--lg"></div>
+        <div class="vis-ring vis-ring--md"></div>
+        <div class="vis-ring vis-ring--sm"></div>
+
+        <!-- Central brain orb -->
+        <div class="vis-orb">
+          <i data-lucide="brain"></i>
+        </div>
+
+        <!-- Floating cognitive score chips -->
+        <div class="score-chip score-chip--1">
+          <span class="score-chip__dot score-chip__dot--blue"></span>
+          <div class="score-chip__meta">
+            <span class="score-chip__label">Memory</span>
+            <span class="score-chip__value">92<small>%</small></span>
+          </div>
+        </div>
+
+        <div class="score-chip score-chip--2">
+          <span class="score-chip__dot score-chip__dot--purple"></span>
+          <div class="score-chip__meta">
+            <span class="score-chip__label">Attention</span>
+            <span class="score-chip__value">88<small>%</small></span>
+          </div>
+        </div>
+
+        <div class="score-chip score-chip--3">
+          <span class="score-chip__dot score-chip__dot--green"></span>
+          <div class="score-chip__meta">
+            <span class="score-chip__label">Processing Speed</span>
+            <span class="score-chip__value">95<small>%</small></span>
+          </div>
+        </div>
+
+        <div class="score-chip score-chip--4">
+          <span class="score-chip__dot score-chip__dot--amber"></span>
+          <div class="score-chip__meta">
+            <span class="score-chip__label">Executive Function</span>
+            <span class="score-chip__value">85<small>%</small></span>
+          </div>
+        </div>
+
+        <div class="score-chip score-chip--5">
+          <span class="score-chip__dot score-chip__dot--cyan"></span>
+          <div class="score-chip__meta">
+            <span class="score-chip__label">Visuospatial</span>
+            <span class="score-chip__value">90<small>%</small></span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     STAT STRIP
+============================================================ -->
+<div class="stat-strip" aria-label="Key statistics">
+  <div class="container">
+    <div class="stat-strip__grid">
+
+      <div class="stat-strip__item">
+        <span class="stat-strip__value">
+          15 <span class="stat-strip__unit">min</span>
+        </span>
+        <span class="stat-strip__label">Instant Report</span>
+      </div>
+
+      <div class="stat-strip__divider" aria-hidden="true"></div>
+
+      <div class="stat-strip__item">
+        <span class="stat-strip__value">5</span>
+        <span class="stat-strip__label">Comprehensive Assessments</span>
+      </div>
+
+      <div class="stat-strip__divider" aria-hidden="true"></div>
+
+      <div class="stat-strip__item">
+        <span class="stat-strip__value">
+          25<span class="stat-strip__unit">+</span>
+        </span>
+        <span class="stat-strip__label">Vital Biomarkers</span>
+      </div>
+
+      <div class="stat-strip__divider" aria-hidden="true"></div>
+
+      <div class="stat-strip__item">
+        <span class="stat-strip__value">Real-time</span>
+        <span class="stat-strip__label">Actionable Insights</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     SECTION 2 · COGNITIVE DOMAINS
+============================================================ -->
+<section class="domains section--lg" id="domains" aria-labelledby="domains-heading">
+  <div class="container">
+
+    <div class="section-heading section-heading--center">
+      <span class="section-heading__eyebrow">
+        <i data-lucide="layers"></i>
+        What We Measure
+      </span>
+      <h2 class="section-heading__title" id="domains-heading">
+        Five Pillars of Cognitive Health
+      </h2>
+      <p class="section-heading__subtitle">
+        Our assessment covers the complete spectrum of cognitive function, providing a
+        holistic snapshot of your mental performance in a single session.
+      </p>
+    </div>
+
+    <div class="domains-grid">
+
+      <div class="card card--interactive hover-lift scroll-reveal anim-delay-1">
+        <div class="domain-icon domain-icon--blue">
+          <i data-lucide="database"></i>
+        </div>
+        <h3 class="domain-card__title">Memory</h3>
+        <p class="domain-card__desc">
+          Evaluate your ability to encode, store, and retrieve information across
+          short-term and working memory systems.
+        </p>
+      </div>
+
+      <div class="card card--interactive hover-lift scroll-reveal anim-delay-2">
+        <div class="domain-icon domain-icon--purple">
+          <i data-lucide="crosshair"></i>
+        </div>
+        <h3 class="domain-card__title">Attention</h3>
+        <p class="domain-card__desc">
+          Measure sustained focus, selective attention, and your resistance to
+          distraction under controlled conditions.
+        </p>
+      </div>
+
+      <div class="card card--interactive hover-lift scroll-reveal anim-delay-3">
+        <div class="domain-icon domain-icon--emerald">
+          <i data-lucide="sliders"></i>
+        </div>
+        <h3 class="domain-card__title">Executive Function</h3>
+        <p class="domain-card__desc">
+          Assess planning, cognitive flexibility, and inhibitory control —
+          the brain's higher-order management system.
+        </p>
+      </div>
+
+      <div class="card card--interactive hover-lift scroll-reveal anim-delay-4">
+        <div class="domain-icon domain-icon--amber">
+          <i data-lucide="zap"></i>
+        </div>
+        <h3 class="domain-card__title">Processing Speed</h3>
+        <p class="domain-card__desc">
+          Gauge how efficiently your brain processes incoming information and
+          executes rapid mental operations.
+        </p>
+      </div>
+
+      <div class="card card--interactive hover-lift scroll-reveal anim-delay-5">
+        <div class="domain-icon domain-icon--cyan">
+          <i data-lucide="move"></i>
+        </div>
+        <h3 class="domain-card__title">Visuospatial Ability</h3>
+        <p class="domain-card__desc">
+          Test spatial reasoning, visual pattern recognition, and mental
+          rotation across perceptual challenges.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ============================================================
+     SECTION 3 · HOW IT WORKS
+============================================================ -->
+<section class="how-it-works section--lg" id="how-it-works" aria-labelledby="hiw-heading">
+  <div class="container">
+
+    <div class="section-heading section-heading--center">
+      <span class="section-heading__eyebrow">
+        <i data-lucide="map"></i>
+        Your Journey
+      </span>
+      <h2 class="section-heading__title" id="hiw-heading">
+        From Assessment to Insight
+      </h2>
+      <p class="section-heading__subtitle">
+        A seamless four-step process designed around your comfort and clarity,
+        from first click to personalised results.
+      </p>
+    </div>
+
+    <div class="timeline" role="list">
+
+      <!-- Track line (decorative, hidden on mobile) -->
+      <div class="timeline__track" aria-hidden="true"></div>
+
+      <div class="timeline__nodes">
+
+        <!-- Step 1 -->
+        <div class="timeline__node scroll-reveal anim-delay-1" role="listitem">
+          <div class="timeline__circle">
+            <i data-lucide="user-check"></i>
+          </div>
+          <span class="step__num">01</span>
+          <h4 class="step__title">Enter Details</h4>
+          <p class="step__desc">
+            Provide basic demographic information so we can personalise your
+            cognitive baseline benchmarks.
+          </p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="timeline__node scroll-reveal anim-delay-2" role="listitem">
+          <div class="timeline__circle">
+            <i data-lucide="clipboard-list"></i>
+          </div>
+          <span class="step__num">02</span>
+          <h4 class="step__title">Complete Assessments</h4>
+          <p class="step__desc">
+            Work through five scientifically-designed tests, each designed to
+            take just two to three focused minutes.
+          </p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="timeline__node scroll-reveal anim-delay-3" role="listitem">
+          <div class="timeline__circle">
+            <i data-lucide="bar-chart-2"></i>
+          </div>
+          <span class="step__num">03</span>
+          <h4 class="step__title">Analyze Results</h4>
+          <p class="step__desc">
+            Our engine scores your performance against age-matched norms
+            and peer groups in real time.
+          </p>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="timeline__node scroll-reveal anim-delay-4" role="listitem">
+          <div class="timeline__circle">
+            <i data-lucide="layout-dashboard"></i>
+          </div>
+          <span class="step__num">04</span>
+          <h4 class="step__title">View Dashboard</h4>
+          <p class="step__desc">
+            Explore your cognitive profile with intuitive charts, domain scores,
+            and personalised insights.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ============================================================
+     SECTION 4 · CALL TO ACTION
+============================================================ -->
+<section class="cta-section" aria-labelledby="cta-heading">
+  <div class="container">
+
+    <div class="cta-card">
+
+      <div class="cta-card__bg-glow" aria-hidden="true"></div>
+
+      <div class="cta-card__inner">
+
+        <span class="cta-badge">
+          <i data-lucide="activity"></i>
+          Free · No Account Required
+        </span>
+
+        <h2 class="cta-card__title" id="cta-heading">
+          Your Cognitive Health<br>
+          Deserves Clarity
+        </h2>
+
+        <p class="cta-card__sub">
+          Join thousands who have taken control of their mental wellbeing.
+          A 15-minute assessment can reveal insights that take years to notice otherwise.
+          Know your brain, before it matters most.
+        </p>
+
+        <div class="cta-card__actions">
+          <a href="{{ url_for('assessment') }}"
+             class="btn btn--lg btn--pill cta-btn--primary">
+            <i data-lucide="brain"></i>
+            Start Your Assessment
+          </a>
+          <a href="{{ url_for('dashboard') }}"
+             class="btn btn--lg btn--pill cta-btn--outline">
+            View Sample Dashboard
+          </a>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}

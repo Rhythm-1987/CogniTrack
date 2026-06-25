@@ -5,8 +5,9 @@
    because DOMContentLoaded fires after all deferred scripts.
    ============================================================
    Table of Contents
-   01. Lucide Icons — initialise all [data-lucide] elements
-   02. Navbar      — scroll shadow + mobile drawer
+   01. Lucide Icons  — initialise all [data-lucide] elements
+   02. Navbar        — scroll shadow + mobile drawer
+   03. Scroll Reveal — IntersectionObserver for .scroll-reveal elements
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -23,6 +24,11 @@ document.addEventListener('DOMContentLoaded', function () {
      02. NAVBAR
   ---------------------------------------------------------- */
   initNavbar();
+
+  /* ----------------------------------------------------------
+     03. SCROLL REVEAL
+  ---------------------------------------------------------- */
+  initScrollReveal();
 
 });
 
@@ -88,4 +94,38 @@ function initNavbar() {
   window.matchMedia('(min-width: 768px)').addEventListener('change', function (e) {
     if (e.matches) { closeDrawer(); }
   });
+}
+
+
+/* ============================================================
+   initScrollReveal()
+   Observes every .scroll-reveal element and adds .visible when
+   it enters the viewport, triggering the CSS transition.
+   Reads/writes: .scroll-reveal → .visible
+   Falls back to immediate reveal if IntersectionObserver is
+   unavailable (old browsers, pre-render environments).
+============================================================ */
+function initScrollReveal() {
+  var items = document.querySelectorAll('.scroll-reveal');
+  if (!items.length) { return; }
+
+  /* Graceful degradation */
+  if (!('IntersectionObserver' in window)) {
+    items.forEach(function (el) { el.classList.add('visible'); });
+    return;
+  }
+
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target); /* fire once, then stop watching */
+      }
+    });
+  }, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -40px 0px' /* trigger slightly before the element reaches the fold */
+  });
+
+  items.forEach(function (el) { observer.observe(el); });
 }
