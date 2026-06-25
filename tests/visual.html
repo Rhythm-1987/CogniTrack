@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Visuospatial — CogniTrack{% endblock %}
+{% block title %}Spatial Reasoning — CogniTrack{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/visual.css') }}" />
@@ -9,7 +9,7 @@
 {% block content %}
 
 <!-- ============================================================
-     VISUOSPATIAL — Step 7 of 7 — Mental Rotation Test
+     SPATIAL REASONING — Step 7 of 7
 ============================================================ -->
 <section class="visual-section" aria-label="Visuospatial Assessment">
   <div class="container container--narrow">
@@ -46,10 +46,10 @@
         </div>
 
         <div class="vis-card__badge">
-          <span class="badge badge--emerald">Visuospatial</span>
+          <span class="badge badge--emerald">Spatial Reasoning</span>
         </div>
 
-        <h1 class="vis-card__title">Mental Rotation Test</h1>
+        <h1 class="vis-card__title">Spatial Reasoning Assessment</h1>
 
         <p class="vis-card__lead">
           A reference shape will appear. Below it, four options are shown.
@@ -94,9 +94,9 @@
     </div>
 
     <!-- ══════════════════════════════════════════════════════
-         PHASE 2 — Mental Rotation Test
+         PHASE 2 — Spatial Reasoning Test
     ══════════════════════════════════════════════════════ -->
-    <div class="vis-phase" id="phase-test" aria-label="Mental Rotation Test" aria-hidden="true">
+    <div class="vis-phase" id="phase-test" aria-label="Spatial Reasoning Test" aria-hidden="true">
 
       <!-- Question counter + inner progress bar -->
       <div class="vis-test-header">
@@ -111,8 +111,8 @@
       <!-- Reference shape display -->
       <div class="vis-reference-wrap">
         <p class="vis-reference-label text-xs text-muted">REFERENCE SHAPE</p>
-        <div class="vis-shape-card vis-shape-card--reference">
-          <div class="vis-shape vis-shape--reference" id="ref-shape"
+        <div class="vis-shape-card vis-shape-card--reference vis-shape-card--lg">
+          <div class="vis-shape vis-shape--reference vis-shape--lg" id="ref-shape"
                aria-label="Reference shape to match">
             <!-- 4×4 grid cells injected by JS -->
           </div>
@@ -167,10 +167,10 @@
 
         <span class="badge badge--success vis-complete-badge">All Assessments Complete</span>
 
-        <h2 class="vis-card__title">Visuospatial Complete</h2>
+        <h2 class="vis-card__title">Spatial Reasoning Complete</h2>
 
         <p class="vis-card__lead">
-          Your spatial reasoning and mental rotation data has been recorded.
+          Your spatial reasoning data has been recorded.
           You have now completed all five cognitive assessments.
         </p>
 

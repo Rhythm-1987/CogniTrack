@@ -23,12 +23,12 @@
       </span>
 
       <div class="progress progress--sm memory-progress mt-3">
-        <div class="progress__bar" id="phase-bar" style="width: 16.67%"></div>
+        <div class="progress__bar" id="phase-bar" style="width: 14.28%"></div>
       </div>
 
       <div class="memory-progress-labels">
         <span id="phase-label" class="text-sm text-muted">Introduction</span>
-        <span class="text-sm text-muted"><span id="phase-num">1</span>&thinsp;/&thinsp;6</span>
+        <span class="text-sm text-muted"><span id="phase-num">1</span>&thinsp;/&thinsp;7</span>
       </div>
 
     </div>
@@ -48,8 +48,8 @@
         <h1 class="memory-card__title">Word Recall Test</h1>
 
         <p class="memory-card__lead">
-          You will be shown <strong>five words</strong> for 15 seconds.
-          Study them carefully — you will be asked to recall them shortly.
+          You will see two sets of words across two separate trials.
+          Study each set carefully — you will be asked to recall all of them shortly.
         </p>
 
         <ul class="memory-intro-tips">
@@ -59,7 +59,7 @@
           </li>
           <li>
             <i data-lucide="brain"></i>
-            <span>Try to form a mental image</span>
+            <span>Try to form a mental image for each word</span>
           </li>
           <li>
             <i data-lucide="shield"></i>
@@ -75,11 +75,14 @@
       </div>
     </div>
 
-    <!-- ── Phase 2: Word Display ───────────────────────────── -->
-    <div class="memory-phase" id="phase-words" aria-label="Study Words" aria-hidden="true">
+    <!-- ── Phase 2: Trial 1 — 5 easy words ─────────────────── -->
+    <div class="memory-phase" id="phase-trial1" aria-label="Trial 1 — Study Words" aria-hidden="true">
       <div class="card memory-card">
 
         <div class="memory-card__header">
+          <div class="memory-trial-badge">
+            <span class="badge badge--primary">Trial 1 of 2</span>
+          </div>
           <p class="memory-card__instruction">Study these words carefully</p>
           <div class="memory-timer" id="timer" aria-live="polite" aria-label="Time remaining">
             <svg class="timer-ring" viewBox="0 0 56 56" aria-hidden="true">
@@ -90,12 +93,8 @@
           </div>
         </div>
 
-        <div class="memory-words" role="list" aria-label="Words to memorise">
-          <div class="word-card anim-fade-up anim-delay-1" role="listitem">Apple</div>
-          <div class="word-card anim-fade-up anim-delay-2" role="listitem">River</div>
-          <div class="word-card anim-fade-up anim-delay-3" role="listitem">Clock</div>
-          <div class="word-card anim-fade-up anim-delay-4" role="listitem">Flower</div>
-          <div class="word-card anim-fade-up anim-delay-5" role="listitem">Horse</div>
+        <div class="memory-words" role="list" aria-label="Words to memorise — Trial 1">
+          <!-- 5 easy word cards injected by JS -->
         </div>
 
       </div>
@@ -142,7 +141,32 @@
       </div>
     </div>
 
-    <!-- ── Phase 4: Recall ─────────────────────────────────── -->
+    <!-- ── Phase 4: Trial 2 — 6 abstract/medium words ────── -->
+    <div class="memory-phase" id="phase-trial2" aria-label="Trial 2 — Study Words" aria-hidden="true">
+      <div class="card memory-card">
+
+        <div class="memory-card__header">
+          <div class="memory-trial-badge">
+            <span class="badge badge--secondary">Trial 2 of 2</span>
+          </div>
+          <p class="memory-card__instruction">Study these new words carefully</p>
+          <div class="memory-timer" id="timer2" aria-live="polite" aria-label="Time remaining">
+            <svg class="timer-ring" viewBox="0 0 56 56" aria-hidden="true">
+              <circle class="timer-ring__track" cx="28" cy="28" r="24"/>
+              <circle class="timer-ring__fill" id="timer-ring-fill-2" cx="28" cy="28" r="24"/>
+            </svg>
+            <span class="timer-count" id="timer-count-2">15</span>
+          </div>
+        </div>
+
+        <div class="memory-words" id="trial2-words" role="list" aria-label="Words to memorise — Trial 2">
+          <!-- 6 medium word cards injected by JS -->
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Phase 5: Recall ─────────────────────────────────── -->
     <div class="memory-phase" id="phase-recall" aria-label="Free Recall" aria-hidden="true">
       <div class="card memory-card">
 
@@ -153,7 +177,7 @@
         <h2 class="memory-card__title">Free Recall</h2>
 
         <p class="memory-card__lead">
-          Type every word you remember from the list.
+          Type every word you remember from <strong>both trials</strong>.
         </p>
 
         <div class="form-group recall-group">
@@ -176,7 +200,7 @@
       </div>
     </div>
 
-    <!-- ── Phase 5: Recognition ────────────────────────────── -->
+    <!-- ── Phase 6: Recognition ────────────────────────────── -->
     <div class="memory-phase" id="phase-recognition" aria-label="Word Recognition" aria-hidden="true">
       <div class="card memory-card">
 
@@ -187,20 +211,11 @@
         <h2 class="memory-card__title">Recognition</h2>
 
         <p class="memory-card__lead">
-          Select the words that appeared in the original list.
+          Select the words that appeared in either trial.
         </p>
 
         <div class="recognition-grid" id="recognition-grid" role="group" aria-label="Word selection">
-          <button class="recognition-word" data-word="apple"    data-target="true"  type="button" aria-pressed="false">Apple</button>
-          <button class="recognition-word" data-word="table"    data-target="false" type="button" aria-pressed="false">Table</button>
-          <button class="recognition-word" data-word="river"    data-target="true"  type="button" aria-pressed="false">River</button>
-          <button class="recognition-word" data-word="window"   data-target="false" type="button" aria-pressed="false">Window</button>
-          <button class="recognition-word" data-word="clock"    data-target="true"  type="button" aria-pressed="false">Clock</button>
-          <button class="recognition-word" data-word="lamp"     data-target="false" type="button" aria-pressed="false">Lamp</button>
-          <button class="recognition-word" data-word="flower"   data-target="true"  type="button" aria-pressed="false">Flower</button>
-          <button class="recognition-word" data-word="bridge"   data-target="false" type="button" aria-pressed="false">Bridge</button>
-          <button class="recognition-word" data-word="horse"    data-target="true"  type="button" aria-pressed="false">Horse</button>
-          <button class="recognition-word" data-word="mountain" data-target="false" type="button" aria-pressed="false">Mountain</button>
+          <!-- Combined target + distractor words injected by JS (shuffled) -->
         </div>
 
         <p class="recognition-hint text-sm text-muted text-center" id="recognition-hint">
@@ -217,7 +232,7 @@
       </div>
     </div>
 
-    <!-- ── Phase 6: Completion ─────────────────────────────── -->
+    <!-- ── Phase 7: Completion ─────────────────────────────── -->
     <div class="memory-phase" id="phase-complete" aria-label="Assessment Complete" aria-hidden="true">
       <div class="card memory-card memory-card--complete">
 
@@ -230,25 +245,12 @@
         <h2 class="memory-card__title">Memory Assessment Complete</h2>
 
         <p class="memory-card__lead">
-          Well done. Your responses have been recorded. Continue when you are ready.
+          Well done. Your responses have been recorded. Preparing next assessment…
         </p>
 
-        <div class="complete-stats">
-          <div class="complete-stat">
-            <span class="complete-stat__value" id="stat-recall">—</span>
-            <span class="complete-stat__label">Words Recalled</span>
-          </div>
-          <div class="complete-stat__divider" aria-hidden="true"></div>
-          <div class="complete-stat">
-            <span class="complete-stat__value" id="stat-recognition">—</span>
-            <span class="complete-stat__label">Words Recognised</span>
-          </div>
+        <!-- Summary card injected by JS -->
+        <div class="complete-stats" id="complete-stats">
         </div>
-
-        <a href="/attention" class="btn btn--primary btn--lg btn--pill memory-continue-btn">
-          Continue to Attention Assessment
-          <i data-lucide="arrow-right"></i>
-        </a>
 
       </div>
     </div>

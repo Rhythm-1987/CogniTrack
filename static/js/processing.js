@@ -1,19 +1,21 @@
 /* ============================================================
    CogniTrack — Processing Speed Assessment
-   processing.js — Symbol Match Test (DSST-inspired)
+   processing.js — Symbol Match Test   Sprint 4.0
+
+   Dynamic difficulty — answer-option scaling:
+     Q  1– 5  (indices 0– 4)  → 2 options (correct + 1 distractor)
+     Q  6–10  (indices 5– 9)  → 3 options (correct + 2 distractors)
+     Q 11–20  (indices 10–19) → 4 options (correct + 3 distractors)
+
+   Mandatory 2-second key preview countdown before first question.
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', function () {
   'use strict';
 
-  /* ══════════════════════════════════════════════════════════
-     CONFIG
-  ══════════════════════════════════════════════════════════ */
-
-  /* Five visually distinct Unicode symbols */
+  /* ── Symbol pool ────────────────────────────────────────── */
   var SYMBOL_POOL = ['▲', '●', '■', '★', '◆'];
 
-  /* Human-readable names for accessible aria-labels */
   var SYMBOL_NAMES = {
     '▲': 'Triangle',
     '●': 'Circle',
@@ -24,23 +26,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var TOTAL_QUESTIONS = 20;
 
-  /* ══════════════════════════════════════════════════════════
-     STATE
-  ══════════════════════════════════════════════════════════ */
-
-  var keyMap         = {};    /* { 1: '▲', 2: '●', 3: '■', 4: '★', 5: '◆' } — randomised */
-  var questions      = [];    /* { num, correct, options:[4 symbols] } */
+  /* ── State ──────────────────────────────────────────────── */
+  var keyMap          = {};
+  var questions       = [];
   var currentQuestion = 0;
-  var results        = [];    /* { correct, rt, num, answered } */
-  var questionStart  = 0;     /* performance.now() when question displayed */
-  var totalStartTime = 0;     /* performance.now() when first question displayed */
-  var totalMs        = 0;     /* elapsed ms for all 20 questions */
-  var answerPending  = false;
+  var results         = [];
+  var questionStart   = 0;
+  var totalStartTime  = 0;
+  var totalMs         = 0;
+  var answerPending   = false;
+  var startedAt       = null;
+  var previewTimer    = null;
 
-  /* ══════════════════════════════════════════════════════════
-     DOM REFERENCES
-  ══════════════════════════════════════════════════════════ */
-
+  /* ── DOM refs ───────────────────────────────────────────── */
   var phases = {
     intro:   document.getElementById('phase-intro'),
     test:    document.getElementById('phase-test'),
@@ -50,22 +48,19 @@ document.addEventListener('DOMContentLoaded', function () {
   var phaseBar      = document.getElementById('proc-phase-bar');
   var phaseLabel    = document.getElementById('proc-phase-label');
   var phaseNum      = document.getElementById('proc-phase-num');
-
   var keyPreviewEl  = document.getElementById('proc-key-preview');
   var keyTestEl     = document.getElementById('proc-key-test');
-
   var procNumberEl  = document.getElementById('proc-number');
   var qCurrentEl    = document.getElementById('q-current');
   var procQBarEl    = document.getElementById('proc-q-bar');
-
   var summaryGridEl = document.getElementById('proc-summary-grid');
   var perfStatusEl  = document.getElementById('proc-perf-status');
+  var beginBtn      = document.getElementById('btn-begin');
 
   var symButtonEls  = Array.prototype.slice.call(
     document.querySelectorAll('#symbol-buttons .proc-sym-btn')
   );
 
-  /* ── Phase config ───────────────────────────────────────── */
   var PHASE_ORDER  = ['intro', 'test', 'summary'];
   var PHASE_LABELS = {
     intro:   'Introduction',
@@ -91,16 +86,13 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ══════════════════════════════════════════════════════════
-     SESSION INITIALISATION
-     Randomises the symbol key and generates 20 questions.
-     Called once on DOMContentLoaded so the key is visible
-     during the intro phase.
+     SESSION INIT
   ══════════════════════════════════════════════════════════ */
 
   function initSession() {
     var shuffled = shuffleArray(SYMBOL_POOL);
     for (var i = 0; i < shuffled.length; i++) {
-      keyMap[i + 1] = shuffled[i]; /* keys 1–5 */
+      keyMap[i + 1] = shuffled[i];
     }
     questions = generateQuestions();
     buildKeyBar(keyPreviewEl, false);
@@ -109,9 +101,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ══════════════════════════════════════════════════════════
      KEY BAR BUILDER
-     Injects 5 key cells into the given container element.
-     compact = true → compact variant (no extra wrapper class needed,
-     handled by CSS on .proc-key-bar--compact on the parent)
   ══════════════════════════════════════════════════════════ */
 
   function buildKeyBar(containerEl, compact) {
@@ -127,24 +116,29 @@ document.addEventListener('DOMContentLoaded', function () {
         '</div>';
     }
     containerEl.innerHTML = html;
-    /* suppress unused-var warning — compact param reserved for future use */
     void compact;
   }
 
   /* ══════════════════════════════════════════════════════════
      QUESTION GENERATION
-     20 questions with random digit (1–5) and shuffled options.
-     Each question has 1 correct symbol + 3 unique distractors.
+     Option count scales per difficulty tier.
   ══════════════════════════════════════════════════════════ */
+
+  function optionCountForQuestion(idx) {
+    if (idx < 5)  return 2;   /* Q1–5  */
+    if (idx < 10) return 3;   /* Q6–10 */
+    return 4;                 /* Q11–20 */
+  }
 
   function generateQuestions() {
     var qs = [];
     for (var i = 0; i < TOTAL_QUESTIONS; i++) {
       var num     = randInt(1, 5);
       var correct = keyMap[num];
-      var others  = SYMBOL_POOL.filter(function (s) { return s !== correct; });
-      var options = shuffleArray([correct].concat(shuffleArray(others).slice(0, 3)));
-      qs.push({ num: num, correct: correct, options: options });
+      var others  = shuffleArray(SYMBOL_POOL.filter(function (s) { return s !== correct; }));
+      var count   = optionCountForQuestion(i);
+      var options = shuffleArray([correct].concat(others.slice(0, count - 1)));
+      qs.push({ num: num, correct: correct, options: options, optionCount: count });
     }
     return qs;
   }
@@ -166,12 +160,44 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     var idx = PHASE_ORDER.indexOf(name) + 1;
-    var pct = Math.round((idx / PHASE_ORDER.length) * 100);
-    phaseBar.style.width   = pct + '%';
+    phaseBar.style.width   = Math.round((idx / PHASE_ORDER.length) * 100) + '%';
     phaseLabel.textContent = PHASE_LABELS[name];
     phaseNum.textContent   = idx;
 
+    if (typeof CT !== 'undefined') {
+      CT.updateStage('processing', PHASE_ORDER.indexOf(name), {
+        currentQuestion: currentQuestion,
+        results:         results,
+        startedAt:       startedAt
+      });
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     2-SECOND KEY PREVIEW COUNTDOWN
+     Called when Begin is clicked; shows a countdown overlay
+     on the begin button before the first question appears.
+  ══════════════════════════════════════════════════════════ */
+
+  function startPreviewCountdown(callback) {
+    beginBtn.disabled    = true;
+    beginBtn.textContent = 'Memorise key… 2';
+
+    var count = 2;
+    previewTimer = setInterval(function () {
+      count--;
+      if (count > 0) {
+        beginBtn.textContent = 'Memorise key… ' + count;
+      } else {
+        clearInterval(previewTimer);
+        previewTimer = null;
+        beginBtn.disabled    = false;
+        beginBtn.textContent = 'Begin Test';
+        callback();
+      }
+    }, 1000);
   }
 
   /* ══════════════════════════════════════════════════════════
@@ -181,32 +207,33 @@ document.addEventListener('DOMContentLoaded', function () {
   function showQuestion(idx) {
     var q = questions[idx];
 
-    /* Update counter and inner progress bar */
     qCurrentEl.textContent = idx + 1;
     procQBarEl.style.width = ((idx / TOTAL_QUESTIONS) * 100) + '%';
 
-    /* Brief opacity dip between questions */
     procNumberEl.classList.add('is-swapping');
+
+    /* Show or hide buttons based on option count */
+    symButtonEls.forEach(function (btn, i) {
+      btn.style.display = i < q.optionCount ? '' : 'none';
+    });
 
     setTimeout(function () {
       procNumberEl.textContent = String(q.num);
       procNumberEl.setAttribute('aria-label', 'Number: ' + q.num);
       procNumberEl.classList.remove('is-swapping');
 
-      /* Update the 4 symbol buttons */
       symButtonEls.forEach(function (btn, i) {
-        var sym = q.options[i];
-        btn.textContent = sym;
-        btn.setAttribute('data-symbol', sym);
-        btn.setAttribute('aria-label', SYMBOL_NAMES[sym]);
-        btn.disabled = false;
-        btn.classList.remove('is-correct', 'is-incorrect', 'is-hint');
+        if (i < q.optionCount) {
+          var sym = q.options[i];
+          btn.textContent = sym;
+          btn.setAttribute('data-symbol', sym);
+          btn.setAttribute('aria-label', SYMBOL_NAMES[sym]);
+          btn.disabled = false;
+          btn.classList.remove('is-correct', 'is-incorrect', 'is-hint');
+        }
       });
 
-      /* Start timing after word is visible */
-      if (idx === 0) {
-        totalStartTime = performance.now();
-      }
+      if (idx === 0) { totalStartTime = performance.now(); }
       questionStart = performance.now();
       answerPending = true;
     }, 100);
@@ -224,31 +251,28 @@ document.addEventListener('DOMContentLoaded', function () {
     var q         = questions[currentQuestion];
     var isCorrect = (symbol === q.correct);
 
-    results.push({
-      correct:  isCorrect,
-      rt:       rt,
-      num:      q.num,
-      answered: symbol
-    });
+    results.push({ correct: isCorrect, rt: rt, num: q.num, answered: symbol });
 
-    /* Disable all buttons to block double-clicks */
     disableButtons();
 
-    /* Feedback on clicked button */
     var clickedBtn = getButtonBySymbol(symbol);
-    if (clickedBtn) {
-      clickedBtn.classList.add(isCorrect ? 'is-correct' : 'is-incorrect');
-    }
+    if (clickedBtn) { clickedBtn.classList.add(isCorrect ? 'is-correct' : 'is-incorrect'); }
 
-    /* On wrong answer: briefly reveal the correct button as a hint */
     if (!isCorrect) {
       var correctBtn = getButtonBySymbol(q.correct);
-      if (correctBtn) {
-        correctBtn.classList.add('is-hint');
-      }
+      if (correctBtn) { correctBtn.classList.add('is-hint'); }
     }
 
     currentQuestion++;
+
+    /* Persist state on each answer */
+    if (typeof CT !== 'undefined') {
+      CT.updateStage('processing', 1, {
+        currentQuestion: currentQuestion,
+        results:         results,
+        startedAt:       startedAt
+      });
+    }
 
     setTimeout(function () {
       if (currentQuestion < TOTAL_QUESTIONS) {
@@ -268,14 +292,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function getButtonBySymbol(sym) {
     for (var i = 0; i < symButtonEls.length; i++) {
-      if (symButtonEls[i].getAttribute('data-symbol') === sym) {
-        return symButtonEls[i];
-      }
+      if (symButtonEls[i].getAttribute('data-symbol') === sym) { return symButtonEls[i]; }
     }
     return null;
   }
 
-  /* Attach click listener to each button */
   symButtonEls.forEach(function (btn) {
     btn.addEventListener('click', function () {
       handleAnswer(btn.getAttribute('data-symbol'));
@@ -283,7 +304,25 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   /* ══════════════════════════════════════════════════════════
-     SUMMARY — clinical metrics
+     KEYBOARD — keys 1 2 3 4 map to visible symbol buttons
+  ══════════════════════════════════════════════════════════ */
+
+  document.addEventListener('keydown', function (e) {
+    if (!phases.test.classList.contains('is-active')) { return; }
+    if (!answerPending) { return; }
+
+    var idx = parseInt(e.key, 10) - 1;
+    if (isNaN(idx) || idx < 0 || idx >= symButtonEls.length) { return; }
+
+    var btn = symButtonEls[idx];
+    if (btn.style.display === 'none' || btn.disabled) { return; }
+
+    e.preventDefault();
+    handleAnswer(btn.getAttribute('data-symbol'));
+  });
+
+  /* ══════════════════════════════════════════════════════════
+     SUMMARY — clinical metrics + standardised session write
   ══════════════════════════════════════════════════════════ */
 
   function buildSummary() {
@@ -294,47 +333,59 @@ document.addEventListener('DOMContentLoaded', function () {
     var avgRt     = Math.round(totalRt / results.length);
     var totalSecs = (totalMs / 1000).toFixed(1);
 
-    /* Performance rating based on accuracy */
-    var rating, ratingClass;
-    if (accuracy >= 90) {
-      rating      = 'Excellent';
-      ratingClass = 'excellent';
-    } else if (accuracy >= 70) {
-      rating      = 'Good';
-      ratingClass = 'good';
-    } else {
-      rating      = 'Needs Improvement';
-      ratingClass = 'needs-improvement';
-    }
+    var score     = accuracy;
+    var ratingObj = (typeof CT !== 'undefined') ? CT.getRating(score) : legacyRating(accuracy);
 
-    /* Inject 4 metric tiles (2 × 2 grid) */
     summaryGridEl.innerHTML =
-      procTile('Accuracy',    accuracy + '%',        'highlight')                   +
-      procTile('Correct',     correct + ' / 20',     correct >= 18 ? 'good' : '')  +
-      procTile('Avg. Time',   avgRt + ' ms',         '')                            +
-      procTile('Total Time',  totalSecs + ' s',      '');
+      procTile('Accuracy',   accuracy + '%',         'highlight')                   +
+      procTile('Correct',    correct + ' / 20',      correct >= 18 ? 'good' : '')   +
+      procTile('Avg. Time',  avgRt + ' ms',           '')                            +
+      procTile('Total Time', totalSecs + ' s',        '');
 
-    /* Inject performance rating pill */
+    /* Rich summary card */
     perfStatusEl.innerHTML =
-      '<div class="proc-status-pill proc-status-pill--' + ratingClass + '">'        +
-        '<span class="proc-status-pill__dot" aria-hidden="true"></span>'             +
-        '<span class="proc-status-pill__label">Performance: ' + rating + '</span>'  +
+      '<div class="ct-summary-card">' +
+        '<div class="ct-summary-score">' +
+          '<span class="ct-summary-score__num" data-target="' + score + '">0</span>' +
+          '<span class="ct-summary-score__label">Score</span>' +
+        '</div>' +
+        '<div class="ct-summary-rating ct-summary-rating--' + ratingObj.cls + '">' +
+          '<span class="ct-summary-rating__label">' + ratingObj.label + '</span>' +
+          '<span class="ct-summary-rating__sub">' + ratingObj.sub + '</span>' +
+        '</div>' +
       '</div>';
 
-    /* Re-render Lucide icons injected into the DOM (arrow-right on continue btn) */
+    animateScore(perfStatusEl.querySelector('[data-target]'), score);
+
     if (typeof lucide !== 'undefined') { lucide.createIcons(); }
 
     goToPhase('summary');
 
-    persistSession({
-      accuracy:   accuracy,
-      correct:    correct,
-      incorrect:  incorrect,
-      avgRt:      avgRt,
-      totalMs:    totalMs,
-      totalSecs:  parseFloat(totalSecs),
-      rating:     rating
-    });
+    if (typeof CT !== 'undefined') {
+      CT.writeSession('processing', startedAt, score, accuracy, avgRt, {
+        keyMap:     keyMap,
+        questions:  TOTAL_QUESTIONS,
+        totalMs:    totalMs,
+        totalSecs:  parseFloat(totalSecs),
+        results:    results
+      });
+
+      CT.completeModule('processing');
+
+      /* Lock continue link to block accidental nav during transition */
+      var continueEl = phases.summary ? phases.summary.querySelector('a.btn') : null;
+      if (continueEl) { CT.lockButton(continueEl); }
+
+      setTimeout(function () {
+        CT.showTransitionCard(CT.getNextModuleUrl(), CT.getNextModuleName());
+      }, 1800);
+    }
+  }
+
+  function legacyRating(accuracy) {
+    if (accuracy >= 90) return { label: 'Excellent',    sub: '↑ Above Average',       cls: 'excellent'    };
+    if (accuracy >= 70) return { label: 'Good',         sub: 'Within Normal Range',    cls: 'good'         };
+    return                     { label: 'Needs Review', sub: 'Consider Re-assessment', cls: 'needs-review' };
   }
 
   function procTile(label, value, modifier) {
@@ -348,47 +399,74 @@ document.addEventListener('DOMContentLoaded', function () {
     );
   }
 
-  /* ══════════════════════════════════════════════════════════
-     SESSION STORAGE
-  ══════════════════════════════════════════════════════════ */
-
-  function persistSession(scores) {
-    var user = {};
-    try {
-      user = JSON.parse(sessionStorage.getItem('cognitrack_user') || '{}');
-    } catch (e) { /* user data unavailable */ }
-
-    var session = {
-      timestamp:   new Date().toISOString(),
-      user:        user,
-      assessment:  'processing',
-      keyMap:      keyMap,
-      questions:   TOTAL_QUESTIONS,
-      results:     results,
-      scores:      scores
-    };
-
-    try {
-      sessionStorage.setItem('cognitrack_session_processing', JSON.stringify(session));
-    } catch (e) { /* private browsing / storage quota */ }
+  function animateScore(el, target) {
+    if (!el) { return; }
+    var dur = 900; var begin = performance.now();
+    (function step(now) {
+      var p = Math.min((now - begin) / dur, 1);
+      el.textContent = Math.round(p * target);
+      if (p < 1) { requestAnimationFrame(step); }
+    }(performance.now()));
   }
 
   /* ══════════════════════════════════════════════════════════
-     BEGIN BUTTON
+     SESSION RECOVERY
   ══════════════════════════════════════════════════════════ */
 
-  document.getElementById('btn-begin').addEventListener('click', function () {
-    goToPhase('test');
-    /* Small delay lets the phase animation settle before first question */
-    setTimeout(function () { showQuestion(0); }, 500);
+  function attemptRecovery() {
+    if (typeof CT === 'undefined') { return false; }
+    var progress = CT.loadProgress();
+    if (!progress) { return false; }
+
+    if (progress.modules && progress.modules.processing) {
+      var session = null;
+      try { session = JSON.parse(sessionStorage.getItem('cognitrack_session_processing') || 'null'); } catch (e) {}
+      if (session && session.rawData) {
+        startedAt       = session.startedAt;
+        results         = session.rawData.results || [];
+        currentQuestion = TOTAL_QUESTIONS;
+        totalMs         = session.rawData.totalMs || 0;
+        buildSummary();
+        return true;
+      }
+    }
+
+    if (progress.currentModule === 'processing' && progress.currentStage > 0) {
+      var saved = CT.getModuleState('processing');
+      if (saved) {
+        results         = saved.results         || [];
+        currentQuestion = saved.currentQuestion || 0;
+        startedAt       = saved.startedAt;
+      }
+      goToPhase('test');
+      setTimeout(function () { showQuestion(currentQuestion); }, 500);
+      return true;
+    }
+
+    return false;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     BEGIN BUTTON — triggers 2s key preview then test
+  ══════════════════════════════════════════════════════════ */
+
+  beginBtn.addEventListener('click', function () {
+    startedAt = new Date().toISOString();
+
+    startPreviewCountdown(function () {
+      goToPhase('test');
+      setTimeout(function () { showQuestion(0); }, 500);
+    });
   });
 
   /* ══════════════════════════════════════════════════════════
-     BOOT
-     Key generated immediately so it shows in the intro phase.
+     BOOT — key generated at load so it appears in intro phase
   ══════════════════════════════════════════════════════════ */
 
   initSession();
-  goToPhase('intro');
+
+  if (!attemptRecovery()) {
+    goToPhase('intro');
+  }
 
 });

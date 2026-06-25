@@ -86,6 +86,19 @@ document.addEventListener('DOMContentLoaded', function () {
       sessionStorage.setItem('cognitrack_user', JSON.stringify(userData));
     } catch (e) { /* private browsing / storage full — proceed anyway */ }
 
+    /* ── Initialise global assessment progress tracker ───────── */
+    if (typeof CT !== 'undefined' && CT.initProgress) {
+      /* Always reset on a fresh user registration */
+      try { sessionStorage.removeItem('cognitrack_progress'); } catch (e) {}
+      CT.initProgress();
+    }
+
+    /* ── Lock submit button to prevent double-submission ─────── */
+    var submitBtn = form.querySelector('[type="submit"]');
+    if (submitBtn && typeof CT !== 'undefined' && CT.lockButton) {
+      CT.lockButton(submitBtn);
+    }
+
     /* ── Submit natively (GET → /assessment with all form values) */
     isSubmitting = true;
     form.submit();

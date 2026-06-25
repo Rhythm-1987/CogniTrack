@@ -1597,3 +1597,619 @@ section {
     transition: none;
   }
 }
+
+
+/* ============================================================
+   22. MODULE TRANSITION CARD  (Sprint 4.1 — Decelerated)
+   Full-screen overlay between assessment modules.
+   Shown by CT.showTransitionCard() in cognitrack-core.js.
+   Total sequence: ~2.7 s with domain accent colour switching.
+   ============================================================ */
+
+.ct-transition-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  transition: opacity 350ms ease;
+}
+
+.ct-transition-overlay.is-visible {
+  opacity: 1;
+}
+
+/* ── Domain accent custom properties ─────────────────────── */
+.ct-transition-overlay--memory     { --ct-domain: #2563EB; --ct-domain-bg: rgba(37,99,235,0.10); --ct-domain-border: rgba(37,99,235,0.22); }
+.ct-transition-overlay--attention  { --ct-domain: #7C3AED; --ct-domain-bg: rgba(124,58,237,0.10); --ct-domain-border: rgba(124,58,237,0.22); }
+.ct-transition-overlay--executive  { --ct-domain: #EA580C; --ct-domain-bg: rgba(234,88,12,0.10); --ct-domain-border: rgba(234,88,12,0.22); }
+.ct-transition-overlay--processing { --ct-domain: #0891B2; --ct-domain-bg: rgba(8,145,178,0.10); --ct-domain-border: rgba(8,145,178,0.22); }
+.ct-transition-overlay--spatial    { --ct-domain: #059669; --ct-domain-bg: rgba(5,150,105,0.10); --ct-domain-border: rgba(5,150,105,0.22); }
+.ct-transition-overlay--dashboard  { --ct-domain: #2563EB; --ct-domain-bg: rgba(37,99,235,0.10); --ct-domain-border: rgba(37,99,235,0.22); }
+
+.ct-transition-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.05);
+  padding: var(--space-7) var(--space-8);
+  max-width: 420px;
+  width: calc(100% - var(--space-8));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  transform: translateY(20px) scale(0.97);
+  transition: transform 380ms var(--transition-spring);
+}
+
+.ct-transition-overlay.is-visible .ct-transition-card {
+  transform: translateY(0) scale(1);
+}
+
+/* ── Header row ─────────────────────────────────────────── */
+.ct-transition-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.ct-transition-check {
+  width: 48px;
+  height: 48px;
+  background: var(--color-success);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ct-transition-check svg {
+  width: 28px;
+  height: 28px;
+  stroke: #ffffff;
+}
+
+.ct-transition-check circle {
+  stroke: rgba(255,255,255,0.35);
+}
+
+.ct-transition-header-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ct-transition-complete-label {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.ct-transition-up-next {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--ct-domain, var(--color-primary));
+}
+
+/* ── Informational domain preview ───────────────────────── */
+.ct-transition-domain {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--ct-domain-bg, rgba(37,99,235,0.10));
+  border: 1px solid var(--ct-domain-border, rgba(37,99,235,0.22));
+  border-radius: var(--radius-lg);
+}
+
+.ct-transition-domain-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--color-surface);
+  border: 1px solid var(--ct-domain-border, rgba(37,99,235,0.22));
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--ct-domain, var(--color-primary));
+}
+
+.ct-transition-domain-icon svg,
+.ct-transition-domain-icon i { width: 22px; height: 22px; }
+
+.ct-transition-domain-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ct-transition-domain-name {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.ct-transition-domain-metric {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+}
+
+.ct-transition-domain-time {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--ct-domain, var(--color-primary));
+  margin-top: 3px;
+}
+
+.ct-domain-clock { width: 13px; height: 13px; flex-shrink: 0; }
+
+/* ── Rotating analytical message ────────────────────────── */
+.ct-transition-analysis {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ct-transition-analysis__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ct-domain, var(--color-primary));
+  flex-shrink: 0;
+  animation: ct-analysis-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes ct-analysis-pulse {
+  0%, 100% { opacity: 1;    transform: scale(1);   }
+  50%       { opacity: 0.4; transform: scale(0.72); }
+}
+
+.ct-transition-analysis__text {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
+  transition: opacity 150ms ease;
+}
+
+.ct-transition-analysis__text.is-changing { opacity: 0; }
+
+/* ── Progress fill bar — 2 550 ms eased ─────────────────── */
+.ct-transition-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.ct-transition-bar__fill {
+  height: 100%;
+  width: 0%;
+  background: var(--ct-domain, var(--color-primary));
+  border-radius: var(--radius-pill);
+  transition: width 2550ms cubic-bezier(0.05, 0, 0.15, 1);
+}
+
+
+/* ============================================================
+   23. CONFETTI CANVAS OVERLAY
+   ============================================================ */
+
+.ct-confetti-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 8999;
+  pointer-events: none;
+}
+
+
+/* ============================================================
+   24. STANDARDISED ASSESSMENT SUMMARY CARD
+   Used on all 5 module completion screens.
+   ============================================================ */
+
+.ct-summary-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.ct-summary-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ct-summary-score__num {
+  font-family: var(--font-display);
+  font-size: var(--text-5xl);
+  font-weight: 800;
+  color: var(--color-primary);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ct-summary-score__label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.ct-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.ct-summary-item {
+  background: var(--color-surface-alt);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.ct-summary-item__label {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.ct-summary-item__value {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rating badge */
+.ct-summary-rating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-alt);
+  width: 100%;
+}
+
+.ct-summary-rating__label {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.ct-summary-rating__sub {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.ct-summary-rating--excellent {
+  background: rgba(34, 197, 94, 0.10);
+  border: 1px solid rgba(34, 197, 94, 0.30);
+}
+.ct-summary-rating--excellent .ct-summary-rating__label {
+  color: #15803d;
+}
+
+.ct-summary-rating--good {
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+}
+.ct-summary-rating--good .ct-summary-rating__label {
+  color: var(--color-primary);
+}
+
+.ct-summary-rating--average {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+.ct-summary-rating--average .ct-summary-rating__label {
+  color: #b45309;
+}
+
+.ct-summary-rating--needs-review {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+.ct-summary-rating--needs-review .ct-summary-rating__label {
+  color: #dc2626;
+}
+
+
+/* ============================================================
+   25. USER TRUST NOTE  (user.html)
+   ============================================================ */
+
+.user-trust-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: rgba(37, 99, 235, 0.05);
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-4);
+}
+
+.user-trust-note [data-lucide] {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: var(--color-primary);
+}
+
+.user-trust-note p {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+
+/* ============================================================
+   26. MEMORY TRIAL BADGE & TRIAL-2 WORD CARD VARIANT
+   ============================================================ */
+
+.memory-trial-badge {
+  margin-bottom: var(--space-2);
+}
+
+.word-card--medium {
+  background: linear-gradient(135deg,
+    rgba(124, 58, 237, 0.08) 0%,
+    rgba(124, 58, 237, 0.04) 100%);
+  border-color: rgba(124, 58, 237, 0.20);
+  color: #5b21b6;
+}
+
+
+/* ============================================================
+   27. EXPANDED SPATIAL REFERENCE CANVAS
+   ============================================================ */
+
+.vis-shape-card--lg {
+  padding: var(--space-5);
+}
+
+.vis-shape--lg {
+  --vis-cell-size: 20px;   /* expanded from default ~14-16 px */
+}
+
+@media (max-width: 480px) {
+  .vis-shape--lg {
+    --vis-cell-size: 16px;
+  }
+}
+
+
+/* ============================================================
+   28. BUTTON LOADING SPINNER & LOCKED STATE
+   Applied instantly by CT.lockButton() on any activation of
+   a navigation / submission button to block double-clicks.
+   ============================================================ */
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.30);
+  border-top-color: rgba(255, 255, 255, 0.90);
+  border-radius: 50%;
+  animation: btn-spin 0.65s linear infinite;
+  vertical-align: middle;
+  margin-right: var(--space-2);
+  flex-shrink: 0;
+}
+
+.btn--loading {
+  opacity: 0.80;
+  cursor: not-allowed;
+}
+
+
+/* ============================================================
+   29. NAVBAR SESSION PROGRESS INDICATOR
+   Injected by initNavbarProgress() in main.js when the user
+   has completed at least one assessment module.
+   ============================================================ */
+
+.nav-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-right: var(--space-2);
+}
+
+.nav-progress__track {
+  width: 84px;
+  height: 5px;
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.nav-progress__fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary) 0%, #7C3AED 100%);
+  border-radius: var(--radius-pill);
+  transition: width 600ms ease;
+}
+
+.nav-progress__badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .nav-progress { display: none; }
+}
+
+
+/* ============================================================
+   30. GRAND FINALE COMPLETION PORTAL
+   Full-screen celebration shown by CT.showFinalePortal()
+   after the Spatial Reasoning module completes.
+   ============================================================ */
+
+.ct-finale-portal {
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0F172A 0%, #1C3458 55%, #0F172A 100%);
+  opacity: 0;
+  transition: opacity 450ms ease;
+}
+
+.ct-finale-portal.is-visible {
+  opacity: 1;
+}
+
+.ct-finale-inner {
+  text-align: center;
+  padding: var(--space-10) var(--space-8);
+  max-width: 540px;
+  width: 100%;
+}
+
+/* ── Five staggered checkmarks ──────────────────────────── */
+.ct-finale-checks {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.ct-finale-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  background: rgba(34, 197, 94, 0.88);
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0.4) translateY(10px);
+  animation: finale-check-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.ct-finale-check--2 { animation-delay: 0.07s; }
+.ct-finale-check--3 { animation-delay: 0.14s; }
+.ct-finale-check--4 { animation-delay: 0.21s; }
+.ct-finale-check--5 { animation-delay: 0.28s; }
+
+@keyframes finale-check-pop {
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Headline & sub ─────────────────────────────────────── */
+.ct-finale-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 2.9rem);
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-2);
+  animation: finale-slide-up 0.6s 0.45s ease both;
+}
+
+.ct-finale-sub {
+  font-size: var(--text-lg);
+  color: rgba(255, 255, 255, 0.72);
+  margin: 0 0 var(--space-8);
+  animation: finale-slide-up 0.6s 0.55s ease both;
+}
+
+@keyframes finale-slide-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.ct-finale-rule {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  margin: 0 0 var(--space-8);
+}
+
+/* ── Report generation block ────────────────────────────── */
+.ct-finale-report {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  animation: finale-slide-up 0.6s 0.70s ease both;
+}
+
+.ct-finale-report-label {
+  font-size: var(--text-sm);
+  color: rgba(255, 255, 255, 0.60);
+  margin: 0;
+  min-height: 1.6em;
+  transition: color 400ms ease;
+}
+
+.ct-finale-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ct-finale-progress-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.ct-finale-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #22C55E 0%, #2563EB 100%);
+  border-radius: var(--radius-pill);
+  transition: width 2500ms cubic-bezier(0.05, 0, 0.15, 1);
+}
+
+.ct-finale-progress-pct {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.75);
+  min-width: 38px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

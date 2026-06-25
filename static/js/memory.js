@@ -1,58 +1,83 @@
 /* ============================================================
    CogniTrack — Memory Assessment
-   memory.js   Sprint 3.5
+   memory.js   Sprint 4.0
+
+   Two-trial design:
+     Trial 1 — 5 easy concrete nouns (15 s study window)
+     Trial 2 — 6 abstract / medium nouns (15 s study window)
+   Distraction phase (3 arithmetic questions) between trials.
+   Free recall + recognition covering all 11 target words.
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', function () {
   'use strict';
 
   /* ══════════════════════════════════════════════════════════
-     WORD BANK — 90 concrete, neutral nouns
+     WORD TIERS
+     Easy  — simple, high-imageability, 1-2 syllable nouns
+     Medium — abstract, multi-syllable, lower imageability
   ══════════════════════════════════════════════════════════ */
-  var WORD_BANK = [
-    'Apple',   'Acorn',   'Anchor',  'Arrow',   'Bamboo',
-    'Barrel',  'Blanket', 'Boulder', 'Bridge',  'Candle',
-    'Cedar',   'Cloud',   'Cobble',  'Coral',   'Crane',
-    'Cricket', 'Crown',   'Daisy',   'Dolphin', 'Eagle',
-    'Ember',   'Fern',    'Flame',   'Flint',   'Flower',
-    'Forest',  'Glacier', 'Granite', 'Harbor',  'Hazel',
-    'Heron',   'Honey',   'Horizon', 'Horse',   'Lantern',
-    'Lemon',   'Leopard', 'Lily',    'Linen',   'Maple',
-    'Marble',  'Meadow',  'Mirror',  'Moss',    'Mountain',
-    'Mushroom','Nest',    'Oak',     'Opal',    'Otter',
-    'Paddle',  'Pebble',  'Pepper',  'Pillow',  'Pine',
-    'Planet',  'Plum',    'Quartz',  'Rabbit',  'Rainbow',
-    'Raven',   'River',   'Robin',   'Rock',    'Saddle',
-    'Salmon',  'Sand',    'Silver',  'Snow',    'Sparrow',
-    'Spider',  'Stone',   'Storm',   'Stream',  'Sugar',
-    'Swan',    'Temple',  'Thorn',   'Timber',  'Torch',
-    'Tower',   'Tunnel',  'Turtle',  'Vapor',   'Vessel',
-    'Violet',  'Walnut',  'Willow',  'Window',  'Wolf'
+
+  var EASY_WORDS = [
+    'Apple',  'Chair',   'Cloud',  'Eagle',   'Flame',
+    'Horse',  'Honey',   'Lemon',  'Maple',   'Nest',
+    'Oak',    'Plum',    'Rock',   'Snow',    'Swan',
+    'Wolf',   'Crane',   'Crown',  'Daisy',   'Fern',
+    'Flower', 'Heron',   'Lily',   'Moss',    'Pine',
+    'Rabbit', 'Raven',   'River',  'Robin',   'Sand',
+    'Silver', 'Stone',   'Storm',  'Stream',  'Sugar',
+    'Thorn',  'Turtle',  'Willow', 'Window',  'Spider'
+  ];
+
+  var MEDIUM_WORDS = [
+    'Anchor',  'Arrow',   'Bamboo',  'Barrel',  'Blanket',
+    'Boulder', 'Candle',  'Cedar',   'Cobble',  'Cricket',
+    'Dolphin', 'Ember',   'Glacier', 'Harbor',  'Hazel',
+    'Horizon', 'Lantern', 'Leopard', 'Linen',   'Marble',
+    'Meadow',  'Mirror',  'Opal',    'Paddle',  'Planet',
+    'Quartz',  'Saddle',  'Salmon',  'Temple',  'Torch',
+    'Tower',   'Tunnel',  'Vapor',   'Vessel',  'Violet',
+    'Walnut',  'Acorn',   'Timber',  'Pillow',  'Mushroom'
+  ];
+
+  /* Remaining words used as recognition distractors */
+  var DISTRACTOR_POOL = [
+    'Bridge', 'Bucket', 'Button', 'Cabin', 'Carpet',
+    'Chalk',  'Chisel', 'Comet',  'Copper','Cymbal',
+    'Feather','Figure', 'Funnel', 'Garden','Geyser',
+    'Glacier','Gravel', 'Hammer', 'Helmet','Island',
+    'Jungle', 'Kettle', 'Knuckle','Ladder','Lantern'
   ];
 
   /* ── Config ─────────────────────────────────────────────── */
-  var TIMER_DURATION   = 15;
-  var CIRCUMFERENCE    = 2 * Math.PI * 24; /* ≈ 150.80 */
-  var TARGET_COUNT     = 5;
-  var DISTRACTOR_COUNT = 5;
-  var QUESTION_COUNT   = 3;
+  var TIMER_DURATION    = 15;
+  var CIRCUMFERENCE     = 2 * Math.PI * 24;   /* ≈ 150.80 */
+  var TRIAL1_COUNT      = 5;
+  var TRIAL2_COUNT      = 6;
+  var DISTRACTOR_COUNT  = 6;
+  var QUESTION_COUNT    = 3;
 
-  /* ── Session State ──────────────────────────────────────── */
-  var targetWords     = [];
+  /* ── Session state ──────────────────────────────────────── */
+  var trial1Words     = [];
+  var trial2Words     = [];
+  var targetWords     = [];   /* trial1 + trial2 combined */
   var distractors     = [];
   var questions       = [];
   var selectedWords   = {};
   var recallText      = '';
   var assessmentStart = null;
+  var startedAt       = null;
   var timerInterval   = null;
   var timeLeft        = TIMER_DURATION;
   var currentQuestion = 0;
+  var activeTimer     = 1;    /* 1 = timer for trial1, 2 = timer for trial2 */
 
-  /* ── DOM Refs ───────────────────────────────────────────── */
+  /* ── DOM refs ───────────────────────────────────────────── */
   var phases = {
     intro:       document.getElementById('phase-intro'),
-    words:       document.getElementById('phase-words'),
+    trial1:      document.getElementById('phase-trial1'),
     distraction: document.getElementById('phase-distraction'),
+    trial2:      document.getElementById('phase-trial2'),
     recall:      document.getElementById('phase-recall'),
     recognition: document.getElementById('phase-recognition'),
     complete:    document.getElementById('phase-complete')
@@ -61,9 +86,17 @@ document.addEventListener('DOMContentLoaded', function () {
   var phaseBar         = document.getElementById('phase-bar');
   var phaseLabel       = document.getElementById('phase-label');
   var phaseNum         = document.getElementById('phase-num');
+
+  /* Trial 1 timer refs */
   var timerCount       = document.getElementById('timer-count');
   var ringFill         = document.getElementById('timer-ring-fill');
-  var wordGrid         = document.querySelector('.memory-words');
+
+  /* Trial 2 timer refs */
+  var timerCount2      = document.getElementById('timer-count-2');
+  var ringFill2        = document.getElementById('timer-ring-fill-2');
+
+  var trial1WordsGrid  = document.querySelector('#phase-trial1 .memory-words');
+  var trial2WordsGrid  = document.getElementById('trial2-words');
   var qText            = document.getElementById('q-text');
   var qCurrent         = document.getElementById('q-current');
   var distractInput    = document.getElementById('distraction-input');
@@ -71,17 +104,18 @@ document.addEventListener('DOMContentLoaded', function () {
   var recallInput      = document.getElementById('recall-input');
   var recognitionGrid  = document.getElementById('recognition-grid');
   var recognitionError = document.getElementById('recognition-error');
-  var completeStats    = document.querySelector('.complete-stats');
+  var completeStats    = document.getElementById('complete-stats');
 
-  /* ── Phase Config ───────────────────────────────────────── */
+  /* ── Phase meta ─────────────────────────────────────────── */
   var PHASE_ORDER = [
-    'intro', 'words', 'distraction', 'recall', 'recognition', 'complete'
+    'intro', 'trial1', 'distraction', 'trial2', 'recall', 'recognition', 'complete'
   ];
 
   var PHASE_LABELS = {
     intro:       'Introduction',
-    words:       'Study Words',
-    distraction: 'Distraction',
+    trial1:      'Trial 1 — Study',
+    distraction: 'Distraction Task',
+    trial2:      'Trial 2 — Study',
     recall:      'Free Recall',
     recognition: 'Recognition',
     complete:    'Complete'
@@ -91,7 +125,6 @@ document.addEventListener('DOMContentLoaded', function () {
      UTILITIES
   ══════════════════════════════════════════════════════════ */
 
-  /* Fisher-Yates shuffle — returns a new shuffled copy */
   function shuffleArray(arr) {
     var a = arr.slice();
     for (var i = a.length - 1; i > 0; i--) {
@@ -101,58 +134,82 @@ document.addEventListener('DOMContentLoaded', function () {
     return a;
   }
 
-  /* Integer in [min, max] inclusive */
   function randInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
   /* ══════════════════════════════════════════════════════════
-     SESSION INIT — called once on page load
+     SESSION INIT
   ══════════════════════════════════════════════════════════ */
 
   function initSession() {
-    /* Shuffle the full bank; first 5 = targets, next 5 = distractors */
-    var shuffled  = shuffleArray(WORD_BANK);
-    targetWords   = shuffled.slice(0, TARGET_COUNT);
-    distractors   = shuffled.slice(TARGET_COUNT, TARGET_COUNT + DISTRACTOR_COUNT);
+    var shuffledEasy   = shuffleArray(EASY_WORDS);
+    var shuffledMedium = shuffleArray(MEDIUM_WORDS);
+
+    trial1Words = shuffledEasy.slice(0, TRIAL1_COUNT);
+    trial2Words = shuffledMedium.slice(0, TRIAL2_COUNT);
+    targetWords = trial1Words.concat(trial2Words);     /* 11 total */
+
+    /* Distractors: words not in either target set */
+    var usedLower  = targetWords.map(function (w) { return w.toLowerCase(); });
+    var distPool   = shuffleArray(
+      DISTRACTOR_POOL.filter(function (w) {
+        return usedLower.indexOf(w.toLowerCase()) === -1;
+      })
+    );
+    distractors = distPool.slice(0, DISTRACTOR_COUNT);
+
     selectedWords = {};
     recallText    = '';
+    questions     = generateQuestions(QUESTION_COUNT);
 
-    /* Generate fresh arithmetic questions */
-    questions = generateQuestions(QUESTION_COUNT);
-
-    /* Hydrate the dynamic DOM regions */
-    populateWordDisplay();
+    populateTrial1Grid();
+    populateTrial2Grid();
     populateRecognitionGrid();
+
+    /* Save intermediate state for session recovery */
+    saveIntermediateState(0);
   }
 
-  /* ── Phase 2: word cards ────────────────────────────────── */
-  function populateWordDisplay() {
-    wordGrid.innerHTML = '';
-    targetWords.forEach(function (word, i) {
+  function populateTrial1Grid() {
+    trial1WordsGrid.innerHTML = '';
+    trial1Words.forEach(function (word, i) {
       var div = document.createElement('div');
       div.className   = 'word-card anim-fade-up anim-delay-' + (i + 1);
       div.setAttribute('role', 'listitem');
       div.textContent = word;
-      wordGrid.appendChild(div);
+      trial1WordsGrid.appendChild(div);
     });
   }
 
-  /* ── Phase 5: recognition grid ──────────────────────────── */
+  function populateTrial2Grid() {
+    trial2WordsGrid.innerHTML = '';
+    trial2Words.forEach(function (word, i) {
+      var div = document.createElement('div');
+      div.className   = 'word-card word-card--medium anim-fade-up anim-delay-' + (i + 1);
+      div.setAttribute('role', 'listitem');
+      div.textContent = word;
+      trial2WordsGrid.appendChild(div);
+    });
+  }
+
+  /* Fisher-Yates shuffled combined grid */
   function populateRecognitionGrid() {
-    /* Combine and shuffle targets + distractors */
     var combined = shuffleArray(targetWords.concat(distractors));
     recognitionGrid.innerHTML = '';
 
     combined.forEach(function (word) {
-      var isTarget = targetWords.indexOf(word) !== -1;
+      var isTarget = targetWords.some(function (t) {
+        return t.toLowerCase() === word.toLowerCase();
+      });
+
       var btn = document.createElement('button');
-      btn.className        = 'recognition-word';
-      btn.type             = 'button';
-      btn.dataset.word     = word.toLowerCase();
-      btn.dataset.target   = isTarget ? 'true' : 'false';
+      btn.className      = 'recognition-word';
+      btn.type           = 'button';
+      btn.dataset.word   = word.toLowerCase();
+      btn.dataset.target = isTarget ? 'true' : 'false';
       btn.setAttribute('aria-pressed', 'false');
-      btn.textContent      = word;
+      btn.textContent    = word;
       btn.addEventListener('click', onRecognitionWordClick);
       recognitionGrid.appendChild(btn);
     });
@@ -180,6 +237,9 @@ document.addEventListener('DOMContentLoaded', function () {
     phaseLabel.textContent = PHASE_LABELS[name];
     phaseNum.textContent   = idx;
 
+    /* Persist current stage for refresh recovery */
+    saveIntermediateState(PHASE_ORDER.indexOf(name));
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -188,48 +248,61 @@ document.addEventListener('DOMContentLoaded', function () {
   ══════════════════════════════════════════════════════════ */
 
   document.getElementById('btn-begin').addEventListener('click', function () {
+    startedAt       = new Date().toISOString();
     assessmentStart = Date.now();
-    goToPhase('words');
-    startTimer();
+    goToPhase('trial1');
+    startTimer(1);
   });
 
   /* ══════════════════════════════════════════════════════════
-     PHASE 2: COUNTDOWN TIMER
+     COUNTDOWN TIMER  (shared by both trials)
+     trialNum: 1 | 2
   ══════════════════════════════════════════════════════════ */
 
-  function startTimer() {
-    timeLeft = TIMER_DURATION;
-    ringFill.style.strokeDasharray  = CIRCUMFERENCE;
-    ringFill.style.strokeDashoffset = 0;
-    updateTimerDisplay();
+  function startTimer(trialNum) {
+    activeTimer = trialNum;
+    timeLeft    = TIMER_DURATION;
+
+    var countEl = trialNum === 1 ? timerCount  : timerCount2;
+    var fillEl  = trialNum === 1 ? ringFill    : ringFill2;
+
+    fillEl.style.strokeDasharray  = CIRCUMFERENCE;
+    fillEl.style.strokeDashoffset = 0;
+    updateTimerDisplay(countEl, fillEl);
 
     timerInterval = setInterval(function () {
       timeLeft -= 1;
-      updateTimerDisplay();
+      updateTimerDisplay(countEl, fillEl);
+
       if (timeLeft <= 0) {
         clearInterval(timerInterval);
         timerInterval = null;
-        goToPhase('distraction');
-        loadQuestion(0);
+
+        if (trialNum === 1) {
+          goToPhase('distraction');
+          loadQuestion(0);
+        } else {
+          goToPhase('recall');
+          recallInput.focus();
+        }
       }
     }, 1000);
   }
 
-  function updateTimerDisplay() {
-    timerCount.textContent = timeLeft;
+  function updateTimerDisplay(countEl, fillEl) {
+    countEl.textContent = timeLeft;
     var offset = CIRCUMFERENCE * (1 - timeLeft / TIMER_DURATION);
-    ringFill.style.strokeDashoffset = offset;
+    fillEl.style.strokeDashoffset = offset;
 
-    ringFill.classList.remove('is-warning', 'is-danger');
-    if (timeLeft <= 5)      ringFill.classList.add('is-danger');
-    else if (timeLeft <= 8) ringFill.classList.add('is-warning');
+    fillEl.classList.remove('is-warning', 'is-danger');
+    if (timeLeft <= 5)      fillEl.classList.add('is-danger');
+    else if (timeLeft <= 8) fillEl.classList.add('is-warning');
   }
 
   /* ══════════════════════════════════════════════════════════
-     PHASE 3: DYNAMIC ARITHMETIC DISTRACTION
+     PHASE 3: DISTRACTION
   ══════════════════════════════════════════════════════════ */
 
-  /* Pick `count` unique operations then generate one question each */
   function generateQuestions(count) {
     var ops = shuffleArray(['add', 'sub', 'mul', 'div']).slice(0, count);
     return ops.map(generateQuestion);
@@ -239,33 +312,17 @@ document.addEventListener('DOMContentLoaded', function () {
     var a, b, answer, text;
     switch (op) {
       case 'add':
-        a      = randInt(11, 59);
-        b      = randInt(11, 59);
-        text   = a + ' + ' + b;
-        answer = a + b;
-        break;
-
+        a = randInt(11, 59); b = randInt(11, 59);
+        text = a + ' + ' + b; answer = a + b; break;
       case 'sub':
-        a      = randInt(30, 89);
-        b      = randInt(10, a - 10);
-        text   = a + ' − ' + b;   /* − */
-        answer = a - b;
-        break;
-
+        a = randInt(30, 89); b = randInt(10, a - 10);
+        text = a + ' − ' + b; answer = a - b; break;
       case 'mul':
-        a      = randInt(3, 9);
-        b      = randInt(3, 9);
-        text   = a + ' × ' + b;   /* × */
-        answer = a * b;
-        break;
-
-      default: /* div — guaranteed exact integer result */
-        b      = randInt(2, 9);
-        var q  = randInt(3, 9);
-        a      = b * q;
-        text   = a + ' ÷ ' + b;   /* ÷ */
-        answer = q;
-        break;
+        a = randInt(3, 9); b = randInt(3, 9);
+        text = a + ' × ' + b; answer = a * b; break;
+      default:
+        b = randInt(2, 9); var q = randInt(3, 9); a = b * q;
+        text = a + ' ÷ ' + b; answer = q; break;
     }
     return { text: text, answer: answer };
   }
@@ -282,7 +339,10 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('btn-distraction-next').addEventListener('click', advanceQuestion);
 
   distractInput.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') { advanceQuestion(); }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      advanceQuestion();
+    }
   });
 
   function advanceQuestion() {
@@ -294,13 +354,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (next < questions.length) {
       loadQuestion(next);
     } else {
-      goToPhase('recall');
-      recallInput.focus();
+      goToPhase('trial2');
+      startTimer(2);
     }
   }
 
   /* ══════════════════════════════════════════════════════════
-     PHASE 4: FREE RECALL
+     PHASE 5: FREE RECALL
   ══════════════════════════════════════════════════════════ */
 
   document.getElementById('btn-recall-continue').addEventListener('click', function () {
@@ -309,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   /* ══════════════════════════════════════════════════════════
-     PHASE 5: RECOGNITION
+     PHASE 6: RECOGNITION
   ══════════════════════════════════════════════════════════ */
 
   function onRecognitionWordClick() {
@@ -333,12 +393,13 @@ document.addEventListener('DOMContentLoaded', function () {
       showError(recognitionError, 'Please select at least one word before submitting.');
       return;
     }
+    if (typeof CT !== 'undefined' && CT.lockButton) { CT.lockButton(this); }
     buildSummary();
     goToPhase('complete');
   });
 
   /* ══════════════════════════════════════════════════════════
-     PHASE 6: CLINICAL SUMMARY SCREEN
+     PHASE 7: CLINICAL SUMMARY + SESSION PERSISTENCE
   ══════════════════════════════════════════════════════════ */
 
   function buildSummary() {
@@ -357,88 +418,206 @@ document.addEventListener('DOMContentLoaded', function () {
       ? Math.round((Date.now() - assessmentStart) / 1000)
       : 0;
 
-    var recallPct = Math.round((recallCount / TARGET_COUNT) * 100);
+    var totalTargets   = targetWords.length;                         /* 11 */
+    var recallPct      = Math.round((recallCount / totalTargets) * 100);
+    var recognitionPct = Math.round((recognitionCount / totalTargets) * 100);
+    var score          = Math.round(recognitionPct * 0.6 + recallPct * 0.4);
 
-    /* Classify performance on recognition accuracy */
-    var status, statusClass;
-    if (recognitionCount === 5) {
-      status = 'Excellent';     statusClass = 'excellent';
-    } else if (recognitionCount >= 3) {
-      status = 'Good';          statusClass = 'good';
-    } else {
-      status = 'Needs Review';  statusClass = 'needs-review';
-    }
+    var ratingObj = (typeof CT !== 'undefined') ? CT.getRating(score) : null;
+    var ratingLabel = ratingObj ? ratingObj.label : (
+      score >= 90 ? 'Excellent' : score >= 75 ? 'Good' : score >= 60 ? 'Average' : 'Needs Review'
+    );
 
-    /* Replace .complete-stats with a rich summary grid */
-    completeStats.className  = 'summary-grid';
-    completeStats.innerHTML  =
-      tile('Words Presented',   '5')                       +
-      tile('Words Recalled',    recallCount + ' / 5') +
-      tile('Recognition',       recognitionCount + ' / 5') +
-      tile('Recall Accuracy',   recallPct + '%')           +
-      tile('Time Taken',        timeTaken + 's')           +
-      '<div class="summary-status summary-status--' + statusClass + '">' +
-        '<span class="summary-status__dot" aria-hidden="true"></span>' +
-        '<span class="summary-status__label">' + status + '</span>'   +
+    /* ── Rich assessment summary card ──────────────────── */
+    completeStats.className = 'ct-summary-card';
+    completeStats.innerHTML =
+      '<div class="ct-summary-score">' +
+        '<span class="ct-summary-score__num" data-target="' + score + '">0</span>' +
+        '<span class="ct-summary-score__label">Score</span>' +
+      '</div>' +
+      '<div class="ct-summary-grid">' +
+        summaryTile('Words Shown',     totalTargets)                          +
+        summaryTile('Recalled',        recallCount + ' / ' + totalTargets)   +
+        summaryTile('Recognised',      recognitionCount + ' / ' + totalTargets) +
+        summaryTile('Recall Accuracy', recallPct + '%')                      +
+        summaryTile('Time Taken',      timeTaken + 's')                      +
+      '</div>' +
+      '<div class="ct-summary-rating ct-summary-rating--' +
+          (ratingObj ? ratingObj.cls : 'good') + '">' +
+        '<span class="ct-summary-rating__label">' + ratingLabel + '</span>' +
+        (ratingObj ? '<span class="ct-summary-rating__sub">' + ratingObj.sub + '</span>' : '') +
       '</div>';
 
-    /* Persist full session object */
-    persistSession({
-      recallCount:      recallCount,
-      recallPct:        recallPct,
-      recognitionCount: recognitionCount,
-      timeTaken:        timeTaken,
-      status:           status
-    });
+    animateScore(completeStats.querySelector('[data-target]'), score);
+
+    /* ── Persist standardised session ────────────────────── */
+    if (typeof CT !== 'undefined') {
+      CT.writeSession('memory', startedAt, score, recognitionPct, 0, {
+        trial1Words:        trial1Words,
+        trial2Words:        trial2Words,
+        distractors:        distractors,
+        recallText:         recallText,
+        recallCount:        recallCount,
+        recognitionCount:   recognitionCount,
+        totalTargets:       totalTargets,
+        recallPct:          recallPct,
+        recognitionPct:     recognitionPct,
+        mathAnswered:       currentQuestion + 1,
+        selectedWords:      Object.keys(selectedWords)
+      });
+
+      CT.completeModule('memory');
+
+      /* Automated handshake — transition card after 1.8 s */
+      setTimeout(function () {
+        CT.showTransitionCard(CT.getNextModuleUrl(), CT.getNextModuleName());
+      }, 1800);
+    }
   }
 
-  function tile(label, value) {
+  function summaryTile(label, value) {
     return (
-      '<div class="summary-item">' +
-        '<span class="summary-item__label">' + label + '</span>' +
-        '<span class="summary-item__value">' + value + '</span>' +
+      '<div class="ct-summary-item">' +
+        '<span class="ct-summary-item__label">' + label + '</span>' +
+        '<span class="ct-summary-item__value">' + value + '</span>' +
       '</div>'
     );
   }
 
+  /* CSS counting animation for the score number */
+  function animateScore(el, target) {
+    if (!el) { return; }
+    var start   = 0;
+    var dur     = 900;
+    var begin   = performance.now();
+
+    function step(now) {
+      var p = Math.min((now - begin) / dur, 1);
+      el.textContent = Math.round(p * target);
+      if (p < 1) { requestAnimationFrame(step); }
+    }
+    requestAnimationFrame(step);
+  }
+
   /* ══════════════════════════════════════════════════════════
-     SESSION STORAGE
+     SESSION RECOVERY
   ══════════════════════════════════════════════════════════ */
 
-  function persistSession(scores) {
-    var user = {};
-    try {
-      user = JSON.parse(sessionStorage.getItem('cognitrack_user') || '{}');
-    } catch (e) { /* demographic data not available */ }
-
-    var session = {
-      timestamp:            new Date().toISOString(),
-      user:                 user,
-      assessment:           'memory',
-      targetWords:          targetWords,
-      recallText:           recallText,
-      selectedWords:        Object.keys(selectedWords),
-      mathQuestionsAnswered: currentQuestion + 1,
-      scores:               scores
-    };
-
-    try {
-      sessionStorage.setItem('cognitrack_session_memory', JSON.stringify(session));
-    } catch (e) { /* private browsing or storage quota exceeded */ }
+  function saveIntermediateState(phaseIndex) {
+    if (typeof CT === 'undefined') { return; }
+    CT.updateStage('memory', phaseIndex, {
+      trial1Words:  trial1Words,
+      trial2Words:  trial2Words,
+      distractors:  distractors,
+      startedAt:    startedAt
+    });
   }
+
+  function attemptRecovery() {
+    if (typeof CT === 'undefined') { return false; }
+
+    var progress = CT.loadProgress();
+    if (!progress) { return false; }
+
+    /* Module already completed — go straight to complete */
+    if (progress.modules && progress.modules.memory) {
+      var session = null;
+      try {
+        session = JSON.parse(sessionStorage.getItem('cognitrack_session_memory') || 'null');
+      } catch (e) {}
+
+      if (session) {
+        /* Restore summary data from saved session */
+        startedAt = session.startedAt;
+        var raw   = session.rawData || {};
+        trial1Words  = raw.trial1Words  || [];
+        trial2Words  = raw.trial2Words  || [];
+        targetWords  = trial1Words.concat(trial2Words);
+        recallText   = raw.recallText   || '';
+        /* Rebuild selectedWords map */
+        (raw.selectedWords || []).forEach(function (w) { selectedWords[w] = true; });
+        buildSummary();
+        goToPhase('complete');
+        return true;
+      }
+    }
+
+    /* Module in progress — restore to saved phase */
+    if (progress.currentModule === 'memory' && progress.currentStage > 0) {
+      var saved = CT.getModuleState('memory');
+      if (saved) {
+        if (saved.trial1Words) { trial1Words = saved.trial1Words; }
+        if (saved.trial2Words) { trial2Words = saved.trial2Words; }
+        if (saved.distractors) { distractors = saved.distractors; }
+        if (saved.startedAt)   { startedAt   = saved.startedAt; }
+        targetWords = trial1Words.concat(trial2Words);
+        populateTrial1Grid();
+        populateTrial2Grid();
+        populateRecognitionGrid();
+      }
+
+      var phaseName = PHASE_ORDER[progress.currentStage] || 'intro';
+      goToPhase(phaseName);
+      return true;
+    }
+
+    return false;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     KEYBOARD NAVIGATION
+     Enter: advances phases and submits inputs
+  ══════════════════════════════════════════════════════════ */
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') { return; }
+
+    /* Only fire keyboard shortcuts when we are NOT inside a textarea */
+    var tag = document.activeElement ? document.activeElement.tagName : '';
+    if (tag === 'TEXTAREA') { return; }
+
+    e.preventDefault();
+
+    /* Determine active phase */
+    var active = PHASE_ORDER.find
+      ? PHASE_ORDER.find(function (p) {
+          return phases[p] && phases[p].classList.contains('is-active');
+        })
+      : (function () {
+          for (var i = 0; i < PHASE_ORDER.length; i++) {
+            if (phases[PHASE_ORDER[i]] && phases[PHASE_ORDER[i]].classList.contains('is-active')) {
+              return PHASE_ORDER[i];
+            }
+          }
+          return null;
+        }());
+
+    if (!active) { return; }
+
+    switch (active) {
+      case 'intro':
+        document.getElementById('btn-begin').click();
+        break;
+      case 'distraction':
+        document.getElementById('btn-distraction-next').click();
+        break;
+      case 'recall':
+        document.getElementById('btn-recall-continue').click();
+        break;
+      case 'recognition':
+        document.getElementById('btn-recognition-submit').click();
+        break;
+      default:
+        break;
+    }
+  });
 
   /* ══════════════════════════════════════════════════════════
      HELPERS
   ══════════════════════════════════════════════════════════ */
 
-  function showError(el, msg) {
-    el.textContent = msg;
-    el.hidden      = false;
-  }
-
-  function hideError(el) {
-    el.hidden = true;
-  }
+  function showError(el, msg) { el.textContent = msg; el.hidden = false; }
+  function hideError(el)       { el.hidden = true; }
 
   /* ══════════════════════════════════════════════════════════
      BOOT
@@ -446,7 +625,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
   ringFill.style.strokeDasharray  = CIRCUMFERENCE;
   ringFill.style.strokeDashoffset = 0;
+  ringFill2.style.strokeDasharray  = CIRCUMFERENCE;
+  ringFill2.style.strokeDashoffset = 0;
+
   initSession();
-  goToPhase('intro');
+
+  if (!attemptRecovery()) {
+    goToPhase('intro');
+  }
 
 });

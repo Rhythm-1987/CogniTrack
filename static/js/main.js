@@ -30,6 +30,11 @@ document.addEventListener('DOMContentLoaded', function () {
   ---------------------------------------------------------- */
   initScrollReveal();
 
+  /* ----------------------------------------------------------
+     04. NAVBAR SESSION PROGRESS INDICATOR
+  ---------------------------------------------------------- */
+  initNavbarProgress();
+
 });
 
 
@@ -94,6 +99,50 @@ function initNavbar() {
   window.matchMedia('(min-width: 768px)').addEventListener('change', function (e) {
     if (e.matches) { closeDrawer(); }
   });
+}
+
+
+/* ============================================================
+   initNavbarProgress()
+   Reads cognitrack_progress from sessionStorage and injects a
+   compact progress bar + badge into .navbar__inner when at
+   least one module has been completed.
+   Reads/writes: .navbar__inner → injects .nav-progress
+============================================================ */
+function initNavbarProgress() {
+  var progress = null;
+  try {
+    var raw = sessionStorage.getItem('cognitrack_progress');
+    progress = raw ? JSON.parse(raw) : null;
+  } catch (e) { return; }
+
+  if (!progress || !progress.completedCount || progress.completedCount < 1) { return; }
+
+  var inner = document.querySelector('.navbar__inner');
+  if (!inner) { return; }
+
+  var completed = progress.completedCount;
+  var total     = 5;
+  var pct       = Math.round((completed / total) * 100);
+
+  var el = document.createElement('div');
+  el.className = 'nav-progress';
+  el.setAttribute('aria-label', completed + ' of ' + total + ' modules completed');
+
+  el.innerHTML =
+    '<div class="nav-progress__track" aria-hidden="true">' +
+      '<div class="nav-progress__fill" style="width:' + pct + '%"></div>' +
+    '</div>' +
+    '<span class="nav-progress__badge">' +
+      completed + ' / ' + total + ' Modules' +
+    '</span>';
+
+  var navActions = inner.querySelector('.nav-actions');
+  if (navActions) {
+    inner.insertBefore(el, navActions);
+  } else {
+    inner.appendChild(el);
+  }
 }
 
 

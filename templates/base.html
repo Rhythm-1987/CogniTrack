@@ -20,6 +20,9 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
 
+  <!-- Canvas Confetti (used on final assessment completion) -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js" defer></script>
+
   <!-- Application Stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
 
@@ -39,6 +42,9 @@
 
   <!-- Footer -->
   {% include 'footer.html' %}
+
+  <!-- Core Framework Engine (progress tracking, transitions, confetti) -->
+  <script src="{{ url_for('static', filename='js/cognitrack-core.js') }}"></script>
 
   <!-- Application Script -->
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>

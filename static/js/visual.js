@@ -1,7 +1,13 @@
 /* ============================================================
-   CogniTrack — Visuospatial Assessment
-   visual.js — Mental Rotation Test
-   Shapes: 4×4 binary matrices, rotated and mirrored in JS.
+   CogniTrack — Spatial Reasoning Assessment
+   visual.js   Sprint 4.0
+
+   Angular complexity scaling (rotation of correct answer):
+     Q  1– 3  → 90°  (easiest)
+     Q  4– 7  → 180°
+     Q  8–10  → 270° (hardest)
+
+   Final module: triggers confetti + results consolidation.
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -9,79 +15,46 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ══════════════════════════════════════════════════════════
      SHAPE LIBRARY
-     Eight 4×4 binary matrices.
-     All shapes are asymmetric: no rotation equals the mirror.
-     This guarantees the test is well-formed for every question.
+     Eight 4×4 asymmetric binary matrices.
+     No rotation equals the mirror — guarantees well-formed questions.
   ══════════════════════════════════════════════════════════ */
 
   var SHAPE_LIBRARY = [
-
-    /* 0 — J (classic corner hook) */
-    [[1,0,0,0],
-     [1,0,0,0],
-     [1,0,0,0],
-     [1,1,0,0]],
-
+    /* 0 — J */
+    [[1,0,0,0],[1,0,0,0],[1,0,0,0],[1,1,0,0]],
     /* 1 — F-pentomino */
-    [[1,1,1,0],
-     [1,0,0,0],
-     [1,1,0,0],
-     [0,0,0,0]],
-
-    /* 2 — Z-stair (diagonal steps) */
-    [[0,0,1,0],
-     [0,1,1,0],
-     [0,1,0,0],
-     [1,1,0,0]],
-
-    /* 3 — L-Z (L base with opposite hook) */
-    [[1,0,0,0],
-     [1,1,0,0],
-     [0,1,0,0],
-     [0,1,1,0]],
-
-    /* 4 — Hook-T (T with bent arm) */
-    [[1,1,1,0],
-     [0,0,1,0],
-     [0,1,1,0],
-     [0,0,0,0]],
-
-    /* 5 — Y-extended (vertical stem with offset branch) */
-    [[0,1,0,0],
-     [1,1,0,0],
-     [0,1,0,0],
-     [0,1,1,0]],
-
-    /* 6 — Corner-step (diagonal staircase) */
-    [[1,1,0,0],
-     [0,1,1,0],
-     [0,0,1,0],
-     [0,0,1,1]],
-
-    /* 7 — S-hook (reverse S with tail) */
-    [[0,1,1,0],
-     [0,1,0,0],
-     [1,1,0,0],
-     [1,0,0,0]]
-
+    [[1,1,1,0],[1,0,0,0],[1,1,0,0],[0,0,0,0]],
+    /* 2 — Z-stair */
+    [[0,0,1,0],[0,1,1,0],[0,1,0,0],[1,1,0,0]],
+    /* 3 — L-Z */
+    [[1,0,0,0],[1,1,0,0],[0,1,0,0],[0,1,1,0]],
+    /* 4 — Hook-T */
+    [[1,1,1,0],[0,0,1,0],[0,1,1,0],[0,0,0,0]],
+    /* 5 — Y-extended */
+    [[0,1,0,0],[1,1,0,0],[0,1,0,0],[0,1,1,0]],
+    /* 6 — Corner-step */
+    [[1,1,0,0],[0,1,1,0],[0,0,1,0],[0,0,1,1]],
+    /* 7 — S-hook */
+    [[0,1,1,0],[0,1,0,0],[1,1,0,0],[1,0,0,0]]
   ];
 
   var TOTAL_QUESTIONS = 10;
 
-  /* ══════════════════════════════════════════════════════════
-     STATE
-  ══════════════════════════════════════════════════════════ */
+  /* Angular complexity per question index:
+     Q1–3  (idx 0–2)  → 90°
+     Q4–7  (idx 3–6)  → 180°
+     Q8–10 (idx 7–9)  → 270°                                 */
+  var ANSWER_ANGLES = [90,90,90, 180,180,180,180, 270,270,270];
 
+  /* ── State ──────────────────────────────────────────────── */
   var questions       = [];
   var currentQuestion = 0;
-  var results         = [];   /* { correct, rt } */
-  var questionStart   = 0;    /* performance.now() */
+  var results         = [];
+  var questionStart   = 0;
   var answerPending   = false;
+  var startedAt       = null;
 
-  /* ══════════════════════════════════════════════════════════
-     DOM REFERENCES
-  ══════════════════════════════════════════════════════════ */
-
+  /* ── DOM refs ───────────────────────────────────────────── */
   var phases = {
     intro:   document.getElementById('phase-intro'),
     test:    document.getElementById('phase-test'),
@@ -97,7 +70,6 @@ document.addEventListener('DOMContentLoaded', function () {
   var summaryGridEl = document.getElementById('vis-summary-grid');
   var perfStatusEl  = document.getElementById('vis-perf-status');
 
-  /* Candidate buttons + their inner shape containers */
   var candidateBtns   = [];
   var candidateShapes = [];
   for (var k = 0; k < 4; k++) {
@@ -105,11 +77,10 @@ document.addEventListener('DOMContentLoaded', function () {
     candidateShapes.push(document.getElementById('cand-shape-' + k));
   }
 
-  /* Phase config */
   var PHASE_ORDER  = ['intro', 'test', 'summary'];
   var PHASE_LABELS = {
     intro:   'Introduction',
-    test:    'Rotation Test',
+    test:    'Spatial Reasoning',
     summary: 'Summary'
   };
 
@@ -134,36 +105,27 @@ document.addEventListener('DOMContentLoaded', function () {
      MATRIX OPERATIONS
   ══════════════════════════════════════════════════════════ */
 
-  /* Rotate 90° clockwise: new[i][j] = old[n-1-j][i] */
   function rotate90(matrix) {
-    var n = matrix.length;
-    var r = [];
+    var n = matrix.length, r = [];
     for (var i = 0; i < n; i++) {
       r[i] = [];
-      for (var j = 0; j < n; j++) {
-        r[i][j] = matrix[n - 1 - j][i];
-      }
+      for (var j = 0; j < n; j++) { r[i][j] = matrix[n - 1 - j][i]; }
     }
     return r;
   }
 
-  /* Rotate by 0, 90, 180, or 270 degrees clockwise */
   function rotate(matrix, deg) {
-    var steps = (((deg % 360) + 360) % 360) / 90; /* 0, 1, 2, or 3 */
+    var steps = (((deg % 360) + 360) % 360) / 90;
     var m = cloneMatrix(matrix);
     for (var i = 0; i < steps; i++) { m = rotate90(m); }
     return m;
   }
 
-  /* Horizontal mirror: new[i][j] = old[i][n-1-j] */
   function mirrorH(matrix) {
-    var n = matrix.length;
-    var r = [];
+    var n = matrix.length, r = [];
     for (var i = 0; i < n; i++) {
       r[i] = [];
-      for (var j = 0; j < n; j++) {
-        r[i][j] = matrix[i][n - 1 - j];
-      }
+      for (var j = 0; j < n; j++) { r[i][j] = matrix[i][n - 1 - j]; }
     }
     return r;
   }
@@ -179,7 +141,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ══════════════════════════════════════════════════════════
      SHAPE RENDERING
-     Injects 16 .vis-cell divs into a .vis-shape container.
   ══════════════════════════════════════════════════════════ */
 
   function renderShape(matrix, containerEl, extraCellClass) {
@@ -187,12 +148,9 @@ document.addEventListener('DOMContentLoaded', function () {
     for (var row = 0; row < matrix.length; row++) {
       for (var col = 0; col < matrix[row].length; col++) {
         var cell = document.createElement('div');
-        if (matrix[row][col]) {
-          cell.className = 'vis-cell vis-cell--filled' +
-            (extraCellClass ? ' ' + extraCellClass : '');
-        } else {
-          cell.className = 'vis-cell';
-        }
+        cell.className = matrix[row][col]
+          ? 'vis-cell vis-cell--filled' + (extraCellClass ? ' ' + extraCellClass : '')
+          : 'vis-cell';
         containerEl.appendChild(cell);
       }
     }
@@ -200,12 +158,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ══════════════════════════════════════════════════════════
      INTRO EXAMPLES
-     Shows the J-shape: base, 180° rotation (correct), mirror (incorrect).
   ══════════════════════════════════════════════════════════ */
 
   function buildIntroExamples() {
     var base     = SHAPE_LIBRARY[0];
-    var rotated  = rotate(base, 180);  /* clearly visually different from base */
+    var rotated  = rotate(base, 180);
     var mirrored = mirrorH(base);
 
     var exEl = document.getElementById('vis-intro-examples');
@@ -235,44 +192,33 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ══════════════════════════════════════════════════════════
-     QUESTION GENERATION
+     QUESTION GENERATION — angular complexity per slot
 
-     Each question:
-       - Reference = rotate(base, refAngle)
-       - Correct   = rotate(base, differentAngle)
-       - Distractors = 3 rotations of mirrorH(base) that differ
-         from the correct option (guaranteed for our asymmetric shapes)
-
-     Strategy for 10 questions from 8 shapes:
-       Fill two shuffled passes through the library, trim to 10.
+     base     → reference shape (at angle 0)
+     corrAngle → forced rotation for the correct option
+     3 distractors = rotations of the horizontally-mirrored base
   ══════════════════════════════════════════════════════════ */
 
-  function generateQuestion(base) {
-    var ANGLES      = [0, 90, 180, 270];
-    var twoAngles   = shuffleArray(ANGLES).slice(0, 2);
-    var refAngle    = twoAngles[0];
-    var corrAngle   = twoAngles[1];
-
-    var reference = rotate(base, refAngle);
+  function generateQuestion(base, corrAngle) {
+    var reference = cloneMatrix(base);        /* always shown at 0° */
     var correct   = rotate(base, corrAngle);
     var mirror    = mirrorH(base);
 
-    /* All 4 rotations of the mirror; filter out any that happen to
-       equal the correct option (edge-case guard) */
+    var ANGLES = [0, 90, 180, 270];
     var mirrorRotations = ANGLES.map(function (a) { return rotate(mirror, a); });
+
     var distractors = shuffleArray(
       mirrorRotations.filter(function (m) { return !matricesEqual(m, correct); })
     ).slice(0, 3);
 
-    /* Belt-and-suspenders: if filter left < 3, pad with remaining */
-    if (distractors.length < 3) {
-      for (var i = 0; distractors.length < 3; i++) {
-        distractors.push(mirrorRotations[i % mirrorRotations.length]);
-      }
+    /* Guard: pad if filter yields < 3 (should not happen for asymmetric shapes) */
+    for (var i = 0; distractors.length < 3; i++) {
+      distractors.push(mirrorRotations[i % mirrorRotations.length]);
     }
 
     return {
       reference: reference,
+      corrAngle: corrAngle,
       options: shuffleArray([
         { matrix: correct,        isCorrect: true  },
         { matrix: distractors[0], isCorrect: false },
@@ -283,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function generateAllQuestions() {
-    /* Cycle through all 8 shapes in shuffled order, twice, trim to 10 */
+    /* Cycle through all 8 shapes in shuffled order — trim to 10 */
     var indices = [];
     while (indices.length < TOTAL_QUESTIONS) {
       var pass = [];
@@ -292,8 +238,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     indices = indices.slice(0, TOTAL_QUESTIONS);
 
-    return indices.map(function (idx) {
-      return generateQuestion(SHAPE_LIBRARY[idx]);
+    return indices.map(function (shapeIdx, qIdx) {
+      return generateQuestion(SHAPE_LIBRARY[shapeIdx], ANSWER_ANGLES[qIdx]);
     });
   }
 
@@ -314,10 +260,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     var idx = PHASE_ORDER.indexOf(name) + 1;
-    var pct = Math.round((idx / PHASE_ORDER.length) * 100);
-    phaseBar.style.width   = pct + '%';
+    phaseBar.style.width   = Math.round((idx / PHASE_ORDER.length) * 100) + '%';
     phaseLabel.textContent = PHASE_LABELS[name];
     phaseNum.textContent   = idx;
+
+    if (typeof CT !== 'undefined') {
+      CT.updateStage('spatial', PHASE_ORDER.indexOf(name), {
+        currentQuestion: currentQuestion,
+        results:         results,
+        startedAt:       startedAt
+      });
+    }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -332,10 +285,8 @@ document.addEventListener('DOMContentLoaded', function () {
     qCurrentEl.textContent = idx + 1;
     visQBarEl.style.width  = ((idx / TOTAL_QUESTIONS) * 100) + '%';
 
-    /* Render reference shape */
     renderShape(q.reference, refShapeEl);
 
-    /* Render and arm each candidate */
     for (var i = 0; i < 4; i++) {
       renderShape(q.options[i].matrix, candidateShapes[i]);
       candidateBtns[i].setAttribute('data-correct', q.options[i].isCorrect ? '1' : '0');
@@ -360,13 +311,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     results.push({ correct: isCorrect, rt: rt });
 
-    /* Disable all buttons */
     for (var i = 0; i < 4; i++) { candidateBtns[i].disabled = true; }
 
-    /* Feedback on clicked button */
     candidateBtns[btnIndex].classList.add(isCorrect ? 'is-correct' : 'is-incorrect');
 
-    /* If wrong: highlight the correct option as hint */
     if (!isCorrect) {
       for (var j = 0; j < 4; j++) {
         if (candidateBtns[j].getAttribute('data-correct') === '1') {
@@ -378,6 +326,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     currentQuestion++;
 
+    /* Save after each answer */
+    if (typeof CT !== 'undefined') {
+      CT.updateStage('spatial', 1, {
+        currentQuestion: currentQuestion,
+        results:         results,
+        startedAt:       startedAt
+      });
+    }
+
     setTimeout(function () {
       if (currentQuestion < TOTAL_QUESTIONS) {
         showQuestion(currentQuestion);
@@ -387,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }, isCorrect ? 420 : 720);
   }
 
-  /* Attach click listeners */
+  /* Click listeners */
   (function () {
     for (var i = 0; i < 4; i++) {
       (function (idx) {
@@ -399,7 +356,22 @@ document.addEventListener('DOMContentLoaded', function () {
   }());
 
   /* ══════════════════════════════════════════════════════════
-     SUMMARY — clinical metrics
+     KEYBOARD — keys 1 2 3 4 map to candidate buttons
+  ══════════════════════════════════════════════════════════ */
+
+  document.addEventListener('keydown', function (e) {
+    if (!phases.test.classList.contains('is-active')) { return; }
+    if (!answerPending) { return; }
+
+    var idx = parseInt(e.key, 10) - 1;
+    if (isNaN(idx) || idx < 0 || idx > 3) { return; }
+
+    e.preventDefault();
+    if (!candidateBtns[idx].disabled) { handleAnswer(idx); }
+  });
+
+  /* ══════════════════════════════════════════════════════════
+     SUMMARY — clinical metrics + standardised session + confetti
   ══════════════════════════════════════════════════════════ */
 
   function buildSummary() {
@@ -409,41 +381,65 @@ document.addEventListener('DOMContentLoaded', function () {
     var totalRt   = results.reduce(function (s, r) { return s + r.rt; }, 0);
     var avgRt     = Math.round(totalRt / results.length);
 
-    var rating, ratingClass;
-    if (accuracy >= 87) {
-      rating      = 'Excellent';
-      ratingClass = 'excellent';
-    } else if (accuracy >= 67) {
-      rating      = 'Good';
-      ratingClass = 'good';
-    } else {
-      rating      = 'Needs Improvement';
-      ratingClass = 'needs-improvement';
-    }
+    /* Phase-accuracy breakdown */
+    var p1 = results.slice(0, 3);
+    var p2 = results.slice(3, 7);
+    var p3 = results.slice(7);
+    var pAcc = function (arr) {
+      return arr.length ? Math.round(arr.filter(function (r) { return r.correct; }).length / arr.length * 100) : 0;
+    };
+
+    var score     = accuracy;
+    var ratingObj = (typeof CT !== 'undefined') ? CT.getRating(score) : legacyRating(accuracy);
 
     summaryGridEl.innerHTML =
-      visTile('Accuracy',    accuracy + '%',    'highlight')                   +
-      visTile('Correct',     correct + ' / 10', correct >= 13 ? 'good' : '')  +
-      visTile('Avg. Time',   avgRt + ' ms',     '')                            +
-      visTile('Incorrect',   incorrect,          incorrect > 5  ? 'warn' : '');
+      visTile('Accuracy',   accuracy + '%',    'highlight')                  +
+      visTile('Correct',    correct + ' / 10', correct >= 9  ? 'good' : '') +
+      visTile('Avg. Time',  avgRt + ' ms',     '')                           +
+      visTile('Incorrect',  incorrect,          incorrect > 3 ? 'warn' : '');
 
+    /* Rich summary card */
     perfStatusEl.innerHTML =
-      '<div class="vis-status-pill vis-status-pill--' + ratingClass + '">'         +
-        '<span class="vis-status-pill__dot" aria-hidden="true"></span>'             +
-        '<span class="vis-status-pill__label">Performance: ' + rating + '</span>'  +
+      '<div class="ct-summary-card">' +
+        '<div class="ct-summary-score">' +
+          '<span class="ct-summary-score__num" data-target="' + score + '">0</span>' +
+          '<span class="ct-summary-score__label">Score</span>' +
+        '</div>' +
+        '<div class="ct-summary-rating ct-summary-rating--' + ratingObj.cls + '">' +
+          '<span class="ct-summary-rating__label">' + ratingObj.label + '</span>' +
+          '<span class="ct-summary-rating__sub">' + ratingObj.sub + '</span>' +
+        '</div>' +
       '</div>';
+
+    animateScore(perfStatusEl.querySelector('[data-target]'), score);
 
     if (typeof lucide !== 'undefined') { lucide.createIcons(); }
 
     goToPhase('summary');
 
-    persistSession({
-      accuracy:  accuracy,
-      correct:   correct,
-      incorrect: incorrect,
-      avgRt:     avgRt,
-      rating:    rating
-    });
+    if (typeof CT !== 'undefined') {
+      CT.writeSession('spatial', startedAt, score, accuracy, avgRt, {
+        questions:       TOTAL_QUESTIONS,
+        results:         results,
+        q1_3Accuracy:    pAcc(p1),
+        q4_7Accuracy:    pAcc(p2),
+        q8_10Accuracy:   pAcc(p3)
+      });
+
+      CT.completeModule('spatial');
+
+      /* Consolidate all 5 modules into cognitrack_results */
+      CT.consolidateResults();
+
+      /* Finale portal — confetti + report generation + redirect */
+      CT.showFinalePortal();
+    }
+  }
+
+  function legacyRating(accuracy) {
+    if (accuracy >= 87) return { label: 'Excellent',    sub: '↑ Above Average',       cls: 'excellent'    };
+    if (accuracy >= 67) return { label: 'Good',         sub: 'Within Normal Range',    cls: 'good'         };
+    return                     { label: 'Needs Review', sub: 'Consider Re-assessment', cls: 'needs-review' };
   }
 
   function visTile(label, value, modifier) {
@@ -457,28 +453,52 @@ document.addEventListener('DOMContentLoaded', function () {
     );
   }
 
+  function animateScore(el, target) {
+    if (!el) { return; }
+    var dur = 900; var begin = performance.now();
+    (function step(now) {
+      var p = Math.min((now - begin) / dur, 1);
+      el.textContent = Math.round(p * target);
+      if (p < 1) { requestAnimationFrame(step); }
+    }(performance.now()));
+  }
+
   /* ══════════════════════════════════════════════════════════
-     SESSION STORAGE
+     SESSION RECOVERY
   ══════════════════════════════════════════════════════════ */
 
-  function persistSession(scores) {
-    var user = {};
-    try {
-      user = JSON.parse(sessionStorage.getItem('cognitrack_user') || '{}');
-    } catch (e) { /* user data unavailable */ }
+  function attemptRecovery() {
+    if (typeof CT === 'undefined') { return false; }
+    var progress = CT.loadProgress();
+    if (!progress) { return false; }
 
-    var session = {
-      timestamp:  new Date().toISOString(),
-      user:       user,
-      assessment: 'visual',
-      questions:  TOTAL_QUESTIONS,
-      results:    results,
-      scores:     scores
-    };
+    if (progress.modules && progress.modules.spatial) {
+      var session = null;
+      try { session = JSON.parse(sessionStorage.getItem('cognitrack_session_spatial') || 'null'); } catch (e) {}
+      if (session && session.rawData) {
+        startedAt       = session.startedAt;
+        results         = session.rawData.results || [];
+        currentQuestion = TOTAL_QUESTIONS;
+        questions       = generateAllQuestions();
+        buildSummary();
+        return true;
+      }
+    }
 
-    try {
-      sessionStorage.setItem('cognitrack_session_visual', JSON.stringify(session));
-    } catch (e) { /* private browsing / storage quota */ }
+    if (progress.currentModule === 'spatial' && progress.currentStage > 0) {
+      var saved = CT.getModuleState('spatial');
+      if (saved) {
+        results         = saved.results         || [];
+        currentQuestion = saved.currentQuestion || 0;
+        startedAt       = saved.startedAt;
+      }
+      questions = generateAllQuestions();
+      goToPhase('test');
+      setTimeout(function () { showQuestion(currentQuestion); }, 500);
+      return true;
+    }
+
+    return false;
   }
 
   /* ══════════════════════════════════════════════════════════
@@ -486,6 +506,8 @@ document.addEventListener('DOMContentLoaded', function () {
   ══════════════════════════════════════════════════════════ */
 
   document.getElementById('btn-begin').addEventListener('click', function () {
+    if (typeof CT !== 'undefined' && CT.lockButton) { CT.lockButton(this); }
+    startedAt = new Date().toISOString();
     questions = generateAllQuestions();
     goToPhase('test');
     setTimeout(function () { showQuestion(0); }, 500);
@@ -493,11 +515,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ══════════════════════════════════════════════════════════
      BOOT
-     Build intro examples immediately so shapes appear before
-     the user clicks Begin.
   ══════════════════════════════════════════════════════════ */
 
   buildIntroExamples();
-  goToPhase('intro');
+
+  if (!attemptRecovery()) {
+    goToPhase('intro');
+  }
 
 });

@@ -70,7 +70,7 @@
 
           <!-- Gender -->
           <div class="form-group">
-            <label class="label" for="gender">Gender</label>
+            <label class="label label--required" for="gender">Gender</label>
             <select class="select" id="gender" name="gender">
               <option value="" disabled selected>Select gender</option>
               <option value="male">Male</option>
@@ -82,7 +82,7 @@
 
           <!-- Education Level -->
           <div class="form-group">
-            <label class="label" for="education">Education Level</label>
+            <label class="label label--required" for="education">Education Level</label>
             <select class="select" id="education" name="education">
               <option value="" disabled selected>Select education level</option>
               <option value="high-school">High School</option>
@@ -95,7 +95,7 @@
 
           <!-- Sleep Quality -->
           <div class="form-group">
-            <label class="label" for="sleep-quality">Sleep Quality</label>
+            <label class="label label--required" for="sleep-quality">Sleep Quality</label>
             <select class="select" id="sleep-quality" name="sleep_quality">
               <option value="" disabled selected>Select sleep quality</option>
               <option value="excellent">Excellent</option>
@@ -119,6 +119,15 @@
             </select>
           </div>
 
+        </div>
+
+        <!-- ── Trust Note ─────────────────────────────────── -->
+        <div class="user-trust-note" role="note">
+          <i data-lucide="shield-check" aria-hidden="true"></i>
+          <p>
+            Your information is processed safely on the client-side for this simulation session
+            and is never stored permanently on an external server.
+          </p>
         </div>
 
         <!-- ── Divider ─────────────────────────────────────── -->
