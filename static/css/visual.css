@@ -1,0 +1,806 @@
+/* ============================================================
+   CogniTrack — Visuospatial Assessment
+   visual.css — Page-specific styles only
+   Domain colour: Emerald #059669
+   ============================================================ */
+
+/* ── Domain colour tokens ───────────────────────────────── */
+:root {
+  --vis-emerald:        #059669;
+  --vis-emerald-dark:   #047857;
+  --vis-emerald-light:  #10B981;
+  --vis-emerald-bg:     rgba(5, 150, 105, 0.08);
+  --vis-emerald-bg-mid: rgba(5, 150, 105, 0.14);
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   SECTION LAYOUT
+   Emerald tint — distinct from all prior domain colours
+══════════════════════════════════════════════════════════ */
+
+.visual-section {
+  min-height: calc(100vh - 4.5rem);
+  padding-block: var(--space-12) var(--space-20);
+  background: linear-gradient(160deg, var(--color-bg) 55%, #ECFDF5 100%);
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   BADGE VARIANT — emerald
+══════════════════════════════════════════════════════════ */
+
+.badge--emerald {
+  background: var(--vis-emerald-bg);
+  color: var(--vis-emerald);
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   PHASE PROGRESS STRIP
+══════════════════════════════════════════════════════════ */
+
+.vis-progress-wrap {
+  margin-bottom: var(--space-8);
+  text-align: center;
+}
+
+.vis-progress {
+  max-width: 480px;
+  margin-inline: auto;
+}
+
+#vis-phase-bar {
+  background: linear-gradient(90deg, var(--vis-emerald-dark) 0%, var(--vis-emerald-light) 100%);
+}
+
+.vis-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  max-width: 480px;
+  margin: var(--space-2) auto 0;
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   PHASE VISIBILITY
+══════════════════════════════════════════════════════════ */
+
+.vis-phase {
+  display: none;
+}
+
+.vis-phase.is-active {
+  display: block;
+  animation: visPhaseEnter var(--transition-slow) ease both;
+}
+
+@keyframes visPhaseEnter {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   SHARED CARD (Phase 1 intro + Phase 3 summary)
+══════════════════════════════════════════════════════════ */
+
+.vis-card {
+  max-width: 640px;
+  margin-inline: auto;
+  text-align: center;
+  padding: var(--space-12) var(--space-8);
+}
+
+.vis-card__icon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: var(--radius-xl);
+  background: var(--vis-emerald-bg);
+  color: var(--vis-emerald);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline: auto;
+  margin-bottom: var(--space-5);
+}
+
+.vis-card__icon svg {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.vis-card__badge {
+  margin-bottom: var(--space-4);
+}
+
+.vis-card__title {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  margin-bottom: var(--space-4);
+}
+
+.vis-card__lead {
+  font-size: var(--text-md);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  max-width: 460px;
+  margin-inline: auto;
+  margin-bottom: var(--space-6);
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   SHAPES — CSS Grid block patterns
+   These classes are shared between intro examples,
+   the reference shape, and the candidate shapes.
+══════════════════════════════════════════════════════════ */
+
+.vis-shape {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+}
+
+/* ── Shape cell ── */
+.vis-cell {
+  border-radius: 3px;
+  background: transparent;
+}
+
+.vis-cell--filled {
+  background: var(--vis-emerald);
+}
+
+/* ── Fixed-size variants ── */
+.vis-shape--reference {
+  width: 144px;
+  height: 144px;
+}
+
+.vis-shape--example {
+  width: 68px;
+  height: 68px;
+}
+
+/* ── Candidate shape fills its button ── */
+.vis-candidate .vis-shape {
+  width: 100%;
+  height: 100%;
+  gap: 3px;
+}
+
+/* ── Intro example — mirror cells tinted red ── */
+.vis-shape--ex-no .vis-cell--filled {
+  background: var(--color-danger);
+  opacity: 0.75;
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   PHASE 1 — INTRO EXAMPLES
+   Injected by JS: two groups (ok + no) side by side
+══════════════════════════════════════════════════════════ */
+
+.vis-intro-examples {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.vis-ex-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--color-border);
+}
+
+.vis-ex-group--ok {
+  border-color: var(--color-success);
+  background: var(--color-success-bg);
+}
+
+.vis-ex-group--no {
+  border-color: var(--color-danger);
+  background: rgba(220, 38, 38, 0.05);
+}
+
+.vis-ex-shapes {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.vis-ex-arrow {
+  color: var(--color-text-muted);
+  font-size: var(--text-lg);
+  display: flex;
+  align-items: center;
+}
+
+.vis-ex-arrow svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.vis-ex-label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-wide);
+  margin: 0;
+}
+
+.vis-ex-label--ok { color: #15803D; }
+.vis-ex-label--no { color: var(--color-danger); }
+
+.vis-ex-sep {
+  display: flex;
+  align-items: center;
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+  color: var(--color-text-muted);
+  padding-top: var(--space-3);
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   INTRO RULES
+══════════════════════════════════════════════════════════ */
+
+.vis-intro-rules {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  text-align: left;
+  max-width: 420px;
+}
+
+.vis-intro-rule {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-secondary);
+}
+
+.vis-intro-rule svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.vis-intro-rule--ok svg { color: var(--vis-emerald); }
+.vis-intro-rule--no svg { color: var(--color-danger); }
+
+/* Intro meta + Begin button */
+.vis-intro-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: var(--space-2) var(--space-5);
+  margin-bottom: var(--space-8);
+}
+
+.vis-intro-meta__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text-secondary);
+}
+
+.vis-intro-meta__item svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--vis-emerald);
+}
+
+.vis-intro-meta__divider {
+  width: 1px;
+  height: 1.125rem;
+  background: var(--color-border);
+}
+
+.vis-begin-btn {
+  background: var(--vis-emerald);
+  color: var(--color-text-inverse);
+  border: 1.5px solid var(--vis-emerald);
+  box-shadow: 0 4px 16px rgba(5, 150, 105, 0.22);
+  min-width: 200px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  transition:
+    background var(--transition-base),
+    transform var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.vis-begin-btn:hover {
+  background: var(--vis-emerald-dark);
+  border-color: var(--vis-emerald-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(5, 150, 105, 0.30);
+  color: var(--color-text-inverse);
+}
+
+.vis-begin-btn:active {
+  transform: translateY(0);
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   PHASE 2 — MENTAL ROTATION TEST
+══════════════════════════════════════════════════════════ */
+
+/* Question counter + inner progress bar */
+.vis-test-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+  max-width: 520px;
+  margin-inline: auto;
+}
+
+.vis-q-counter {
+  font-weight: var(--font-medium);
+  letter-spacing: var(--tracking-wide);
+}
+
+.vis-q-progress {
+  width: 100%;
+}
+
+#vis-q-bar {
+  background: linear-gradient(90deg, var(--vis-emerald-dark) 0%, var(--vis-emerald-light) 100%);
+  transition: width 220ms ease;
+}
+
+/* ── Reference shape display ──────────────────────────── */
+
+.vis-reference-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: var(--space-5);
+}
+
+.vis-reference-label {
+  font-weight: var(--font-bold);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  margin-bottom: var(--space-3);
+  color: var(--vis-emerald);
+}
+
+.vis-shape-card--reference {
+  background: var(--color-surface);
+  border: 2.5px solid var(--vis-emerald);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow:
+    var(--shadow-md),
+    0 0 0 5px var(--vis-emerald-bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Test question prompt ─────────────────────────────── */
+
+.vis-prompt {
+  text-align: center;
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-1);
+}
+
+.vis-prompt-sub {
+  text-align: center;
+  margin-bottom: var(--space-5);
+}
+
+/* ── Candidate shape buttons — 2×2 grid ──────────────── */
+
+.vis-candidates {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+  max-width: 400px;
+  margin-inline: auto;
+}
+
+.vis-candidate {
+  position: relative;
+  aspect-ratio: 1;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-xs);
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+  outline-offset: 3px;
+}
+
+.vis-candidate:hover:not(:disabled) {
+  border-color: var(--vis-emerald);
+  background: var(--vis-emerald-bg);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.vis-candidate:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.vis-candidate:focus-visible {
+  outline: 3px solid var(--vis-emerald);
+}
+
+.vis-candidate:disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
+  transform: none;
+}
+
+/* Option number — small corner label */
+.vis-cand-num {
+  position: absolute;
+  top: 7px;
+  left: 9px;
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  color: var(--color-text-muted);
+  line-height: 1;
+  letter-spacing: var(--tracking-wide);
+}
+
+/* ── Candidate feedback states ─────────────────────────
+   Cell colours change so feedback is immediately obvious.
+──────────────────────────────────────────────────────── */
+
+/* Correct choice — green cells + green border */
+.vis-candidate.is-correct {
+  border-color: var(--color-success);
+  background: var(--color-success-bg);
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.16);
+  animation: candCorrectPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.vis-candidate.is-correct .vis-cell--filled {
+  background: var(--color-success);
+}
+
+@keyframes candCorrectPop {
+  0%   { transform: scale(1); }
+  55%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* Incorrect choice — red cells + red shake */
+.vis-candidate.is-incorrect {
+  border-color: var(--color-danger);
+  background: rgba(220, 38, 38, 0.06);
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.14);
+  animation: candIncorrectShake 0.38s ease both;
+}
+.vis-candidate.is-incorrect .vis-cell--filled {
+  background: var(--color-danger);
+  opacity: 0.8;
+}
+
+@keyframes candIncorrectShake {
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(-8px); }
+  45%  { transform: translateX(7px); }
+  65%  { transform: translateX(-4px); }
+  82%  { transform: translateX(2px); }
+  100% { transform: translateX(0); }
+}
+
+/* Hint — reveals correct option after wrong answer */
+.vis-candidate.is-hint {
+  border-color: var(--color-success);
+  background: var(--color-success-bg);
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.16);
+  animation: candHintReveal 0.28s ease both;
+}
+.vis-candidate.is-hint .vis-cell--filled {
+  background: var(--color-success);
+}
+
+@keyframes candHintReveal {
+  from { opacity: 0.4; }
+  to   { opacity: 1; }
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   PHASE 3 — SUMMARY
+══════════════════════════════════════════════════════════ */
+
+.vis-card--complete {
+  background: linear-gradient(160deg, var(--color-surface) 55%, #ECFDF5 100%);
+}
+
+.vis-complete-icon {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  background: var(--vis-emerald-bg);
+  color: var(--vis-emerald);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline: auto;
+  margin-bottom: var(--space-5);
+  animation: visSuccessPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.vis-complete-icon svg {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+@keyframes visSuccessPop {
+  from { opacity: 0; transform: scale(0.4); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.vis-complete-badge {
+  display: inline-flex;
+  margin-bottom: var(--space-4);
+}
+
+/* 2×2 summary metric grid */
+.vis-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+  width: 100%;
+  margin-bottom: var(--space-5);
+  animation: visGridReveal 0.45s ease both;
+  animation-delay: 0.12s;
+}
+
+@keyframes visGridReveal {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.vis-summary-item {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.vis-summary-item__label {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--font-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  line-height: var(--leading-snug);
+}
+
+.vis-summary-item__value {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--vis-emerald);
+  line-height: 1;
+}
+
+.vis-summary-item__value--highlight {
+  font-size: var(--text-3xl);
+  color: var(--vis-emerald);
+}
+
+.vis-summary-item__value--good {
+  color: var(--color-success);
+}
+
+.vis-summary-item__value--warn {
+  color: var(--color-danger);
+}
+
+/* Performance rating pill */
+.vis-perf-status {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-8);
+  animation: visGridReveal 0.45s ease both;
+  animation-delay: 0.22s;
+}
+
+.vis-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  border: 1.5px solid transparent;
+}
+
+.vis-status-pill__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.vis-status-pill__label {
+  letter-spacing: var(--tracking-wide);
+}
+
+.vis-status-pill--excellent {
+  background: var(--color-success-bg);
+  color: #15803D;
+  border-color: rgba(22, 163, 74, 0.30);
+}
+.vis-status-pill--excellent .vis-status-pill__dot { background: var(--color-success); }
+
+.vis-status-pill--good {
+  background: var(--vis-emerald-bg);
+  color: var(--vis-emerald-dark);
+  border-color: rgba(5, 150, 105, 0.28);
+}
+.vis-status-pill--good .vis-status-pill__dot { background: var(--vis-emerald); }
+
+.vis-status-pill--needs-improvement {
+  background: var(--color-warning-bg);
+  color: #B45309;
+  border-color: rgba(245, 158, 11, 0.30);
+}
+.vis-status-pill--needs-improvement .vis-status-pill__dot { background: var(--color-warning); }
+
+/* Continue button — emerald */
+.vis-continue-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--vis-emerald);
+  color: var(--color-text-inverse);
+  border: 1.5px solid var(--vis-emerald);
+  box-shadow: 0 4px 16px rgba(5, 150, 105, 0.22);
+  transition:
+    background var(--transition-base),
+    transform var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.vis-continue-btn:hover {
+  background: var(--vis-emerald-dark);
+  border-color: var(--vis-emerald-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(5, 150, 105, 0.30);
+  color: var(--color-text-inverse);
+}
+
+.vis-continue-btn:active {
+  transform: translateY(0);
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE — Tablet (≤ 767px)
+══════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+
+  .visual-section {
+    padding-block: var(--space-8) var(--space-12);
+  }
+
+  .vis-card {
+    padding: var(--space-8) var(--space-5);
+  }
+
+  .vis-card__title {
+    font-size: var(--text-2xl);
+  }
+
+  .vis-shape--reference {
+    width: 120px;
+    height: 120px;
+  }
+
+  .vis-shape-card--reference {
+    padding: var(--space-4);
+  }
+
+  .vis-candidates {
+    max-width: 360px;
+    gap: var(--space-3);
+  }
+
+  .vis-candidate {
+    padding: var(--space-4);
+  }
+
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE — Mobile (≤ 479px)
+══════════════════════════════════════════════════════════ */
+
+@media (max-width: 479px) {
+
+  .vis-shape--reference {
+    width: 100px;
+    height: 100px;
+  }
+
+  .vis-shape--example {
+    width: 56px;
+    height: 56px;
+  }
+
+  .vis-candidates {
+    gap: var(--space-2);
+    max-width: 300px;
+  }
+
+  .vis-candidate {
+    padding: var(--space-3);
+  }
+
+  .vis-intro-examples {
+    gap: var(--space-3);
+  }
+
+  .vis-summary-item__value {
+    font-size: var(--text-xl);
+  }
+
+  .vis-intro-meta {
+    flex-direction: column;
+    gap: var(--space-2);
+    border-radius: var(--radius-lg);
+    padding: var(--space-3) var(--space-5);
+  }
+
+  .vis-intro-meta__divider {
+    width: 80%;
+    height: 1px;
+  }
+
+}

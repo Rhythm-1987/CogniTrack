@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Visuospatial — CogniTrack{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/visual.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     VISUOSPATIAL — Step 7 of 7 — Mental Rotation Test
+============================================================ -->
+<section class="visual-section" aria-label="Visuospatial Assessment">
+  <div class="container container--narrow">
+
+    <!-- ── Phase Progress Strip ────────────────────────────── -->
+    <div class="vis-progress-wrap anim-fade-up">
+
+      <span class="badge badge--emerald">
+        <i data-lucide="box"></i>
+        Step 7 of 7
+      </span>
+
+      <div class="progress progress--sm vis-progress mt-3">
+        <div class="progress__bar" id="vis-phase-bar" style="width: 33.33%"></div>
+      </div>
+
+      <div class="vis-progress-labels">
+        <span id="vis-phase-label" class="text-sm text-muted">Introduction</span>
+        <span class="text-sm text-muted">
+          <span id="vis-phase-num">1</span>&thinsp;/&thinsp;3
+        </span>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         PHASE 1 — Introduction
+    ══════════════════════════════════════════════════════ -->
+    <div class="vis-phase is-active" id="phase-intro" aria-label="Introduction">
+      <div class="card vis-card">
+
+        <div class="vis-card__icon">
+          <i data-lucide="box"></i>
+        </div>
+
+        <div class="vis-card__badge">
+          <span class="badge badge--emerald">Visuospatial</span>
+        </div>
+
+        <h1 class="vis-card__title">Mental Rotation Test</h1>
+
+        <p class="vis-card__lead">
+          A reference shape will appear. Below it, four options are shown.
+          Select the option that is the <strong>same shape</strong> — simply
+          viewed from a different angle.
+        </p>
+
+        <!-- Visual examples — built and injected by JS -->
+        <div class="vis-intro-examples" id="vis-intro-examples"
+             aria-label="Example: rotation vs mirror">
+        </div>
+
+        <ul class="vis-intro-rules">
+          <li class="vis-intro-rule vis-intro-rule--ok">
+            <i data-lucide="rotate-cw"></i>
+            <span>Rotated shapes <strong>are</strong> correct — same shape, different angle</span>
+          </li>
+          <li class="vis-intro-rule vis-intro-rule--no">
+            <i data-lucide="flip-horizontal-2"></i>
+            <span>Mirrored shapes are <strong>not</strong> correct — they are reflections</span>
+          </li>
+        </ul>
+
+        <div class="vis-intro-meta">
+          <span class="vis-intro-meta__item">
+            <i data-lucide="layers"></i>
+            10 Questions
+          </span>
+          <span class="vis-intro-meta__divider" aria-hidden="true"></span>
+          <span class="vis-intro-meta__item">
+            <i data-lucide="clock"></i>
+            2 Minutes
+          </span>
+        </div>
+
+        <button class="btn btn--lg btn--pill vis-begin-btn" id="btn-begin" type="button">
+          <i data-lucide="play"></i>
+          Begin Test
+        </button>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         PHASE 2 — Mental Rotation Test
+    ══════════════════════════════════════════════════════ -->
+    <div class="vis-phase" id="phase-test" aria-label="Mental Rotation Test" aria-hidden="true">
+
+      <!-- Question counter + inner progress bar -->
+      <div class="vis-test-header">
+        <span class="vis-q-counter text-sm text-muted">
+          Question&ensp;<span id="q-current">1</span>&thinsp;of&thinsp;10
+        </span>
+        <div class="progress progress--sm vis-q-progress">
+          <div class="progress__bar vis-q-bar" id="vis-q-bar" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Reference shape display -->
+      <div class="vis-reference-wrap">
+        <p class="vis-reference-label text-xs text-muted">REFERENCE SHAPE</p>
+        <div class="vis-shape-card vis-shape-card--reference">
+          <div class="vis-shape vis-shape--reference" id="ref-shape"
+               aria-label="Reference shape to match">
+            <!-- 4×4 grid cells injected by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Test question prompt -->
+      <p class="vis-prompt">
+        Which option is the <strong>same shape</strong>, just rotated?
+      </p>
+      <p class="vis-prompt-sub text-sm text-muted">
+        Mirrored shapes are not the same
+      </p>
+
+      <!-- Four candidate buttons — content updated per question by JS -->
+      <div class="vis-candidates" id="vis-candidates" role="group"
+           aria-label="Choose the matching shape">
+
+        <button class="vis-candidate" id="cand-0" type="button" aria-label="Option 1">
+          <span class="vis-cand-num" aria-hidden="true">1</span>
+          <div class="vis-shape" id="cand-shape-0"></div>
+        </button>
+
+        <button class="vis-candidate" id="cand-1" type="button" aria-label="Option 2">
+          <span class="vis-cand-num" aria-hidden="true">2</span>
+          <div class="vis-shape" id="cand-shape-1"></div>
+        </button>
+
+        <button class="vis-candidate" id="cand-2" type="button" aria-label="Option 3">
+          <span class="vis-cand-num" aria-hidden="true">3</span>
+          <div class="vis-shape" id="cand-shape-2"></div>
+        </button>
+
+        <button class="vis-candidate" id="cand-3" type="button" aria-label="Option 4">
+          <span class="vis-cand-num" aria-hidden="true">4</span>
+          <div class="vis-shape" id="cand-shape-3"></div>
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         PHASE 3 — Summary
+    ══════════════════════════════════════════════════════ -->
+    <div class="vis-phase" id="phase-summary" aria-label="Summary" aria-hidden="true">
+      <div class="card vis-card vis-card--complete">
+
+        <div class="vis-complete-icon">
+          <i data-lucide="box"></i>
+        </div>
+
+        <span class="badge badge--success vis-complete-badge">All Assessments Complete</span>
+
+        <h2 class="vis-card__title">Visuospatial Complete</h2>
+
+        <p class="vis-card__lead">
+          Your spatial reasoning and mental rotation data has been recorded.
+          You have now completed all five cognitive assessments.
+        </p>
+
+        <!-- Summary metrics — injected by JS -->
+        <div class="vis-summary-grid" id="vis-summary-grid" aria-label="Performance metrics">
+        </div>
+
+        <!-- Performance rating — injected by JS -->
+        <div class="vis-perf-status" id="vis-perf-status">
+        </div>
+
+        <a href="/results" class="btn btn--lg btn--pill vis-continue-btn">
+          View Full Results
+          <i data-lucide="arrow-right"></i>
+        </a>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/visual.js') }}"></script>
+{% endblock %}
