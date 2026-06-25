@@ -1,0 +1,661 @@
+/* ============================================================
+   CogniTrack — Attention Assessment
+   attention.css — Page-specific styles only
+   Domain colour: Attention Purple #7C3AED
+   ============================================================ */
+
+/* ── Domain colour token (local scope) ─────────────────── */
+:root {
+  --attn-purple:        #7C3AED;
+  --attn-purple-light:  #A78BFA;
+  --attn-purple-bg:     rgba(124, 58, 237, 0.08);
+  --attn-purple-ring:   rgba(124, 58, 237, 0.20);
+  --attn-purple-text:   #5B21B6;
+  --circle-size:        240px;
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   SECTION LAYOUT
+══════════════════════════════════════════════════════════ */
+
+.attention-section {
+  min-height: calc(100vh - 4.5rem);
+  padding-block: var(--space-12) var(--space-20);
+  /* Soft purple tint differentiates from memory (blue tint) */
+  background: linear-gradient(160deg, var(--color-bg) 55%, #F5F3FF 100%);
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   BADGE VARIANT — purple (new, safe to add here)
+══════════════════════════════════════════════════════════ */
+
+.badge--purple {
+  background: var(--attn-purple-bg);
+  color: var(--attn-purple);
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   PROGRESS STRIP
+══════════════════════════════════════════════════════════ */
+
+.attn-progress-wrap {
+  margin-bottom: var(--space-8);
+  text-align: center;
+}
+
+.attn-progress {
+  max-width: 480px;
+  margin-inline: auto;
+}
+
+/* Purple gradient fill overrides the global blue gradient */
+#attn-phase-bar {
+  background: linear-gradient(90deg, var(--attn-purple) 0%, var(--attn-purple-light) 100%);
+  background-size: 200% 100%;
+}
+
+.attn-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  max-width: 480px;
+  margin: var(--space-2) auto 0;
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   PHASE VISIBILITY
+══════════════════════════════════════════════════════════ */
+
+.attn-phase {
+  display: none;
+}
+
+.attn-phase.is-active {
+  display: block;
+  animation: attnPhaseEnter var(--transition-slow) ease both;
+}
+
+@keyframes attnPhaseEnter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   SHARED CARD (Phase 1 intro + Phase 3 summary)
+══════════════════════════════════════════════════════════ */
+
+.attn-card {
+  max-width: 620px;
+  margin-inline: auto;
+  text-align: center;
+  padding: var(--space-12) var(--space-8);
+}
+
+.attn-card__icon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: var(--radius-xl);
+  background: var(--attn-purple-bg);
+  color: var(--attn-purple);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline: auto;
+  margin-bottom: var(--space-5);
+}
+
+.attn-card__icon svg {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.attn-card__badge {
+  margin-bottom: var(--space-4);
+}
+
+.attn-card__title {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  margin-bottom: var(--space-4);
+}
+
+.attn-card__lead {
+  font-size: var(--text-md);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  max-width: 440px;
+  margin-inline: auto;
+  margin-bottom: var(--space-8);
+}
+
+/* Inline green emphasis in lead text */
+.attn-green {
+  color: var(--color-success);
+  font-weight: var(--font-semibold);
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   PHASE 1 — INTRO
+══════════════════════════════════════════════════════════ */
+
+/* Instruction tips */
+.attn-intro-tips {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  text-align: left;
+  max-width: 380px;
+}
+
+.attn-intro-tips li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+.attn-intro-tips li svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--attn-purple);
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+/* Meta pill — rounds + time */
+.attn-intro-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: var(--space-2) var(--space-5);
+  margin-bottom: var(--space-8);
+}
+
+.attn-intro-meta__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text-secondary);
+}
+
+.attn-intro-meta__item svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--attn-purple);
+}
+
+.attn-intro-meta__divider {
+  width: 1px;
+  height: 1.125rem;
+  background: var(--color-border);
+}
+
+/* Begin button purple override via CSS custom properties */
+.attn-begin-btn {
+  background: var(--attn-purple);
+  border-color: var(--attn-purple);
+  min-width: 200px;
+}
+
+.attn-begin-btn:hover {
+  background: #6D28D9;
+  border-color: #6D28D9;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.30);
+}
+
+.attn-begin-btn:active {
+  transform: translateY(0);
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   PHASE 2 — REACTION TEST
+══════════════════════════════════════════════════════════ */
+
+/* Round pip strip */
+.attn-round-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.attn-round-label {
+  font-weight: var(--font-medium);
+  letter-spacing: var(--tracking-wide);
+}
+
+.attn-round-pips {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.round-pip {
+  width: 32px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-border);
+  transition: background var(--transition-base), transform var(--transition-base);
+}
+
+.round-pip.is-done {
+  background: var(--attn-purple);
+}
+
+.round-pip.is-current {
+  background: var(--attn-purple-light);
+  transform: scaleY(1.4);
+}
+
+/* Status message */
+.attn-status {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  text-align: center;
+  letter-spacing: var(--tracking-tight);
+  margin-bottom: var(--space-6);
+  min-height: 2.25rem;
+  transition: color var(--transition-fast);
+}
+
+.attn-status.is-go {
+  color: var(--color-success);
+}
+
+.attn-status.is-false {
+  color: var(--color-danger);
+}
+
+.attn-status.is-result {
+  color: var(--attn-purple);
+}
+
+/* Circle arena — focused radial background */
+.attn-arena {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 340px;
+  padding-block: var(--space-8);
+  background: radial-gradient(
+    ellipse 60% 55% at center,
+    rgba(124, 58, 237, 0.04) 0%,
+    transparent 70%
+  );
+  border-radius: var(--radius-xl);
+  margin-bottom: var(--space-6);
+}
+
+/* ── The Reaction Circle ─────────────────────────────────
+   All visual state changes are CSS class-driven.
+   JS never sets inline styles on the circle.
+──────────────────────────────────────────────────────── */
+
+.attn-circle {
+  width: var(--circle-size);
+  height: var(--circle-size);
+  border-radius: 50%;
+  border: none;
+  outline: none;
+  background: var(--color-border-strong);  /* neutral waiting */
+  cursor: default;
+  transition:
+    background 300ms ease,
+    box-shadow 300ms ease,
+    transform 120ms ease;
+  position: relative;
+
+  /* Inner ring detail */
+  box-shadow:
+    inset 0 2px 8px rgba(15, 23, 42, 0.10),
+    0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.attn-circle:focus-visible {
+  outline: 3px solid var(--attn-purple);
+  outline-offset: 6px;
+}
+
+/* ── READY STATE — circle turns green with glow pulse */
+.attn-circle.is-ready {
+  background: var(--color-success);
+  cursor: pointer;
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.08),
+    0 0 0 14px rgba(34, 197, 94, 0.14),
+    0 0 0 28px rgba(34, 197, 94, 0.06);
+  animation: circleReadyPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes circleReadyPulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 2px 8px rgba(0, 0, 0, 0.08),
+      0 0 0 10px rgba(34, 197, 94, 0.14),
+      0 0 0 24px rgba(34, 197, 94, 0.06);
+  }
+  50% {
+    box-shadow:
+      inset 0 2px 8px rgba(0, 0, 0, 0.08),
+      0 0 0 20px rgba(34, 197, 94, 0.18),
+      0 0 0 42px rgba(34, 197, 94, 0.07);
+  }
+}
+
+/* ── FALSE START STATE — red shake */
+.attn-circle.is-false {
+  background: var(--color-danger);
+  cursor: not-allowed;
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.10),
+    0 0 0 12px rgba(239, 68, 68, 0.14);
+  animation: circleFalseShake 0.45s ease both;
+}
+
+@keyframes circleFalseShake {
+  0%   { transform: translateX(0); }
+  18%  { transform: translateX(-10px) rotate(-2deg); }
+  36%  { transform: translateX(8px) rotate(2deg); }
+  54%  { transform: translateX(-6px) rotate(-1deg); }
+  72%  { transform: translateX(4px); }
+  100% { transform: translateX(0); }
+}
+
+/* ── CLICKED STATE — success feedback */
+.attn-circle.is-clicked {
+  background: #16A34A;
+  cursor: default;
+  transform: scale(0.91);
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.12),
+    0 0 0 18px rgba(34, 197, 94, 0.10);
+  animation: circleClickBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes circleClickBounce {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(0.88); }
+  100% { transform: scale(0.91); }
+}
+
+/* Instruction beneath circle */
+.attn-instruction {
+  text-align: center;
+  min-height: 1.5em;
+  line-height: var(--leading-relaxed);
+  transition: opacity var(--transition-fast);
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   PHASE 3 — SUMMARY
+══════════════════════════════════════════════════════════ */
+
+.attn-card--complete {
+  background: linear-gradient(160deg, var(--color-surface) 55%, #F5F3FF 100%);
+}
+
+/* Completion icon — purple domain color */
+.attn-complete-icon {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  background: var(--attn-purple-bg);
+  color: var(--attn-purple);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline: auto;
+  margin-bottom: var(--space-5);
+  animation: attnSuccessPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.attn-complete-icon svg {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+@keyframes attnSuccessPop {
+  from { opacity: 0; transform: scale(0.4); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.attn-complete-badge {
+  display: inline-flex;
+  margin-bottom: var(--space-4);
+}
+
+/* 2×2 summary grid */
+.attn-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+  width: 100%;
+  margin-bottom: var(--space-5);
+  animation: attnGridReveal 0.5s ease both;
+  animation-delay: 0.15s;
+}
+
+@keyframes attnGridReveal {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.attn-summary-item {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.attn-summary-item__label {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--font-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  line-height: var(--leading-snug);
+}
+
+.attn-summary-item__value {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--attn-purple);
+  line-height: 1;
+}
+
+/* Fastest time in green to highlight best performance */
+.attn-summary-item__value--best {
+  color: var(--color-success);
+}
+
+/* False starts — red if > 0 */
+.attn-summary-item__value--warn {
+  color: var(--color-danger);
+}
+
+/* Performance rating pill */
+.attn-perf-status {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-8);
+  animation: attnGridReveal 0.5s ease both;
+  animation-delay: 0.25s;
+}
+
+.attn-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  border: 1.5px solid transparent;
+}
+
+.attn-status-pill__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.attn-status-pill__label {
+  letter-spacing: var(--tracking-wide);
+}
+
+.attn-status-pill--excellent {
+  background: var(--color-success-bg);
+  color: #15803D;
+  border-color: rgba(34, 197, 94, 0.30);
+}
+.attn-status-pill--excellent .attn-status-pill__dot { background: var(--color-success); }
+
+.attn-status-pill--good {
+  background: var(--attn-purple-bg);
+  color: var(--attn-purple-text);
+  border-color: rgba(124, 58, 237, 0.25);
+}
+.attn-status-pill--good .attn-status-pill__dot { background: var(--attn-purple); }
+
+.attn-status-pill--needs-improvement {
+  background: var(--color-warning-bg);
+  color: #B45309;
+  border-color: rgba(245, 158, 11, 0.30);
+}
+.attn-status-pill--needs-improvement .attn-status-pill__dot { background: var(--color-warning); }
+
+/* Continue button — purple brand */
+.attn-continue-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--attn-purple);
+  color: var(--color-text-inverse);
+  border: 1.5px solid var(--attn-purple);
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.24);
+  transition:
+    background var(--transition-base),
+    transform var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.attn-continue-btn:hover {
+  background: #6D28D9;
+  border-color: #6D28D9;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.30);
+  color: var(--color-text-inverse);
+}
+
+.attn-continue-btn:active {
+  transform: translateY(0);
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE — Tablet (≤ 767px)
+══════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+
+  :root { --circle-size: 190px; }
+
+  .attention-section {
+    padding-block: var(--space-8) var(--space-12);
+  }
+
+  .attn-card {
+    padding: var(--space-8) var(--space-5);
+  }
+
+  .attn-card__title {
+    font-size: var(--text-2xl);
+  }
+
+  .attn-arena {
+    min-height: 280px;
+  }
+
+  .attn-status {
+    font-size: var(--text-lg);
+  }
+
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE — Mobile (≤ 479px)
+══════════════════════════════════════════════════════════ */
+
+@media (max-width: 479px) {
+
+  :root { --circle-size: 155px; }
+
+  .attn-arena {
+    min-height: 230px;
+  }
+
+  .attn-round-strip {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .attn-summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .attn-summary-item__value {
+    font-size: var(--text-xl);
+  }
+
+  .attn-intro-meta {
+    flex-direction: column;
+    gap: var(--space-2);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+  }
+
+  .attn-intro-meta__divider {
+    width: 80%;
+    height: 1px;
+  }
+
+}

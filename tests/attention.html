@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Attention Assessment — CogniTrack{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/attention.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     ATTENTION ASSESSMENT — Step 4 of 7
+============================================================ -->
+<section class="attention-section" aria-label="Attention Assessment">
+  <div class="container container--narrow">
+
+    <!-- ── Progress Strip (shared across all phases) ───────── -->
+    <div class="attn-progress-wrap anim-fade-up">
+
+      <span class="badge badge--purple">
+        <i data-lucide="crosshair"></i>
+        Step 4 of 7
+      </span>
+
+      <div class="progress progress--sm attn-progress mt-3">
+        <div class="progress__bar" id="attn-phase-bar" style="width: 33.33%"></div>
+      </div>
+
+      <div class="attn-progress-labels">
+        <span id="attn-phase-label" class="text-sm text-muted">Introduction</span>
+        <span class="text-sm text-muted">
+          <span id="attn-phase-num">1</span>&thinsp;/&thinsp;3
+        </span>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         PHASE 1 — Introduction
+    ══════════════════════════════════════════════════════ -->
+    <div class="attn-phase is-active" id="phase-intro" aria-label="Introduction">
+      <div class="card attn-card">
+
+        <div class="attn-card__icon">
+          <i data-lucide="crosshair"></i>
+        </div>
+
+        <div class="attn-card__badge">
+          <span class="badge badge--purple">Attention Assessment</span>
+        </div>
+
+        <h1 class="attn-card__title">Reaction Time Test</h1>
+
+        <p class="attn-card__lead">
+          A circle will appear in the centre of the screen.
+          <strong>Wait</strong> until it turns <strong class="attn-green">green</strong>,
+          then click or tap it as fast as you can.
+        </p>
+
+        <ul class="attn-intro-tips">
+          <li>
+            <i data-lucide="ban"></i>
+            <span>Do <strong>not</strong> click until the circle turns green</span>
+          </li>
+          <li>
+            <i data-lucide="mouse-pointer-click"></i>
+            <span>Click the instant you see the colour change</span>
+          </li>
+          <li>
+            <i data-lucide="monitor"></i>
+            <span>Keep your eyes fixed on the circle at all times</span>
+          </li>
+        </ul>
+
+        <div class="attn-intro-meta">
+          <span class="attn-intro-meta__item">
+            <i data-lucide="refresh-cw"></i>
+            5 Rounds
+          </span>
+          <span class="attn-intro-meta__divider" aria-hidden="true"></span>
+          <span class="attn-intro-meta__item">
+            <i data-lucide="clock"></i>
+            1–2 Minutes
+          </span>
+        </div>
+
+        <button class="btn btn--primary btn--lg btn--pill attn-begin-btn" id="btn-begin"
+                style="--btn-bg: #7C3AED; --btn-bg-hover: #6D28D9;">
+          <i data-lucide="play"></i>
+          Begin Test
+        </button>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         PHASE 2 — Reaction Test
+    ══════════════════════════════════════════════════════ -->
+    <div class="attn-phase" id="phase-test" aria-label="Reaction Test" aria-hidden="true">
+
+      <!-- Round indicator strip -->
+      <div class="attn-round-strip">
+        <span class="text-sm text-muted attn-round-label">Round</span>
+        <div class="attn-round-pips" id="round-pips" role="list" aria-label="Round progress">
+          <!-- 5 pips injected by JS -->
+        </div>
+        <span class="text-sm text-muted">
+          <span id="round-num">1</span>&thinsp;of&thinsp;5
+        </span>
+      </div>
+
+      <!-- Live status message -->
+      <p class="attn-status" id="attn-status" aria-live="assertive" aria-atomic="true">
+        Get ready&hellip;
+      </p>
+
+      <!-- Circle arena -->
+      <div class="attn-arena">
+        <button
+          class="attn-circle"
+          id="attn-circle"
+          type="button"
+          aria-label="Reaction target — wait for it to turn green, then click"
+        ></button>
+      </div>
+
+      <!-- Contextual instruction beneath circle -->
+      <p class="attn-instruction text-sm text-muted" id="attn-instruction" aria-live="polite">
+        Wait for the circle to turn green
+      </p>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         PHASE 3 — Summary
+    ══════════════════════════════════════════════════════ -->
+    <div class="attn-phase" id="phase-summary" aria-label="Summary" aria-hidden="true">
+      <div class="card attn-card attn-card--complete">
+
+        <div class="attn-complete-icon">
+          <i data-lucide="zap"></i>
+        </div>
+
+        <span class="badge badge--success attn-complete-badge">Assessment Complete</span>
+
+        <h2 class="attn-card__title">Attention Assessment Complete</h2>
+
+        <p class="attn-card__lead">
+          Your reaction time data has been recorded. Here is your performance summary.
+        </p>
+
+        <!-- Metrics grid — injected by JS -->
+        <div class="attn-summary-grid" id="attn-summary-grid" aria-label="Performance metrics">
+        </div>
+
+        <!-- Performance rating — injected by JS -->
+        <div class="attn-perf-status" id="attn-perf-status">
+        </div>
+
+        <a href="/results" class="btn btn--lg btn--pill attn-continue-btn" id="btn-continue">
+          Continue to Results
+          <i data-lucide="arrow-right"></i>
+        </a>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/attention.js') }}"></script>
+{% endblock %}
