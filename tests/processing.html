@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Processing Speed — CogniTrack{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/processing.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     PROCESSING SPEED — Step 6 of 7 — Symbol Match Test (DSST)
+============================================================ -->
+<section class="processing-section" aria-label="Processing Speed Assessment">
+  <div class="container container--narrow">
+
+    <!-- ── Phase Progress Strip ────────────────────────────── -->
+    <div class="proc-progress-wrap anim-fade-up">
+
+      <span class="badge badge--teal">
+        <i data-lucide="activity"></i>
+        Step 6 of 7
+      </span>
+
+      <div class="progress progress--sm proc-progress mt-3">
+        <div class="progress__bar" id="proc-phase-bar" style="width: 33.33%"></div>
+      </div>
+
+      <div class="proc-progress-labels">
+        <span id="proc-phase-label" class="text-sm text-muted">Introduction</span>
+        <span class="text-sm text-muted">
+          <span id="proc-phase-num">1</span>&thinsp;/&thinsp;3
+        </span>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         PHASE 1 — Introduction
+    ══════════════════════════════════════════════════════ -->
+    <div class="proc-phase is-active" id="phase-intro" aria-label="Introduction">
+      <div class="card proc-card">
+
+        <div class="proc-card__icon">
+          <i data-lucide="activity"></i>
+        </div>
+
+        <div class="proc-card__badge">
+          <span class="badge badge--teal">Processing Speed</span>
+        </div>
+
+        <h1 class="proc-card__title">Symbol Match Test</h1>
+
+        <p class="proc-card__lead">
+          Numbers will appear one at a time. Use the key below to find the
+          <strong>matching symbol</strong> from four options.
+          Respond as quickly and accurately as you can.
+        </p>
+
+        <!-- Symbol key preview — built by JS from randomized mapping -->
+        <div class="proc-key-preview-wrap">
+          <p class="proc-key-preview-label text-sm text-muted">
+            Your symbol key for this session
+          </p>
+          <div class="proc-key-bar" id="proc-key-preview" role="list"
+               aria-label="Symbol key: number to symbol mappings">
+            <!-- 5 key cells injected by JS -->
+          </div>
+        </div>
+
+        <ul class="proc-intro-tips">
+          <li>
+            <i data-lucide="eye"></i>
+            <span>The key stays visible throughout the entire test</span>
+          </li>
+          <li>
+            <i data-lucide="zap"></i>
+            <span>Click the matching symbol as fast as possible</span>
+          </li>
+          <li>
+            <i data-lucide="cpu"></i>
+            <span>This measures your information processing speed</span>
+          </li>
+        </ul>
+
+        <div class="proc-intro-meta">
+          <span class="proc-intro-meta__item">
+            <i data-lucide="layers"></i>
+            20 Questions
+          </span>
+          <span class="proc-intro-meta__divider" aria-hidden="true"></span>
+          <span class="proc-intro-meta__item">
+            <i data-lucide="clock"></i>
+            1–2 Minutes
+          </span>
+        </div>
+
+        <button class="btn btn--lg btn--pill proc-begin-btn" id="btn-begin" type="button">
+          <i data-lucide="play"></i>
+          Begin Test
+        </button>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         PHASE 2 — Symbol Match Test
+    ══════════════════════════════════════════════════════ -->
+    <div class="proc-phase" id="phase-test" aria-label="Symbol Match Test" aria-hidden="true">
+
+      <!-- Compact key strip — always visible during test -->
+      <div class="proc-key-strip">
+        <span class="proc-key-strip__label text-xs text-muted">KEY</span>
+        <div class="proc-key-bar proc-key-bar--compact" id="proc-key-test" role="list"
+             aria-label="Symbol key reference">
+          <!-- Compact key cells injected by JS -->
+        </div>
+      </div>
+
+      <!-- Question counter + inner progress bar -->
+      <div class="proc-test-header">
+        <span class="proc-q-counter text-sm text-muted">
+          Question&ensp;<span id="q-current">1</span>&thinsp;of&thinsp;20
+        </span>
+        <div class="progress progress--sm proc-q-progress">
+          <div class="progress__bar proc-q-bar" id="proc-q-bar" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Number display arena -->
+      <div class="proc-display-wrap">
+        <div class="proc-display" id="proc-display" aria-live="polite" aria-atomic="true">
+          <span class="proc-number" id="proc-number" aria-label="Number to match"></span>
+        </div>
+      </div>
+
+      <p class="proc-instruction text-sm text-muted">
+        Find the matching symbol from the key
+      </p>
+
+      <!-- Four symbol choice buttons — content updated per question by JS -->
+      <div class="proc-symbol-grid" id="symbol-buttons" role="group"
+           aria-label="Select the matching symbol">
+        <button class="proc-sym-btn" id="sym-btn-0" data-symbol="" type="button"></button>
+        <button class="proc-sym-btn" id="sym-btn-1" data-symbol="" type="button"></button>
+        <button class="proc-sym-btn" id="sym-btn-2" data-symbol="" type="button"></button>
+        <button class="proc-sym-btn" id="sym-btn-3" data-symbol="" type="button"></button>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         PHASE 3 — Summary
+    ══════════════════════════════════════════════════════ -->
+    <div class="proc-phase" id="phase-summary" aria-label="Summary" aria-hidden="true">
+      <div class="card proc-card proc-card--complete">
+
+        <div class="proc-complete-icon">
+          <i data-lucide="activity"></i>
+        </div>
+
+        <span class="badge badge--success proc-complete-badge">Assessment Complete</span>
+
+        <h2 class="proc-card__title">Processing Speed Complete</h2>
+
+        <p class="proc-card__lead">
+          Your visual processing and decision speed data has been recorded.
+        </p>
+
+        <!-- Summary metrics — injected by JS -->
+        <div class="proc-summary-grid" id="proc-summary-grid" aria-label="Performance metrics">
+        </div>
+
+        <!-- Performance rating — injected by JS -->
+        <div class="proc-perf-status" id="proc-perf-status">
+        </div>
+
+        <a href="/visual" class="btn btn--lg btn--pill proc-continue-btn">
+          Continue to Visuospatial
+          <i data-lucide="arrow-right"></i>
+        </a>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/processing.js') }}"></script>
+{% endblock %}
