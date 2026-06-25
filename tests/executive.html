@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Executive Function — CogniTrack{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/executive.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     EXECUTIVE FUNCTION — Step 5 of 7 — Stroop Colour Test
+============================================================ -->
+<section class="executive-section" aria-label="Executive Function Assessment">
+  <div class="container container--narrow">
+
+    <!-- ── Phase Progress Strip ────────────────────────────── -->
+    <div class="exec-progress-wrap anim-fade-up">
+
+      <span class="badge badge--orange">
+        <i data-lucide="sliders"></i>
+        Step 5 of 7
+      </span>
+
+      <div class="progress progress--sm exec-progress mt-3">
+        <div class="progress__bar" id="exec-phase-bar" style="width: 33.33%"></div>
+      </div>
+
+      <div class="exec-progress-labels">
+        <span id="exec-phase-label" class="text-sm text-muted">Introduction</span>
+        <span class="text-sm text-muted">
+          <span id="exec-phase-num">1</span>&thinsp;/&thinsp;3
+        </span>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         PHASE 1 — Introduction
+    ══════════════════════════════════════════════════════ -->
+    <div class="exec-phase is-active" id="phase-intro" aria-label="Introduction">
+      <div class="card exec-card">
+
+        <div class="exec-card__icon">
+          <i data-lucide="sliders"></i>
+        </div>
+
+        <div class="exec-card__badge">
+          <span class="badge badge--orange">Executive Function</span>
+        </div>
+
+        <h1 class="exec-card__title">Stroop Colour Test</h1>
+
+        <p class="exec-card__lead">
+          Colour words will appear on screen printed in a <strong>different ink colour</strong>.
+          Your task is to identify the <strong>ink colour</strong> — not the word itself.
+        </p>
+
+        <!-- Live visual example of the Stroop effect -->
+        <div class="exec-example" aria-label="Example of the Stroop test">
+          <p class="exec-example__label text-sm text-muted">For example</p>
+          <div class="exec-example__demo">
+            <div class="exec-example__display">
+              <span class="stroop-word stroop-word--blue">RED</span>
+            </div>
+            <div class="exec-example__arrow" aria-hidden="true">
+              <i data-lucide="arrow-right"></i>
+            </div>
+            <span class="exec-example__btn exec-btn exec-btn--blue" aria-hidden="true">BLUE</span>
+          </div>
+          <p class="exec-example__caption text-sm text-muted">
+            The word says <em>RED</em> but the ink is
+            <strong class="exec-accent">blue</strong> — so you click <strong>BLUE</strong>
+          </p>
+        </div>
+
+        <ul class="exec-intro-tips">
+          <li>
+            <i data-lucide="eye"></i>
+            <span>Focus on the <strong>colour of the ink</strong>, not the word</span>
+          </li>
+          <li>
+            <i data-lucide="zap"></i>
+            <span>Respond as quickly and accurately as you can</span>
+          </li>
+          <li>
+            <i data-lucide="brain"></i>
+            <span>This tests your ability to override automatic responses</span>
+          </li>
+        </ul>
+
+        <div class="exec-intro-meta">
+          <span class="exec-intro-meta__item">
+            <i data-lucide="layers"></i>
+            15 Questions
+          </span>
+          <span class="exec-intro-meta__divider" aria-hidden="true"></span>
+          <span class="exec-intro-meta__item">
+            <i data-lucide="clock"></i>
+            1–2 Minutes
+          </span>
+        </div>
+
+        <button class="btn btn--lg btn--pill exec-begin-btn" id="btn-begin" type="button">
+          <i data-lucide="play"></i>
+          Begin Test
+        </button>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         PHASE 2 — Stroop Test
+    ══════════════════════════════════════════════════════ -->
+    <div class="exec-phase" id="phase-test" aria-label="Stroop Test" aria-hidden="true">
+
+      <!-- Question counter + inner progress bar -->
+      <div class="exec-test-header">
+        <span class="exec-q-counter text-sm text-muted">
+          Question&ensp;<span id="q-current">1</span>&thinsp;of&thinsp;15
+        </span>
+        <div class="progress progress--sm exec-q-progress">
+          <div class="progress__bar exec-q-bar" id="exec-q-bar" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Stroop word display arena -->
+      <div class="exec-display-wrap">
+        <div class="exec-display" id="exec-display" aria-live="polite" aria-atomic="true">
+          <span class="stroop-word" id="stroop-word" aria-label="Word displayed"></span>
+        </div>
+      </div>
+
+      <p class="exec-instruction text-sm text-muted">
+        Click the <strong>colour of the ink</strong>
+      </p>
+
+      <!-- Four colour-choice buttons -->
+      <div class="exec-color-grid" id="color-buttons" role="group" aria-label="Select the ink colour">
+        <button class="exec-btn exec-btn--red"    data-color="RED"    type="button">RED</button>
+        <button class="exec-btn exec-btn--blue"   data-color="BLUE"   type="button">BLUE</button>
+        <button class="exec-btn exec-btn--green"  data-color="GREEN"  type="button">GREEN</button>
+        <button class="exec-btn exec-btn--yellow" data-color="YELLOW" type="button">YELLOW</button>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         PHASE 3 — Summary
+    ══════════════════════════════════════════════════════ -->
+    <div class="exec-phase" id="phase-summary" aria-label="Summary" aria-hidden="true">
+      <div class="card exec-card exec-card--complete">
+
+        <div class="exec-complete-icon">
+          <i data-lucide="brain"></i>
+        </div>
+
+        <span class="badge badge--success exec-complete-badge">Assessment Complete</span>
+
+        <h2 class="exec-card__title">Executive Function Complete</h2>
+
+        <p class="exec-card__lead">
+          Your inhibitory control and cognitive flexibility data has been recorded.
+        </p>
+
+        <!-- Summary metrics injected by JS -->
+        <div class="exec-summary-grid" id="exec-summary-grid" aria-label="Performance metrics">
+        </div>
+
+        <!-- Performance rating injected by JS -->
+        <div class="exec-perf-status" id="exec-perf-status">
+        </div>
+
+        <a href="/processing" class="btn btn--lg btn--pill exec-continue-btn">
+          Continue to Processing Speed
+          <i data-lucide="arrow-right"></i>
+        </a>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/executive.js') }}"></script>
+{% endblock %}
