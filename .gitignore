@@ -7,6 +7,7 @@ __pycache__/
 .venv/
 venv/
 env/
+.venv-1/
 
 # Database
 *.db
@@ -17,4 +18,13 @@ env/
 
 # OS Files
 .DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+
+# macOS
+.DS_Store
+
+# Windows
 Thumbs.db
