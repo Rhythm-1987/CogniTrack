@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Your Results — CogniTrack{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     COGNITRACK DASHBOARD
+     Reads from sessionStorage — no hardcoded values
+============================================================ -->
+<div class="dashboard" id="js-dashboard">
+
+  <!-- ── Hero ──────────────────────────────────────────────── -->
+  <section class="dash-hero" aria-label="Dashboard Hero">
+    <div class="dash-hero__bg" aria-hidden="true"></div>
+    <div class="container">
+      <div class="dash-hero__inner">
+
+        <div class="dash-hero__left anim-fade-up">
+          <span class="badge badge--primary dash-hero__greeting-badge" id="js-time-badge">
+            <i data-lucide="sun"></i>
+            Good Morning
+          </span>
+          <h1 class="dash-hero__title">
+            Hello,&nbsp;<span id="js-user-name" class="dash-hero__name">there</span>
+            <span class="dash-hero__wave" aria-hidden="true">👋</span>
+          </h1>
+          <p class="dash-hero__sub">
+            Your cognitive assessment is complete. Here's your comprehensive performance breakdown.
+          </p>
+          <div class="dash-hero__meta" id="js-hero-meta">
+            <!-- Date + completion count injected by JS -->
+          </div>
+        </div>
+
+        <div class="dash-hero__right anim-fade-up anim-delay-2" aria-hidden="true">
+          <div class="dash-hero__complete-badge">
+            <i data-lucide="check-circle-2"></i>
+            <div>
+              <span class="dash-hero__complete-label">Assessment Complete</span>
+              <span class="dash-hero__complete-sub">All 5 domains evaluated</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Main Body ─────────────────────────────────────────── -->
+  <div class="container dashboard__body">
+
+    <!-- ═══════════════════════════════════════════════════════
+         ROW 1: Overall Score Ring + Radar Chart
+    ═══════════════════════════════════════════════════════ -->
+    <div class="dash-score-radar">
+
+      <!-- Score Ring Card -->
+      <div class="card card--glass dash-score-card anim-fade-up" aria-label="Overall cognitive score">
+        <p class="dash-label">Overall Cognitive Score</p>
+
+        <div class="dash-ring-wrap">
+          <svg class="dash-ring" viewBox="0 0 200 200" aria-hidden="true">
+            <defs>
+              <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop id="ring-grad-start" offset="0%"   stop-color="#2563EB" />
+                <stop id="ring-grad-end"   offset="100%" stop-color="#60A5FA" />
+              </linearGradient>
+            </defs>
+            <circle class="dash-ring__track" cx="100" cy="100" r="80" />
+            <circle
+              class="dash-ring__fill"
+              id="js-ring-fill"
+              cx="100" cy="100" r="80"
+              transform="rotate(-90 100 100)"
+            />
+          </svg>
+          <div class="dash-ring__center">
+            <span class="dash-ring__score" id="js-overall-score">0</span>
+            <span class="dash-ring__denom">/ 100</span>
+          </div>
+        </div>
+
+        <div class="dash-overall-rating">
+          <span class="dash-rating-badge" id="js-rating-badge">--</span>
+          <span class="dash-rating-sub"   id="js-rating-sub">Calculating…</span>
+        </div>
+      </div>
+
+      <!-- Radar Chart Card -->
+      <div class="card card--glass dash-radar-card anim-fade-up anim-delay-1">
+        <p class="dash-label">Cognitive Profile Radar</p>
+        <div class="dash-radar-wrap">
+          <svg
+            class="dash-radar-svg"
+            id="js-radar-svg"
+            viewBox="0 0 320 300"
+            role="img"
+            aria-label="Radar chart showing scores across five cognitive domains"
+          >
+            <defs>
+              <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%"   stop-color="#2563EB" stop-opacity="0.22" />
+                <stop offset="100%" stop-color="#7C3AED" stop-opacity="0.12" />
+              </linearGradient>
+            </defs>
+            <g id="js-radar-grid"   class="radar-grid"></g>
+            <g id="js-radar-axes"   class="radar-axes"></g>
+            <g class="radar-data">
+              <polygon id="js-radar-fill"    class="radar-polygon-fill" points="" />
+              <polygon id="js-radar-polygon" class="radar-polygon"      points="" />
+            </g>
+            <g id="js-radar-labels" class="radar-labels"></g>
+            <g id="js-radar-dots"   class="radar-dots"></g>
+          </svg>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         ROW 2: Domain Cards (5 domains)
+    ═══════════════════════════════════════════════════════ -->
+    <section class="dash-section" aria-label="Domain breakdown">
+      <div class="dash-section__header">
+        <h2 class="dash-section__title">Domain Breakdown</h2>
+        <span class="dash-section__sub">Individual scores across all five cognitive domains</span>
+      </div>
+      <div class="dash-domain-grid" id="js-domain-grid">
+        <!-- 5 cards injected by dashboard.js -->
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         ROW 3: Reaction Metrics + Session Summary
+    ═══════════════════════════════════════════════════════ -->
+    <div class="dash-two-col">
+
+      <div class="card card--glass anim-fade-up">
+        <div class="dash-card-head">
+          <div class="dash-card-icon dash-card-icon--purple">
+            <i data-lucide="activity"></i>
+          </div>
+          <div>
+            <h3 class="dash-card-title">Reaction Metrics</h3>
+            <p class="dash-card-sub">From Attention Assessment</p>
+          </div>
+        </div>
+        <div class="dash-stat-grid" id="js-reaction-metrics"></div>
+      </div>
+
+      <div class="card card--glass anim-fade-up anim-delay-1">
+        <div class="dash-card-head">
+          <div class="dash-card-icon dash-card-icon--teal">
+            <i data-lucide="clock"></i>
+          </div>
+          <div>
+            <h3 class="dash-card-title">Session Summary</h3>
+            <p class="dash-card-sub">Today's assessment overview</p>
+          </div>
+        </div>
+        <div class="dash-stat-grid" id="js-timeline-stats"></div>
+      </div>
+
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         ROW 4: Top Strengths + Recommendations
+    ═══════════════════════════════════════════════════════ -->
+    <div class="dash-two-col">
+
+      <div class="card card--glass anim-fade-up">
+        <div class="dash-card-head">
+          <div class="dash-card-icon dash-card-icon--emerald">
+            <i data-lucide="star"></i>
+          </div>
+          <div>
+            <h3 class="dash-card-title">Top Strengths</h3>
+            <p class="dash-card-sub">Your highest-performing domains</p>
+          </div>
+        </div>
+        <ul class="dash-strengths" id="js-strengths" aria-label="Top cognitive strengths"></ul>
+      </div>
+
+      <div class="card card--glass anim-fade-up anim-delay-1">
+        <div class="dash-card-head">
+          <div class="dash-card-icon dash-card-icon--amber">
+            <i data-lucide="lightbulb"></i>
+          </div>
+          <div>
+            <h3 class="dash-card-title">Recommendations</h3>
+            <p class="dash-card-sub">Personalized actionable insights</p>
+          </div>
+        </div>
+        <ul class="dash-recommendations" id="js-recommendations" aria-label="Recommendations list"></ul>
+      </div>
+
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         ROW 5: Assessment Breakdown Table
+    ═══════════════════════════════════════════════════════ -->
+    <section class="dash-section anim-fade-up" aria-label="Detailed assessment breakdown">
+      <div class="dash-section__header">
+        <h2 class="dash-section__title">Assessment Breakdown</h2>
+        <span class="dash-section__sub">Detailed metrics per module</span>
+      </div>
+      <div class="card dash-table-card">
+        <div class="dash-table-wrap">
+          <table class="dash-table" aria-label="Assessment results table">
+            <thead>
+              <tr>
+                <th scope="col">Module</th>
+                <th scope="col">Score</th>
+                <th scope="col">Accuracy</th>
+                <th scope="col">Duration</th>
+                <th scope="col">Rating</th>
+              </tr>
+            </thead>
+            <tbody id="js-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         ROW 6: Controls
+    ═══════════════════════════════════════════════════════ -->
+    <section class="dash-controls anim-fade-up" aria-label="Dashboard actions">
+      <a href="/memory" class="btn btn--primary btn--lg btn--pill">
+        <i data-lucide="rotate-ccw"></i>
+        Retake Assessment
+      </a>
+      <button class="btn btn--secondary btn--lg btn--pill" disabled aria-disabled="true">
+        <i data-lucide="download"></i>
+        Download Report
+        <span class="badge badge--neutral" style="margin-left:6px;font-size:10px;padding:2px 10px">
+          Coming Soon
+        </span>
+      </button>
+      <a href="/" class="btn btn--ghost btn--lg btn--pill">
+        <i data-lucide="home"></i>
+        Back Home
+      </a>
+    </section>
+
+  </div><!-- /.container.dashboard__body -->
+
+</div><!-- /.dashboard -->
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
