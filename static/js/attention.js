@@ -239,10 +239,15 @@ document.addEventListener('DOMContentLoaded', function () {
   ══════════════════════════════════════════════════════════ */
 
   function buildSummary() {
-    var sum     = reactionTimes.reduce(function (a, b) { return a + b; }, 0);
-    var avg     = Math.round(sum / reactionTimes.length);
-    var fastest = Math.min.apply(null, reactionTimes);
-    var slowest = Math.max.apply(null, reactionTimes);
+    var avg, fastest, slowest;
+    if (reactionTimes.length === 0) {
+      avg = 0; fastest = 0; slowest = 0;
+    } else {
+      var sum = reactionTimes.reduce(function (a, b) { return a + b; }, 0);
+      avg     = Math.round(sum / reactionTimes.length);
+      fastest = Math.min.apply(null, reactionTimes);
+      slowest = Math.max.apply(null, reactionTimes);
+    }
 
     /* Map avg RT to 0-100 score:
        90 + (250 − avgRt) × 0.1

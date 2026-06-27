@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       });
 
-      if (idx === 0) { totalStartTime = performance.now(); }
+      if (totalStartTime === 0) { totalStartTime = performance.now(); }
       questionStart = performance.now();
       answerPending = true;
     }, 100);

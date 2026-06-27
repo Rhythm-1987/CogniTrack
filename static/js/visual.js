@@ -212,7 +212,9 @@ document.addEventListener('DOMContentLoaded', function () {
     ).slice(0, 3);
 
     /* Guard: pad if filter yields < 3 (should not happen for asymmetric shapes) */
+    var maxPadIter = mirrorRotations.length * 4;
     for (var i = 0; distractors.length < 3; i++) {
+      if (i > maxPadIter) { break; }
       distractors.push(mirrorRotations[i % mirrorRotations.length]);
     }
 
@@ -430,6 +432,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
       /* Consolidate all 5 modules into cognitrack_results */
       CT.consolidateResults();
+
+      /* Lock continue button during the 4.2 s finale countdown */
+      var continueEl = document.querySelector('.vis-continue-btn');
+      if (continueEl && CT.lockButton) { CT.lockButton(continueEl); }
 
       /* Finale portal — confetti + report generation + redirect */
       CT.showFinalePortal();

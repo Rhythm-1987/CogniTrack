@@ -165,8 +165,8 @@
       if (!s) return null;
       var raw     = s.rawData || {};
       var avg     = typeof s.avgTime === 'number' ? s.avgTime : null;
-      var fastest = raw.minRT || raw.fastestRT || raw.minTime || raw.bestRT || null;
-      var slowest = raw.maxRT || raw.slowestRT || raw.maxTime || raw.worstRT || null;
+      var fastest = raw.fastest || raw.minRT || raw.fastestRT || raw.minTime || raw.bestRT || null;
+      var slowest = raw.slowest || raw.maxRT || raw.slowestRT || raw.maxTime || raw.worstRT || null;
       return { avg: avg, fastest: fastest, slowest: slowest };
     },
 
@@ -186,51 +186,21 @@
       return Math.max(0, this.overallScore - delta);
     },
 
-    /* Assessment history: real session (latest) + 2 generated past sessions */
+    /* Assessment history: only real session data — no synthetic entries */
     getHistory: function () {
-      var current   = this.overallScore;
-      var now       = new Date();
-      var prev1     = Math.max(0, current - (3 + (current % 7)));
-      var prev2     = Math.max(0, prev1   - (2 + (current % 5)));
-      var dur1      = this.getTotalDuration();
-      var dur2      = dur1 ? Math.round(dur1 * 0.92) : 840;
-      var dur3      = dur1 ? Math.round(dur1 * 0.97) : 870;
-
-      function daysAgo(d) {
-        var dt = new Date(now);
-        dt.setDate(dt.getDate() - d);
-        return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-      }
-
-      return [
-        {
-          date:        daysAgo(0),
-          score:       current,
-          prevScore:   prev1,
-          rating:      Data.getRating(current).label,
-          ratingCls:   Data.getRating(current).cls,
-          duration:    dur1,
-          isLatest:    true
-        },
-        {
-          date:        daysAgo(7),
-          score:       prev1,
-          prevScore:   prev2,
-          rating:      Data.getRating(prev1).label,
-          ratingCls:   Data.getRating(prev1).cls,
-          duration:    dur2,
-          isLatest:    false
-        },
-        {
-          date:        daysAgo(14),
-          score:       prev2,
-          prevScore:   Math.max(0, prev2 - 4),
-          rating:      Data.getRating(prev2).label,
-          ratingCls:   Data.getRating(prev2).cls,
-          duration:    dur3,
-          isLatest:    false
-        }
-      ];
+      var current = this.overallScore;
+      if (current === null) { return []; }
+      var dur = this.getTotalDuration();
+      var dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return [{
+        date:      dateStr,
+        score:     current,
+        prevScore: current,
+        rating:    Data.getRating(current).label,
+        ratingCls: Data.getRating(current).cls,
+        duration:  dur,
+        isLatest:  true
+      }];
     },
 
     /* Three historical scores per domain for sparkline (oldest→latest) */
@@ -598,7 +568,7 @@
     SVG_NS: 'http://www.w3.org/2000/svg',
 
     /* Build a single SVG sparkline and append it to `container` */
-    render: function (container, points, color) {
+    render: function (container, points, color, domainKey) {
       var W = 120, H = 48, pad = 6;
       var min  = Math.min.apply(null, points) - 5;
       var max  = Math.max.apply(null, points) + 5;
@@ -611,7 +581,7 @@
       svg.setAttribute('class', 'trend-svg');
       svg.setAttribute('aria-hidden', 'true');
 
-      var gradId = 'tg-' + Math.random().toString(36).slice(2, 7);
+      var gradId = 'tg-' + (domainKey || Math.random().toString(36).slice(2, 7));
 
       var defs = document.createElementNS(ns, 'defs');
 
@@ -869,7 +839,7 @@
         var svgWrap = document.createElement('div');
         svgWrap.className = 'trend-card__graph';
 
-        Trend.render(svgWrap, history, d.color);
+        Trend.render(svgWrap, history, d.color, d.key);
 
         var pts  = history;
         var delta    = pts[2] - pts[1];
@@ -925,7 +895,9 @@
           '<div class="hist-item' + (h.isLatest ? ' hist-item--latest' : '') + '">' +
             '<div class="hist-item__left">' +
               (h.isLatest ? '<span class="hist-latest-badge">Latest</span>' : '') +
-              '<span class="hist-item__date"><i data-lucide="calendar"></i>' + h.date + '</span>' +
+              '<span class="hist-item__date"><i data-lucide="calendar"></i>' + h.date +
+                (!h.isLatest ? ' <span class="hist-item__simulated">(estimated)</span>' : '') +
+              '</span>' +
             '</div>' +
             '<div class="hist-item__center">' +
               '<span class="hist-item__score">' + h.score + '</span>' +
@@ -1097,12 +1069,12 @@
   function initScrollReveal() {
     var els = document.querySelectorAll('.scroll-reveal');
     if (!els.length || !window.IntersectionObserver) {
-      els.forEach(function (el) { el.classList.add('is-visible'); });
+      els.forEach(function (el) { el.classList.add('visible'); });
       return;
     }
     var observer = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
-        if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target); }
+        if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); }
       });
     }, { threshold: 0.08 });
     els.forEach(function (el) { observer.observe(el); });

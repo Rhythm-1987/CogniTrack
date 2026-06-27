@@ -104,7 +104,7 @@
   CT.saveProgress = function (data) {
     try {
       sessionStorage.setItem(PROGRESS_KEY, JSON.stringify(data));
-    } catch (e) {}
+    } catch (e) { console.warn('CogniTrack storage error:', e); }
   };
 
   CT.initProgress = function () {
@@ -160,7 +160,7 @@
 
     if (p.moduleState) { delete p.moduleState[module]; }
 
-    if (module === 'spatial' && !p.assessmentCompleted) {
+    if (p.completedCount === MODULE_ORDER.length && !p.assessmentCompleted) {
       p.assessmentCompleted = new Date().toISOString();
     }
 
@@ -253,7 +253,7 @@
 
     try {
       sessionStorage.setItem('cognitrack_session_' + module, JSON.stringify(session));
-    } catch (e) {}
+    } catch (e) { console.warn('CogniTrack storage error:', e); }
 
     return session;
   };
@@ -574,6 +574,12 @@
     canvas.height    = window.innerHeight;
     document.body.appendChild(canvas);
 
+    function onResize() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', onResize);
+
     var ctx       = canvas.getContext('2d');
     var colors    = ['#2563EB', '#7C3AED', '#059669', '#F59E0B', '#EF4444', '#0EA5E9', '#EC4899'];
     var particles = [];
@@ -596,7 +602,7 @@
 
     function frame(now) {
       var elapsed = now - startTime;
-      if (elapsed > DURATION) { canvas.remove(); return; }
+      if (elapsed > DURATION) { window.removeEventListener('resize', onResize); canvas.remove(); return; }
 
       var alpha = elapsed < DURATION * 0.75
         ? 1

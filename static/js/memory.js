@@ -260,6 +260,7 @@ document.addEventListener('DOMContentLoaded', function () {
   ══════════════════════════════════════════════════════════ */
 
   function startTimer(trialNum) {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
     activeTimer = trialNum;
     timeLeft    = TIMER_DURATION;
 
@@ -407,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var normalised  = recallText.toLowerCase().replace(/[^a-z\s]/g, '');
 
     var recallCount = targetLower.filter(function (w) {
-      return normalised.indexOf(w) !== -1;
+      return new RegExp('\\b' + w + '\\b').test(normalised);
     }).length;
 
     var recognitionCount = targetLower.filter(function (w) {
@@ -595,6 +596,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!active) { return; }
 
     switch (active) {
+      case 'trial1':
+      case 'trial2':
+        e.preventDefault();
+        break;
       case 'intro':
         document.getElementById('btn-begin').click();
         break;

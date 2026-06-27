@@ -113,7 +113,7 @@
         <span>Estimated Time:&nbsp;<strong>15 Minutes</strong></span>
       </div>
 
-      <a href="/memory" class="btn btn--primary btn--lg btn--pill">
+      <a href="/memory" id="btn-begin-assessment" class="btn btn--primary btn--lg btn--pill">
         <i data-lucide="play"></i>
         Begin Assessment
       </a>
@@ -123,4 +123,8 @@
   </div>
 </section>
 
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/assessment.js') }}"></script>
 {% endblock %}
