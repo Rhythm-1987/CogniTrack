@@ -61,7 +61,6 @@
 
       <!-- Score Ring Card -->
       <div class="card card--glass dash-score-card anim-fade-up" aria-label="Overall cognitive score">
-        <p class="dash-label">Overall Cognitive Score</p>
 
         <div class="dash-ring-wrap">
           <svg class="dash-ring" viewBox="0 0 200 200" aria-hidden="true">
@@ -85,10 +84,28 @@
           </div>
         </div>
 
-        <div class="dash-overall-rating">
-          <span class="dash-rating-badge" id="js-rating-badge">--</span>
-          <span class="dash-rating-sub"   id="js-rating-sub">Calculating…</span>
+        <div class="dash-score-text">
+          <p class="dash-label">Overall Cognitive Score</p>
+
+          <div class="dash-overall-rating">
+            <span class="dash-rating-badge" id="js-rating-badge">--</span>
+            <span class="dash-rating-sub"   id="js-rating-sub">Calculating…</span>
+          </div>
+
+          <div class="dash-score-extras">
+            <span class="dash-overall-status" id="js-overall-status">
+              <i data-lucide="minus"></i>Stable
+            </span>
+            <span class="dash-trend-badge" id="js-trend-badge">
+              <i data-lucide="trending-up"></i>—
+            </span>
+          </div>
+          <div class="dash-score-change-wrap">
+            <span class="dash-score-proto-label">Estimated Trend</span>
+            <span class="dash-score-change" id="js-score-change">—</span>
+          </div>
         </div>
+
       </div>
 
       <!-- Radar Chart Card -->
@@ -136,7 +153,56 @@
     </section>
 
     <!-- ═══════════════════════════════════════════════════════
-         ROW 3: Reaction Metrics + Session Summary
+         ROW 3: Trend Graphs
+    ═══════════════════════════════════════════════════════ -->
+    <section class="dash-section anim-fade-up" aria-label="Domain trend graphs">
+      <div class="dash-section__header">
+        <h2 class="dash-section__title">Performance Trends</h2>
+        <span class="dash-section__sub">Score trajectory across the past 3 assessments per domain</span>
+      </div>
+      <div class="dash-trend-grid" id="js-trend-graphs">
+        <!-- Trend cards injected by dashboard.js -->
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         ROW 4: Cognitive Summary
+    ═══════════════════════════════════════════════════════ -->
+    <section class="dash-section anim-fade-up" aria-label="Cognitive summary">
+      <div class="dash-section__header">
+        <h2 class="dash-section__title">Cognitive Summary</h2>
+        <span class="dash-section__sub">A personalised narrative of your cognitive profile</span>
+      </div>
+      <div class="card card--glass dash-summary-card">
+        <div class="dash-summary-icon" aria-hidden="true">
+          <i data-lucide="brain"></i>
+        </div>
+        <p class="dash-summary-text" id="js-cognitive-summary">
+          Analysing your results…
+        </p>
+        <p class="dash-summary-disclaimer">
+          This summary is for informational purposes only and does not constitute medical advice.
+        </p>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         ROW 5: Assessment History
+    ═══════════════════════════════════════════════════════ -->
+    <section class="dash-section anim-fade-up" aria-label="Assessment history">
+      <div class="dash-section__header">
+        <h2 class="dash-section__title">Assessment History</h2>
+        <span class="dash-section__sub">Latest and previous sessions at a glance</span>
+      </div>
+      <div class="card dash-history-card">
+        <div class="hist-list" id="js-history-list">
+          <!-- History items injected by dashboard.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         ROW 6: Reaction Metrics + Session Summary
     ═══════════════════════════════════════════════════════ -->
     <div class="dash-two-col">
 
@@ -147,7 +213,7 @@
           </div>
           <div>
             <h3 class="dash-card-title">Reaction Metrics</h3>
-            <p class="dash-card-sub">From Attention Assessment</p>
+            <p class="dash-card-sub">From Focus &amp; Attention Assessment</p>
           </div>
         </div>
         <div class="dash-stat-grid" id="js-reaction-metrics"></div>
@@ -169,7 +235,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════
-         ROW 4: Top Strengths + Recommendations
+         ROW 7: Top Strengths + Recommendations
     ═══════════════════════════════════════════════════════ -->
     <div class="dash-two-col">
 
@@ -193,7 +259,7 @@
           </div>
           <div>
             <h3 class="dash-card-title">Recommendations</h3>
-            <p class="dash-card-sub">Personalized actionable insights</p>
+            <p class="dash-card-sub">Personalised, domain-specific insights</p>
           </div>
         </div>
         <ul class="dash-recommendations" id="js-recommendations" aria-label="Recommendations list"></ul>
@@ -202,7 +268,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════
-         ROW 5: Assessment Breakdown Table
+         ROW 8: Assessment Breakdown Table
     ═══════════════════════════════════════════════════════ -->
     <section class="dash-section anim-fade-up" aria-label="Detailed assessment breakdown">
       <div class="dash-section__header">
@@ -228,7 +294,7 @@
     </section>
 
     <!-- ═══════════════════════════════════════════════════════
-         ROW 6: Controls
+         ROW 9: Controls
     ═══════════════════════════════════════════════════════ -->
     <section class="dash-controls anim-fade-up" aria-label="Dashboard actions">
       <a href="/memory" class="btn btn--primary btn--lg btn--pill">

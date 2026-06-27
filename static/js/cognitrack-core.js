@@ -31,41 +31,41 @@
   };
 
   var MODULE_NAMES = {
-    memory:     'Memory Assessment',
-    attention:  'Attention Assessment',
-    executive:  'Executive Function',
-    processing: 'Processing Speed',
-    spatial:    'Spatial Reasoning'
+    memory:     'Memory Recall',
+    attention:  'Focus & Attention',
+    executive:  'Decision Making',
+    processing: 'Thinking Speed',
+    spatial:    'Visual Reasoning'
   };
 
   /* ── Cognitive domain metadata: icons, metrics, palette ─── */
   var DOMAIN_META = {
     memory: {
-      name:     'Memory Assessment',
+      name:     'Memory Recall',
       icon:     'database',
       metric:   'Domain: Encoding, Storage & Recall',
       duration: 'Est. 3–4 Minutes'
     },
     attention: {
-      name:     'Attention Assessment',
+      name:     'Focus & Attention',
       icon:     'crosshair',
       metric:   'Domain: Reaction Time & Focus Consistency',
       duration: 'Est. 1–2 Minutes'
     },
     executive: {
-      name:     'Executive Function',
+      name:     'Decision Making',
       icon:     'sliders',
       metric:   'Domain: Inhibitory Control & Cognitive Flexibility',
       duration: 'Est. 1–2 Minutes'
     },
     processing: {
-      name:     'Processing Speed',
+      name:     'Thinking Speed',
       icon:     'activity',
       metric:   'Domain: Symbol Substitution & Decision Velocity',
       duration: 'Est. 1–2 Minutes'
     },
     spatial: {
-      name:     'Spatial Reasoning',
+      name:     'Visual Reasoning',
       icon:     'box',
       metric:   'Domain: Mental Rotation & Spatial Orientation',
       duration: 'Est. 2–3 Minutes'
