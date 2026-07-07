@@ -11,7 +11,7 @@
     <div class="navbar__inner">
 
       <!-- Left: Brand -->
-      <a href="{{ url_for('index') }}"
+      <a href="{{ url_for('main.index') }}"
          class="brand"
          aria-label="CogniTrack — go to homepage">
         <div class="brand__icon" aria-hidden="true">
@@ -23,21 +23,21 @@
       <!-- Center: Desktop nav links -->
       <ul class="nav-links" role="list" aria-label="Site pages">
         <li>
-          <a href="{{ url_for('index') }}"
+          <a href="{{ url_for('main.index') }}"
              class="nav-link {% if request.path == '/' %}is-active{% endif %}"
              {% if request.path == '/' %}aria-current="page"{% endif %}>
             Home
           </a>
         </li>
         <li>
-          <a href="{{ url_for('assessment') }}"
+          <a href="{{ url_for('assessment.assessment') }}"
              class="nav-link {% if request.path == '/assessment' %}is-active{% endif %}"
              {% if request.path == '/assessment' %}aria-current="page"{% endif %}>
             Assessment
           </a>
         </li>
         <li>
-          <a href="{{ url_for('dashboard') }}"
+          <a href="{{ url_for('dashboard.dashboard') }}"
              class="nav-link nav-link--dim {% if request.path == '/dashboard' %}is-active{% endif %}"
              {% if request.path == '/dashboard' %}aria-current="page"{% endif %}>
             Dashboard
@@ -47,7 +47,7 @@
 
       <!-- Right: Primary CTA + Hamburger -->
       <div class="nav-actions">
-        <a href="{{ url_for('user') }}"
+        <a href="{{ url_for('main.user') }}"
            class="btn btn--primary btn--sm nav-cta">
           Start Assessment
         </a>
@@ -73,21 +73,21 @@
 
       <ul class="mobile-nav" role="list">
         <li>
-          <a href="{{ url_for('index') }}"
+          <a href="{{ url_for('main.index') }}"
              class="mobile-nav__link {% if request.path == '/' %}is-active{% endif %}"
              {% if request.path == '/' %}aria-current="page"{% endif %}>
             Home
           </a>
         </li>
         <li>
-          <a href="{{ url_for('assessment') }}"
+          <a href="{{ url_for('assessment.assessment') }}"
              class="mobile-nav__link {% if request.path == '/assessment' %}is-active{% endif %}"
              {% if request.path == '/assessment' %}aria-current="page"{% endif %}>
             Assessment
           </a>
         </li>
         <li>
-          <a href="{{ url_for('dashboard') }}"
+          <a href="{{ url_for('dashboard.dashboard') }}"
              class="mobile-nav__link {% if request.path == '/dashboard' %}is-active{% endif %}"
              {% if request.path == '/dashboard' %}aria-current="page"{% endif %}>
             Dashboard
@@ -96,7 +96,7 @@
       </ul>
 
       <div class="mobile-menu__cta">
-        <a href="{{ url_for('assessment') }}"
+        <a href="{{ url_for('assessment.assessment') }}"
            class="btn btn--primary w-full">
           Start Assessment
         </a>
