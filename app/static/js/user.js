@@ -86,11 +86,17 @@ document.addEventListener('DOMContentLoaded', function () {
       sessionStorage.setItem('cognitrack_user', JSON.stringify(userData));
     } catch (e) { /* private browsing / storage full — proceed anyway */ }
 
-    /* ── Initialise global assessment progress tracker ───────── */
-    if (typeof CT !== 'undefined' && CT.initProgress) {
-      /* Always reset on a fresh user registration */
-      try { sessionStorage.removeItem('cognitrack_progress'); } catch (e) {}
-      CT.initProgress();
+    /* ── Clear any prior real assessment run ─────────────────── */
+    if (typeof CT !== 'undefined' && CT.clearAssessmentData) {
+      /* User Information is profile setup, not the assessment itself —
+         assessmentStarted is NOT set here. It's set later, only when
+         the user clicks "Begin Assessment" on the Assessment Overview
+         page (see assessment.js), immediately before Memory Recall
+         begins. Demo data lives in its own namespace and is never
+         touched here — it can't leak into a real assessment either
+         way, but a fresh registration should still start real
+         progress from zero. */
+      CT.clearAssessmentData();
     }
 
     /* ── Lock submit button to prevent double-submission ─────── */

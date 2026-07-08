@@ -1,0 +1,74 @@
+/* ============================================================
+   CogniTrack — Assessment Hub
+   hub.css
+   Depends on: style.css (design tokens must be loaded first)
+============================================================ */
+
+.hub-section {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  padding: var(--space-16) 0;
+}
+
+.hub-card {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-8);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hub-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(37, 99, 235, 0.1);
+  margin-bottom: var(--space-6);
+}
+
+.hub-icon svg { width: 28px; height: 28px; stroke: var(--color-primary); }
+
+.hub-title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-extrabold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-3);
+}
+
+.hub-sub {
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-6);
+  max-width: 44ch;
+}
+
+.hub-domains {
+  justify-content: center;
+  margin-bottom: var(--space-8);
+}
+
+.hub-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.hub-actions > .btn { width: 100%; }
+
+.hub-resume-hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  text-align: center;
+  margin-top: calc(var(--space-3) * -1 + var(--space-1));
+  margin-inline: auto;
+  max-width: 40ch;
+}

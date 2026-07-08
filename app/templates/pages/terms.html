@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Terms of Use — CogniTrack{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<section class="legal-section" aria-label="Terms of Use">
+  <div class="container container--narrow">
+
+    <div class="legal-header anim-fade-up">
+      <span class="badge badge--primary">
+        <i data-lucide="file-text"></i>
+        Terms
+      </span>
+      <h1 class="legal-header__title">Terms of Use</h1>
+      <p class="legal-header__meta">Last updated for the current CogniTrack prototype release</p>
+    </div>
+
+    <div class="card legal-card scroll-reveal">
+      <div class="legal-prose">
+
+        <p>
+          By using CogniTrack, you agree to the terms below. They're written to reflect what
+          the app actually does today, not a hypothetical future version of it.
+        </p>
+
+        <h2>What CogniTrack Is</h2>
+        <p>
+          CogniTrack is a self-guided, five-domain cognitive assessment — Memory Recall,
+          Focus &amp; Attention, Decision Making, Thinking Speed, and Visual Reasoning —
+          designed to give you a personal, informational snapshot of your cognitive
+          performance in about fifteen minutes.
+        </p>
+
+        <h2>Not Medical Advice</h2>
+        <div class="legal-callout">
+          <i data-lucide="alert-circle" aria-hidden="true"></i>
+          <p>
+            CogniTrack is not a diagnostic, clinical, or medical tool. Your results should
+            never be used to diagnose, treat, or make health decisions. If you have concerns
+            about your cognitive health, please consult a qualified healthcare professional.
+          </p>
+        </div>
+
+        <h2>Your Responsibilities</h2>
+        <ul>
+          <li>Provide accurate information on the User Information step — age and other details factor into how your results are framed.</li>
+          <li>Try to complete the assessment in one sitting, in a reasonably distraction-free environment, for the most meaningful results.</li>
+          <li>Understand that results are estimates that can vary with attention, environment, fatigue, and the device you're using.</li>
+        </ul>
+
+        <h2>Data &amp; Sessions</h2>
+        <p>
+          Your progress and results exist only for the duration of your browser session (see
+          our <a href="{{ url_for('main.privacy') }}">Privacy Policy</a> for details). Closing
+          your browser, or starting a new assessment, clears that data. There is currently no
+          way to save results long-term — that capability is planned for a future release
+          alongside optional accounts.
+        </p>
+
+        <h2>Demo Mode</h2>
+        <p>
+          Content shown in Demo Mode is illustrative sample data, not a real assessment
+          result, and must not be interpreted as reflecting your own performance.
+        </p>
+
+        <h2>No Warranty</h2>
+        <p>
+          CogniTrack is provided "as is" during active development. Features, scoring
+          methodology, and result thresholds may change between releases without prior
+          notice, and we make no guarantee of uninterrupted availability.
+        </p>
+
+      </div>
+
+      <div class="legal-contact">
+        <h2>Questions About These Terms</h2>
+        <p class="legal-header__meta">Reach out and we'll get back to you.</p>
+        <p class="legal-contact__email">
+          <i data-lucide="mail" aria-hidden="true"></i>
+          <a href="mailto:terms@cognitrack.app">terms@cognitrack.app</a>
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Support Center — CogniTrack{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<section class="legal-section" aria-label="Support Center">
+  <div class="container container--narrow">
+
+    <div class="legal-header anim-fade-up">
+      <span class="badge badge--primary">
+        <i data-lucide="life-buoy"></i>
+        Support
+      </span>
+      <h1 class="legal-header__title">Support Center</h1>
+      <p class="legal-header__meta">Answers to common questions about how CogniTrack works</p>
+    </div>
+
+    <div class="card legal-card scroll-reveal">
+      <div class="legal-prose">
+        <h2>Frequently Asked Questions</h2>
+      </div>
+
+      <div class="faq-list">
+
+        <div class="faq-item">
+          <p class="faq-item__q">Do I need to create an account?</p>
+          <p class="faq-item__a">
+            No. Just enter a few basic details on the User Information step to personalize
+            your session — no sign-up, password, or email required.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <p class="faq-item__q">Where is my data stored?</p>
+          <p class="faq-item__a">
+            Locally, in your browser's session storage — never on a server. See our
+            <a href="{{ url_for('main.privacy') }}">Privacy Policy</a> for the full picture.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <p class="faq-item__q">I refreshed my browser mid-assessment. Did I lose my progress?</p>
+          <p class="faq-item__a">
+            No — refreshing during any module (Memory Recall, Focus &amp; Attention, Decision
+            Making, Thinking Speed, or Visual Reasoning) preserves where you left off in that
+            module. If you navigate away first, the Assessment Hub's Resume Assessment button
+            will pick you back up at the right module.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <p class="faq-item__q">Why is the "Resume Assessment" button disabled?</p>
+          <p class="faq-item__a">
+            It stays visible but disabled until you've actually begun your first module.
+            Filling out User Information or reading the Assessment Overview doesn't count as
+            starting — once you click Begin Assessment, it unlocks automatically.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <p class="faq-item__q">What is Demo Mode?</p>
+          <p class="faq-item__a">
+            A sample dashboard preview built from fictional data, so you can see the reporting
+            experience before completing your own assessment. It never affects, and is never
+            affected by, your real results.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <p class="faq-item__q">I closed my tab and lost my results — can I get them back?</p>
+          <p class="faq-item__a">
+            Not currently. Session data is intentionally temporary until account support and
+            persistent storage ship in a future release.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <p class="faq-item__q">Is this a medical assessment?</p>
+          <p class="faq-item__a">
+            No. CogniTrack is for informational and self-insight purposes only — not a
+            diagnostic or clinical tool. See our <a href="{{ url_for('main.terms') }}">Terms of Use</a>
+            for details.
+          </p>
+        </div>
+
+      </div>
+
+      <div class="legal-contact">
+        <h2>Still Need Help?</h2>
+        <p class="legal-header__meta">Send us a message and we'll get back to you as soon as we can.</p>
+        <p class="legal-contact__email">
+          <i data-lucide="mail" aria-hidden="true"></i>
+          <a href="mailto:support@cognitrack.app">support@cognitrack.app</a>
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}

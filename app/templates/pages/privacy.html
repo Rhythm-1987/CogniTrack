@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy — CogniTrack{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<section class="legal-section" aria-label="Privacy Policy">
+  <div class="container container--narrow">
+
+    <div class="legal-header anim-fade-up">
+      <span class="badge badge--primary">
+        <i data-lucide="shield-check"></i>
+        Privacy
+      </span>
+      <h1 class="legal-header__title">Privacy Policy</h1>
+      <p class="legal-header__meta">Last updated for the current CogniTrack prototype release</p>
+    </div>
+
+    <div class="card legal-card scroll-reveal">
+      <div class="legal-prose">
+
+        <p>
+          CogniTrack is a browser-based cognitive assessment tool. This page explains, in
+          plain terms, exactly what information the app touches and — just as importantly —
+          where that information actually lives.
+        </p>
+
+        <h2>What We Collect</h2>
+        <p>
+          When you fill out the User Information step, CogniTrack asks for your name, age,
+          gender, education level, sleep quality, and (optionally) your dominant hand. As you
+          move through the five assessment modules — Memory Recall, Focus &amp; Attention,
+          Decision Making, Thinking Speed, and Visual Reasoning — the app also records your
+          responses, timing, and computed scores for each domain.
+        </p>
+
+        <h2>Where Your Data Lives</h2>
+        <div class="legal-callout">
+          <i data-lucide="lock" aria-hidden="true"></i>
+          <p>
+            Everything above is stored exclusively in your browser's <strong>session storage</strong>.
+            It is never transmitted to a server, never written to a database, and is
+            automatically erased the moment you close the tab or browser window.
+          </p>
+        </div>
+        <p>
+          CogniTrack currently has no backend, no database, and no user accounts. There is
+          nothing for anyone — including us — to access once your browser session ends.
+        </p>
+
+        <h2>Demo Mode</h2>
+        <p>
+          The "View Demo Dashboard" option loads a separate, clearly-labeled sample dataset
+          (a fictional profile) so you can preview the dashboard experience before completing
+          your own assessment. Demo data lives in its own storage namespace and never mixes
+          with, overwrites, or is mistaken for your real results.
+        </p>
+
+        <h2>Third-Party Resources</h2>
+        <p>
+          To render the interface, CogniTrack loads a small number of resources from
+          third-party content delivery networks: Google Fonts (Inter and Poppins), Lucide
+          Icons, and canvas-confetti. Requests to these providers may include standard
+          request metadata such as your IP address, handled under each provider's own
+          policies — independent of CogniTrack.
+        </p>
+
+        <h2>Clearing Your Data</h2>
+        <ul>
+          <li>Closing the browser tab or window clears your session immediately.</li>
+          <li>Starting a new assessment from the User Information page resets any prior progress.</li>
+          <li>There is no "delete my account" control, because there is no account or server-side storage to delete from.</li>
+        </ul>
+
+        <h2>What's Changing Next</h2>
+        <p>
+          A future release will introduce optional accounts and persistent storage so you can
+          save results across sessions. This policy will be updated well before that ships,
+          and nothing described above will change retroactively without clear notice.
+        </p>
+
+      </div>
+
+      <div class="legal-contact">
+        <h2>Questions About Your Data</h2>
+        <p class="legal-header__meta">Reach out and we'll get back to you.</p>
+        <p class="legal-contact__email">
+          <i data-lucide="mail" aria-hidden="true"></i>
+          <a href="mailto:privacy@cognitrack.app">privacy@cognitrack.app</a>
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}

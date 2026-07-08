@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Demo Dashboard — CogniTrack{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     DEDICATED DEMO DASHBOARD CONTROLLER
+     This route's entire purpose is the demo view: every visit
+     regenerates the canonical demo dataset (dashboard.js calls
+     CT.loadDemoData() here, and only here) and renders it via the
+     same shared dashboard body as the real dashboard. The real
+     /dashboard route has no code path that can reach this state —
+     they are two separate routes, not one page with a hidden flag.
+============================================================ -->
+{% set dash_hidden = false %}
+{% include 'pages/_dashboard_body.html' %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

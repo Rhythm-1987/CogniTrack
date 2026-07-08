@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Assessment — CogniTrack{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/hub.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     ASSESSMENT HUB
+     The single entry point for the assessment journey from the
+     navbar. Never sends visitors straight to the Overview page —
+     that only appears after User Information is submitted.
+============================================================ -->
+<section class="hub-section" aria-label="Assessment Hub">
+  <div class="container">
+
+    <div class="card card--glass hub-card anim-fade-up">
+
+      <div class="hub-icon" aria-hidden="true">
+        <i data-lucide="clipboard-list"></i>
+      </div>
+
+      <h1 class="hub-title">Cognitive Assessment</h1>
+      <p class="hub-sub">
+        A 15-minute, five-part assessment covering memory, attention, decision making,
+        thinking speed, and visual reasoning — with a personalised report the moment you finish.
+      </p>
+
+      <div class="hub-domains">
+        <span class="domain-pill domain-pill--blue">Memory</span>
+        <span class="domain-pill domain-pill--purple">Attention</span>
+        <span class="domain-pill domain-pill--emerald">Executive Function</span>
+        <span class="domain-pill domain-pill--amber">Processing Speed</span>
+        <span class="domain-pill domain-pill--cyan">Visuospatial</span>
+      </div>
+
+      <div class="hub-actions">
+        <a href="{{ url_for('main.user') }}" class="btn btn--primary btn--lg btn--pill">
+          <i data-lucide="play"></i>
+          Start New Assessment
+        </a>
+        <a href="#"
+           id="js-resume-btn"
+           class="btn btn--secondary btn--lg btn--pill"
+           aria-disabled="true"
+           tabindex="-1"
+           aria-describedby="js-resume-hint">
+          <i data-lucide="rotate-cw"></i>
+          Resume Assessment
+        </a>
+        <p class="hub-resume-hint" id="js-resume-hint">
+          No assessment to resume yet. Complete your first assessment to unlock resume functionality.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/hub.js') }}"></script>
+{% endblock %}

@@ -3,8 +3,13 @@ from flask import Blueprint, render_template
 assessment_bp = Blueprint('assessment', __name__)
 
 
-@assessment_bp.route('/assessment', methods=['GET', 'POST'])
-def assessment():
+@assessment_bp.route('/assessment')
+def hub():
+    return render_template('pages/assessment_hub.html')
+
+
+@assessment_bp.route('/assessment/overview', methods=['GET', 'POST'])
+def overview():
     return render_template('pages/assessment.html')
 
 

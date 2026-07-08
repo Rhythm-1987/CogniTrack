@@ -107,6 +107,13 @@
     } catch (e) { console.warn('CogniTrack storage error:', e); }
   };
 
+  /* Creates the progress record — and with it, assessmentStarted — the
+     first time it's called; a no-op on every call after that. Called
+     from exactly one user-facing place: the "Begin Assessment" click on
+     the Assessment Overview page (assessment.js), which is the true
+     start of the assessment. updateStage()/completeModule() also fall
+     back to it so a module page never crashes on missing progress, but
+     in the normal flow the record already exists by the time either runs. */
   CT.initProgress = function () {
     var existing = CT.loadProgress();
     if (existing) { return existing; }
@@ -167,9 +174,12 @@
     CT.saveProgress(p);
   };
 
+  /* No progress yet means the assessment hasn't started (assessmentStarted
+     is only set when Begin Assessment is clicked — see assessment.js), so
+     the "next" module is simply the first one, not the dashboard. */
   CT.getNextModuleUrl = function () {
     var p = CT.loadProgress();
-    if (!p) { return MODULE_URLS.dashboard; }
+    if (!p) { return MODULE_URLS[MODULE_ORDER[0]]; }
 
     for (var i = 0; i < MODULE_ORDER.length; i++) {
       var m = MODULE_ORDER[i];
@@ -181,7 +191,7 @@
 
   CT.getNextModuleName = function () {
     var p = CT.loadProgress();
-    if (!p) { return 'Dashboard'; }
+    if (!p) { return MODULE_NAMES[MODULE_ORDER[0]]; }
 
     for (var i = 0; i < MODULE_ORDER.length; i++) {
       var m = MODULE_ORDER[i];
@@ -229,7 +239,11 @@
      Writes cognitrack_session_<module> in the unified schema.
   ══════════════════════════════════════════════════════════ */
 
-  CT.writeSession = function (module, startedAt, score, accuracy, avgTime, rawData) {
+  /* storageKey is optional and used only by CT.loadDemoData() to write
+     into the separate demo namespace below — every real module call
+     (memory.js, attention.js, executive.js, processing.js, visual.js)
+     passes exactly the same 6 arguments as before and is unaffected. */
+  CT.writeSession = function (module, startedAt, score, accuracy, avgTime, rawData, storageKey) {
     var completedAt = new Date().toISOString();
     var startMs     = startedAt ? new Date(startedAt).getTime() : Date.now();
     var duration    = parseFloat(((Date.now() - startMs) / 1000).toFixed(1));
@@ -252,7 +266,7 @@
     };
 
     try {
-      sessionStorage.setItem('cognitrack_session_' + module, JSON.stringify(session));
+      sessionStorage.setItem(storageKey || ('cognitrack_session_' + module), JSON.stringify(session));
     } catch (e) { console.warn('CogniTrack storage error:', e); }
 
     return session;
@@ -297,6 +311,192 @@
     } catch (e) {}
 
     return results;
+  };
+
+  /* ══════════════════════════════════════════════════════════
+     DEMO MODE
+     Demo data lives in a completely separate sessionStorage
+     namespace ("cognitrack_demo_*") from real data
+     ("cognitrack_*"). They never share a key, so writing demo
+     data can never overwrite or interfere with a real session —
+     and a plain visit to /dashboard, which only ever reads the
+     real namespace, can never be silently turned into a demo
+     view. The one field the two namespaces share is the storage
+     schema itself: CT.writeSession() builds both, so a demo
+     session is byte-for-byte the same shape as a real one
+     without duplicating that shape anywhere.
+
+     CT.loadDemoData() is called from exactly one place in the
+     app: the "View Demo Dashboard" button on the empty-dashboard
+     state (dashboard.js). Nothing else may call it.
+  ══════════════════════════════════════════════════════════ */
+
+  var DEMO_PREFIX = 'cognitrack_demo_';
+
+  CT.DEMO_USER_KEY = DEMO_PREFIX + 'user';
+
+  /* module key -> the demo-namespaced session key dashboard.js reads.
+     Mirrors the real cognitrack_session_<module> naming exactly,
+     including the historical "spatial" key visual.js actually uses. */
+  CT.DEMO_SESSION_KEYS = {
+    memory:     DEMO_PREFIX + 'session_memory',
+    attention:  DEMO_PREFIX + 'session_attention',
+    executive:  DEMO_PREFIX + 'session_executive',
+    processing: DEMO_PREFIX + 'session_processing',
+    spatial:    DEMO_PREFIX + 'session_spatial'
+  };
+
+  var DEMO_USER = {
+    name:         'Sarah Williams',
+    age:          29,
+    gender:       'female',
+    education:    'bachelors',
+    sleepQuality: 'good',
+    dominantHand: 'right'
+  };
+
+  /* module key -> { score, accuracy, avgTime (ms), durationSec, rawData }
+     rawData shapes mirror exactly what each module's own writeSession
+     call sends (verified against memory.js / attention.js / executive.js /
+     processing.js / visual.js at the time of writing). */
+  var DEMO_MODULES = {
+
+    memory: {
+      score: 88, accuracy: 91, avgTime: 0, durationSec: 205,
+      rawData: {
+        trial1Words:      ['Apple', 'River', 'Chair', 'Candle', 'Ocean'],
+        trial2Words:      ['Justice', 'Rhythm', 'Horizon', 'Velvet', 'Whisper', 'Gravity'],
+        distractors:      ['Mountain', 'Pencil', 'Journey', 'Crystal', 'Shadow', 'Melody'],
+        recallText:       'apple river candle justice velvet whisper gravity ocean',
+        recallCount:      8,
+        recognitionCount: 10,
+        totalTargets:     11,
+        recallPct:        73,
+        recognitionPct:   91,
+        mathAnswered:     3,
+        selectedWords:    ['apple', 'river', 'candle', 'ocean', 'justice', 'rhythm', 'velvet', 'whisper', 'gravity', 'horizon']
+      }
+    },
+
+    attention: {
+      score: 92, accuracy: 92, avgTime: 230, durationSec: 95,
+      rawData: {
+        reactionTimes: [245, 230, 225, 238, 212],
+        falseStarts:   0,
+        fastest:       212,
+        slowest:       245
+      }
+    },
+
+    executive: {
+      score: 84, accuracy: 84, avgTime: 1450, durationSec: 105,
+      rawData: {
+        questions: 15,
+        results: [
+          { correct: true,  rt: 920,  congruent: true  },
+          { correct: true,  rt: 890,  congruent: true  },
+          { correct: true,  rt: 950,  congruent: true  },
+          { correct: true,  rt: 1380, congruent: false },
+          { correct: true,  rt: 1520, congruent: false },
+          { correct: false, rt: 1710, congruent: false },
+          { correct: true,  rt: 1440, congruent: false },
+          { correct: true,  rt: 1490, congruent: false },
+          { correct: true,  rt: 1610, congruent: false },
+          { correct: true,  rt: 1380, congruent: false },
+          { correct: true,  rt: 1650, congruent: false },
+          { correct: false, rt: 1890, congruent: false },
+          { correct: true,  rt: 1720, congruent: false },
+          { correct: true,  rt: 1590, congruent: false },
+          { correct: true,  rt: 1660, congruent: false }
+        ],
+        congruentAccuracy:   100,
+        incongruentAccuracy: 78
+      }
+    },
+
+    processing: {
+      score: 86, accuracy: 85, avgTime: 2100, durationSec: 100,
+      rawData: {
+        keyMap:    { A: '1', B: '2', C: '3', D: '4' },
+        questions: 20,
+        totalMs:   42000,
+        totalSecs: 42.0,
+        results: (function () {
+          var wrong = [4, 11, 17];
+          var out   = [];
+          for (var i = 0; i < 20; i++) {
+            out.push({ correct: wrong.indexOf(i) === -1, rt: 1800 + (i % 5) * 120 });
+          }
+          return out;
+        }())
+      }
+    },
+
+    spatial: {
+      score: 90, accuracy: 90, avgTime: 3200, durationSec: 150,
+      rawData: {
+        questions: 10,
+        results: (function () {
+          var wrong = [7];
+          var out   = [];
+          for (var i = 0; i < 10; i++) {
+            out.push({ correct: wrong.indexOf(i) === -1, rt: 2800 + (i % 4) * 250 });
+          }
+          return out;
+        }()),
+        q1_3Accuracy:  100,
+        q4_7Accuracy:  88,
+        q8_10Accuracy: 83
+      }
+    }
+  };
+
+  /* Clears the REAL assessment namespace — used before a fresh user
+     registration and before "Retake Assessment" from a real dashboard.
+     Never touches the demo namespace: a demo view sitting inert in
+     storage cannot affect, and is not affected by, a real run. */
+  CT.clearAssessmentData = function () {
+    var keys = [
+      'cognitrack_progress', 'cognitrack_results',
+      'cognitrack_session_memory', 'cognitrack_session_attention',
+      'cognitrack_session_executive', 'cognitrack_session_processing',
+      'cognitrack_session_visual', 'cognitrack_session_spatial'
+    ];
+    keys.forEach(function (k) {
+      try { sessionStorage.removeItem(k); } catch (e) {}
+    });
+  };
+
+  /* Clears only the demo namespace — used before regenerating a fresh
+     demo dataset, and before "Retake Assessment" from a demo dashboard. */
+  CT.clearDemoData = function () {
+    var keys = [CT.DEMO_USER_KEY].concat(
+      MODULE_ORDER.map(function (m) { return CT.DEMO_SESSION_KEYS[m]; })
+    );
+    keys.forEach(function (k) {
+      try { sessionStorage.removeItem(k); } catch (e) {}
+    });
+  };
+
+  /* True only if a demo dataset currently exists in the demo namespace.
+     Does NOT mean "the user is viewing the demo dashboard right now" —
+     dashboard.js decides that from the ?demo=1 URL param, so a stale
+     demo dataset sitting in storage can never make a plain /dashboard
+     visit render as a demo view. */
+  CT.hasDemoData = function () {
+    try { return sessionStorage.getItem(CT.DEMO_USER_KEY) !== null; } catch (e) { return false; }
+  };
+
+  CT.loadDemoData = function () {
+    CT.clearDemoData();
+
+    try { sessionStorage.setItem(CT.DEMO_USER_KEY, JSON.stringify(DEMO_USER)); } catch (e) {}
+
+    MODULE_ORDER.forEach(function (key) {
+      var m         = DEMO_MODULES[key];
+      var startedAt = new Date(Date.now() - m.durationSec * 1000).toISOString();
+      CT.writeSession(key, startedAt, m.score, m.accuracy, m.avgTime, m.rawData, CT.DEMO_SESSION_KEYS[key]);
+    });
   };
 
   /* ══════════════════════════════════════════════════════════

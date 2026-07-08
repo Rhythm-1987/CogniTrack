@@ -105,8 +105,13 @@ function initNavbar() {
 /* ============================================================
    initNavbarProgress()
    Reads cognitrack_progress from sessionStorage and injects a
-   compact progress bar + badge into .navbar__inner when at
-   least one module has been completed.
+   compact progress bar + badge into .navbar__inner whenever a
+   REAL assessment is currently in progress or has been completed.
+
+   "cognitrack_progress" is the real-assessment key only — demo
+   sessions live entirely under separate "cognitrack_demo_*" keys
+   (see cognitrack-core.js) and never touch this one, so this
+   indicator can never appear for a demo session.
    Reads/writes: .navbar__inner → injects .nav-progress
 ============================================================ */
 function initNavbarProgress() {
@@ -116,7 +121,11 @@ function initNavbarProgress() {
     progress = raw ? JSON.parse(raw) : null;
   } catch (e) { return; }
 
-  if (!progress || !progress.completedCount || progress.completedCount < 1) { return; }
+  /* Show as soon as a real assessment has started (assessmentStarted is
+     set on the "Begin Assessment" click, immediately before Memory Recall
+     loads — see assessment.js) through to completion — not just once at
+     least one full module is done. */
+  if (!progress || !progress.assessmentStarted) { return; }
 
   var inner = document.querySelector('.navbar__inner');
   if (!inner) { return; }

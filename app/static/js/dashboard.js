@@ -15,10 +15,14 @@
 
   /* ── Domain configuration ──────────────────────────────── */
 
+  /* sessionSuffix/fallbackSuffix are appended to a namespace prefix
+     ("cognitrack_" for a real session, "cognitrack_demo_" for a demo
+     one) so Data.load() can read either namespace without duplicating
+     this table. See resolveMode() / Data.load() below. */
   var DOMAINS = [
     {
-      key:         'memory',
-      sessionKey:  'cognitrack_session_memory',
+      key:            'memory',
+      sessionSuffix:  'session_memory',
       label:       'Memory Recall',
       fullLabel:   'Memory Recall',
       icon:        'database',
@@ -28,8 +32,8 @@
       radarIndex:  0
     },
     {
-      key:         'attention',
-      sessionKey:  'cognitrack_session_attention',
+      key:            'attention',
+      sessionSuffix:  'session_attention',
       label:       'Focus & Attention',
       fullLabel:   'Focus & Attention',
       icon:        'crosshair',
@@ -39,8 +43,8 @@
       radarIndex:  1
     },
     {
-      key:         'executive',
-      sessionKey:  'cognitrack_session_executive',
+      key:            'executive',
+      sessionSuffix:  'session_executive',
       label:       'Decision Making',
       fullLabel:   'Decision Making',
       icon:        'sliders',
@@ -50,8 +54,8 @@
       radarIndex:  2
     },
     {
-      key:         'processing',
-      sessionKey:  'cognitrack_session_processing',
+      key:            'processing',
+      sessionSuffix:  'session_processing',
       label:       'Thinking Speed',
       fullLabel:   'Thinking Speed',
       icon:        'activity',
@@ -61,9 +65,9 @@
       radarIndex:  3
     },
     {
-      key:         'visual',
-      sessionKey:  'cognitrack_session_visual',
-      fallbackKey: 'cognitrack_session_spatial',
+      key:              'visual',
+      sessionSuffix:    'session_visual',
+      fallbackSuffix:   'session_spatial',
       label:       'Visual Reasoning',
       fullLabel:   'Visual Reasoning',
       icon:        'box',
@@ -89,17 +93,20 @@
     scores:       {},
     overallScore: 0,
 
-    load: function () {
+    /* mode is 'real' or 'demo' — selects which sessionStorage
+       namespace to read from. Never both, never guessed. */
+    load: function (mode) {
+      var prefix = (mode === 'demo') ? 'cognitrack_demo_' : 'cognitrack_';
 
       try {
-        var raw = sessionStorage.getItem('cognitrack_user');
+        var raw = sessionStorage.getItem(prefix + 'user');
         this.user = raw ? JSON.parse(raw) : null;
       } catch (e) { this.user = null; }
 
       DOMAINS.forEach(function (d) {
         try {
-          var raw = sessionStorage.getItem(d.sessionKey);
-          if (!raw && d.fallbackKey) raw = sessionStorage.getItem(d.fallbackKey);
+          var raw = sessionStorage.getItem(prefix + d.sessionSuffix);
+          if (!raw && d.fallbackSuffix) raw = sessionStorage.getItem(prefix + d.fallbackSuffix);
           Data.sessions[d.key] = raw ? JSON.parse(raw) : null;
         } catch (e) { Data.sessions[d.key] = null; }
       });
@@ -669,6 +676,13 @@
 
   var UI = {
 
+    /* ── Demo Badge ────────────────────────────────────────── */
+    demoBadge: function (mode) {
+      var el = document.getElementById('js-demo-badge');
+      if (!el) return;
+      el.hidden = (mode !== 'demo');
+    },
+
     /* ── Hero ──────────────────────────────────────────────── */
     hero: function () {
       var greeting = Data.getGreeting();
@@ -1084,14 +1098,83 @@
     if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
   }
 
+  /* Retaking must always start clean. From a REAL dashboard that
+     means clearing the real namespace and going straight to /memory
+     (identity is already known). From a DEMO dashboard, the demo
+     identity ("Sarah Williams") isn't the visitor's own, so it clears
+     the demo namespace and sends them to /user to enter real details
+     first — matching the demo's fictional persona never leaking into
+     a real attempt. */
+  function wireRetake(mode) {
+    var btn = document.getElementById('js-retake-btn');
+    if (!btn) return;
+
+    if (mode === 'demo') {
+      btn.setAttribute('href', '/user');
+    }
+
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (typeof CT === 'undefined') { window.location.href = this.getAttribute('href'); return; }
+      if (mode === 'demo') {
+        if (CT.clearDemoData) { CT.clearDemoData(); }
+      } else {
+        if (CT.clearAssessmentData) { CT.clearAssessmentData(); }
+      }
+      window.location.href = this.getAttribute('href');
+    });
+  }
+
+  /* Mode is decided by which ROUTE this page is, not by a flag or
+     query param:
+       - /dashboard/demo is a dedicated controller. Every visit to it
+         regenerates the canonical demo dataset (the ONLY place in the
+         app that calls CT.loadDemoData()) and always renders 'demo'.
+       - /dashboard (any other path this script runs on) never shows
+         demo content — it resolves only between 'real' (a completed
+         real assessment exists) and 'empty'.
+     This makes it structurally impossible for a plain /dashboard
+     visit to render demo content: that code path doesn't exist here. */
+  function resolveMode() {
+    var isDemoRoute = window.location.pathname.indexOf('/dashboard/demo') === 0;
+
+    if (isDemoRoute) {
+      if (typeof CT !== 'undefined' && CT.loadDemoData) { CT.loadDemoData(); }
+      return 'demo';
+    }
+
+    var progress = (typeof CT !== 'undefined' && CT.loadProgress) ? CT.loadProgress() : null;
+    if (progress && progress.assessmentCompleted) {
+      return 'real';
+    }
+    return 'empty';
+  }
+
 
   /* ══════════════════════════════════════════════════════════
      INIT
   ══════════════════════════════════════════════════════════ */
 
   function init() {
-    Data.load();
+    var mode        = resolveMode();
+    var emptyEl     = document.getElementById('js-dashboard-empty');
+    var dashboardEl = document.getElementById('js-dashboard');
 
+    if (mode === 'empty') {
+      if (emptyEl)     emptyEl.hidden     = false;
+      if (dashboardEl) dashboardEl.hidden = true;
+      /* Both buttons here are plain links (Start Assessment -> /user,
+         View Demo Dashboard -> /dashboard/demo) — no JS wiring needed. */
+      refreshIcons();
+      return;
+    }
+
+    if (emptyEl)     emptyEl.hidden     = true;
+    if (dashboardEl) dashboardEl.hidden = false;
+
+    Data.load(mode);
+
+    UI.demoBadge(mode);
     UI.hero();
     UI.score();
     UI.reactionMetrics();
@@ -1106,6 +1189,7 @@
     UI.table();
 
     refreshIcons();
+    wireRetake(mode);
 
     setTimeout(function () {
       Radar.render(Data.scores);

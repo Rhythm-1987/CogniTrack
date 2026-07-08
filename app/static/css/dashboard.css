@@ -14,6 +14,78 @@
 
 
 /* ============================================================
+   EMPTY STATE
+   Shown in place of the dashboard when no real or demo session
+   exists yet.
+============================================================ */
+
+.dash-empty {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  padding: var(--space-16) 0;
+}
+
+.dash-empty__card {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-8);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dash-empty__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(37, 99, 235, 0.1);
+  margin-bottom: var(--space-6);
+}
+
+.dash-empty__icon svg { width: 28px; height: 28px; stroke: var(--color-primary); }
+
+.dash-empty__title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-extrabold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-3);
+}
+
+.dash-empty__sub {
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-7, 1.75rem);
+  max-width: 40ch;
+}
+
+.dash-empty__card > .btn { width: 100%; }
+
+.dash-empty__divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  margin: var(--space-6) 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.dash-empty__divider::before,
+.dash-empty__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+
+/* ============================================================
    HERO SECTION
 ============================================================ */
 
@@ -53,6 +125,20 @@
 }
 
 .dash-hero__greeting-badge svg {
+  width: 14px;
+  height: 14px;
+}
+
+.dash-demo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: var(--space-3);
+  margin-bottom: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.dash-demo-badge svg {
   width: 14px;
   height: 14px;
 }
@@ -1254,7 +1340,7 @@
   display: flex;
   align-items: flex-start;
   gap: var(--space-5);
-  padding: var(--space-7) var(--space-7);
+  padding: var(--space-6);
 }
 
 .dash-summary-icon {
@@ -1274,11 +1360,25 @@
   stroke: var(--color-primary);
 }
 
+/* Groups the summary text + disclaimer into a single flex item next
+   to the icon, so they always stack vertically as one column instead
+   of competing for width as three siblings in the same row (the
+   previous bug: text and disclaimer had no shared container, so a
+   row-flex layout tried to fit both beside the icon on one line,
+   causing them to overlap/crowd each other at most widths). */
+.dash-summary-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
 .dash-summary-text {
   font-size: var(--text-base);
   color: var(--color-text-secondary);
   line-height: var(--leading-relaxed);
-  margin: 0 0 var(--space-3);
+  margin: 0;
 }
 
 .dash-summary-disclaimer {
