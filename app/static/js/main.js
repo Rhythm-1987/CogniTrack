@@ -16,9 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ----------------------------------------------------------
      01. LUCIDE ICONS
   ---------------------------------------------------------- */
-  if (typeof lucide !== 'undefined') {
-    lucide.createIcons();
-  }
+  CT.renderIcons();
 
   /* ----------------------------------------------------------
      02. NAVBAR
@@ -65,7 +63,7 @@ function initNavbar() {
     toggle.setAttribute('aria-expanded', 'true');
     toggle.setAttribute('aria-label', 'Close navigation menu');
     toggleIcon.setAttribute('data-lucide', 'x');
-    if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+    CT.renderIcons();
   }
 
   function closeDrawer() {
@@ -74,7 +72,7 @@ function initNavbar() {
     toggle.setAttribute('aria-expanded', 'false');
     toggle.setAttribute('aria-label', 'Open navigation menu');
     toggleIcon.setAttribute('data-lucide', 'menu');
-    if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+    CT.renderIcons();
   }
 
   /* ---- Toggle on button click ---- */

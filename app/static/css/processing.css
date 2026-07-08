@@ -640,49 +640,6 @@
   animation-delay: 0.22s;
 }
 
-.proc-status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-5);
-  border-radius: var(--radius-pill);
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  border: 1.5px solid transparent;
-}
-
-.proc-status-pill__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.proc-status-pill__label {
-  letter-spacing: var(--tracking-wide);
-}
-
-.proc-status-pill--excellent {
-  background: var(--color-success-bg);
-  color: #15803D;
-  border-color: rgba(22, 163, 74, 0.30);
-}
-.proc-status-pill--excellent .proc-status-pill__dot { background: var(--color-success); }
-
-.proc-status-pill--good {
-  background: var(--proc-teal-bg);
-  color: var(--proc-teal-dark);
-  border-color: rgba(8, 145, 178, 0.28);
-}
-.proc-status-pill--good .proc-status-pill__dot { background: var(--proc-teal); }
-
-.proc-status-pill--needs-improvement {
-  background: var(--color-warning-bg);
-  color: #B45309;
-  border-color: rgba(245, 158, 11, 0.30);
-}
-.proc-status-pill--needs-improvement .proc-status-pill__dot { background: var(--color-warning); }
-
 /* Continue button — teal */
 .proc-continue-btn {
   display: inline-flex;

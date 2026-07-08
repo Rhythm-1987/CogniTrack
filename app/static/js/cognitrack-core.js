@@ -18,6 +18,50 @@
 
   var CT = {};
 
+  /* ══════════════════════════════════════════════════════════
+     SHARED RANDOMISATION UTILITIES
+     Used by every module that shuffles word/word-option lists
+     or needs a bounded random integer (memory, executive,
+     processing, visual), so the same Fisher-Yates + range logic
+     isn't reimplemented five times.
+  ══════════════════════════════════════════════════════════ */
+
+  CT.shuffle = function (arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  };
+
+  CT.randInt = function (min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  };
+
+  /* Renders every [data-lucide] icon on the page as an aria-hidden SVG.
+     All icons here are decorative — the interactive element they sit in
+     (a button, a link, a badge with visible text) already carries its
+     own accessible name, so the icon itself must never expose one. */
+  CT.renderIcons = function () {
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons({ attrs: { 'aria-hidden': 'true' } });
+    }
+  };
+
+  /* Linear count-up animation shared by every module's completion
+     summary card (memory, attention, executive, processing, visual). */
+  CT.animateCounter = function (el, target, duration) {
+    if (!el) { return; }
+    var dur   = duration || 900;
+    var begin = performance.now();
+    (function step(now) {
+      var p = Math.min((now - begin) / dur, 1);
+      el.textContent = Math.round(p * target);
+      if (p < 1) { requestAnimationFrame(step); }
+    }(performance.now()));
+  };
+
   /* ── Module order + URL / name maps ─────────────────────── */
   var MODULE_ORDER = ['memory', 'attention', 'executive', 'processing', 'spatial'];
 
@@ -478,15 +522,6 @@
     });
   };
 
-  /* True only if a demo dataset currently exists in the demo namespace.
-     Does NOT mean "the user is viewing the demo dashboard right now" —
-     dashboard.js decides that from the ?demo=1 URL param, so a stale
-     demo dataset sitting in storage can never make a plain /dashboard
-     visit render as a demo view. */
-  CT.hasDemoData = function () {
-    try { return sessionStorage.getItem(CT.DEMO_USER_KEY) !== null; } catch (e) { return false; }
-  };
-
   CT.loadDemoData = function () {
     CT.clearDemoData();
 
@@ -608,7 +643,7 @@
     document.body.appendChild(overlay);
 
     /* Render the Lucide icon injected above */
-    if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+    CT.renderIcons();
 
     /* Fade in */
     requestAnimationFrame(function () {

@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
       CT.lockButton(submitBtn);
     }
 
-    /* ── Submit natively (GET → /assessment with all form values) */
+    /* ── Submit natively (POST → /assessment/overview) ───────── */
     isSubmitting = true;
     form.submit();
   });

@@ -72,18 +72,8 @@ document.addEventListener('DOMContentLoaded', function () {
      UTILITIES
   ══════════════════════════════════════════════════════════ */
 
-  function shuffleArray(arr) {
-    var a = arr.slice();
-    for (var i = a.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var t = a[i]; a[i] = a[j]; a[j] = t;
-    }
-    return a;
-  }
-
-  function randInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
+  function shuffleArray(arr) { return CT.shuffle(arr); }
+  function randInt(min, max) { return CT.randInt(min, max); }
 
   /* ══════════════════════════════════════════════════════════
      SESSION INIT
@@ -95,15 +85,18 @@ document.addEventListener('DOMContentLoaded', function () {
       keyMap[i + 1] = shuffled[i];
     }
     questions = generateQuestions();
-    buildKeyBar(keyPreviewEl, false);
-    buildKeyBar(keyTestEl,    true);
+    buildKeyBar(keyPreviewEl);
+    buildKeyBar(keyTestEl);
   }
 
   /* ══════════════════════════════════════════════════════════
      KEY BAR BUILDER
+     Same markup for both the intro preview and the compact
+     in-test strip — the compact layout is CSS-only
+     (.proc-key-bar--compact on the container in processing.html).
   ══════════════════════════════════════════════════════════ */
 
-  function buildKeyBar(containerEl, compact) {
+  function buildKeyBar(containerEl) {
     var html = '';
     for (var n = 1; n <= 5; n++) {
       var sym  = keyMap[n];
@@ -116,7 +109,6 @@ document.addEventListener('DOMContentLoaded', function () {
         '</div>';
     }
     containerEl.innerHTML = html;
-    void compact;
   }
 
   /* ══════════════════════════════════════════════════════════
@@ -357,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     animateScore(perfStatusEl.querySelector('[data-target]'), score);
 
-    if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+    CT.renderIcons();
 
     goToPhase('summary');
 
@@ -399,15 +391,7 @@ document.addEventListener('DOMContentLoaded', function () {
     );
   }
 
-  function animateScore(el, target) {
-    if (!el) { return; }
-    var dur = 900; var begin = performance.now();
-    (function step(now) {
-      var p = Math.min((now - begin) / dur, 1);
-      el.textContent = Math.round(p * target);
-      if (p < 1) { requestAnimationFrame(step); }
-    }(performance.now()));
-  }
+  function animateScore(el, target) { CT.animateCounter(el, target); }
 
   /* ══════════════════════════════════════════════════════════
      SESSION RECOVERY

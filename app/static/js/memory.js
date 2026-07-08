@@ -125,18 +125,8 @@ document.addEventListener('DOMContentLoaded', function () {
      UTILITIES
   ══════════════════════════════════════════════════════════ */
 
-  function shuffleArray(arr) {
-    var a = arr.slice();
-    for (var i = a.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
-    }
-    return a;
-  }
-
-  function randInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
+  function shuffleArray(arr) { return CT.shuffle(arr); }
+  function randInt(min, max) { return CT.randInt(min, max); }
 
   /* ══════════════════════════════════════════════════════════
      SESSION INIT
@@ -486,19 +476,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* CSS counting animation for the score number */
-  function animateScore(el, target) {
-    if (!el) { return; }
-    var start   = 0;
-    var dur     = 900;
-    var begin   = performance.now();
-
-    function step(now) {
-      var p = Math.min((now - begin) / dur, 1);
-      el.textContent = Math.round(p * target);
-      if (p < 1) { requestAnimationFrame(step); }
-    }
-    requestAnimationFrame(step);
-  }
+  function animateScore(el, target) { CT.animateCounter(el, target); }
 
   /* ══════════════════════════════════════════════════════════
      SESSION RECOVERY

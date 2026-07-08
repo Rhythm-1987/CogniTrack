@@ -648,49 +648,6 @@
   animation-delay: 0.22s;
 }
 
-.vis-status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-5);
-  border-radius: var(--radius-pill);
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  border: 1.5px solid transparent;
-}
-
-.vis-status-pill__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.vis-status-pill__label {
-  letter-spacing: var(--tracking-wide);
-}
-
-.vis-status-pill--excellent {
-  background: var(--color-success-bg);
-  color: #15803D;
-  border-color: rgba(22, 163, 74, 0.30);
-}
-.vis-status-pill--excellent .vis-status-pill__dot { background: var(--color-success); }
-
-.vis-status-pill--good {
-  background: var(--vis-emerald-bg);
-  color: var(--vis-emerald-dark);
-  border-color: rgba(5, 150, 105, 0.28);
-}
-.vis-status-pill--good .vis-status-pill__dot { background: var(--vis-emerald); }
-
-.vis-status-pill--needs-improvement {
-  background: var(--color-warning-bg);
-  color: #B45309;
-  border-color: rgba(245, 158, 11, 0.30);
-}
-.vis-status-pill--needs-improvement .vis-status-pill__dot { background: var(--color-warning); }
-
 /* Continue button — emerald */
 .vis-continue-btn {
   display: inline-flex;

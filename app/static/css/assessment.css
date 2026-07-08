@@ -57,6 +57,11 @@
   z-index: 1;
 }
 
+/* Narrower variant for single-message pages (e.g. Assessment Complete) */
+.overview-header--narrow {
+  max-width: 560px;
+}
+
 
 /* ============================================================
    3. STEP INDICATOR
@@ -224,6 +229,11 @@
   gap: var(--space-5);
   position: relative;
   z-index: 1;
+}
+
+/* Extra top spacing when the CTA follows a header with no card in between */
+.overview-cta--spaced {
+  margin-top: 2.5rem;
 }
 
 .overview-cta__time {

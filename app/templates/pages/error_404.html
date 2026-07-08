@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found — CogniTrack{% endblock %}
+
+{% block meta_description %}The page you're looking for doesn't exist or may have moved. Return to CogniTrack home.{% endblock %}
+
+{% block content %}
+
+<section class="error-section" aria-label="Page Not Found">
+  <div class="container">
+    <div class="card card--glass error-card anim-fade-up">
+
+      <div class="error-card__icon" aria-hidden="true">
+        <i data-lucide="compass"></i>
+      </div>
+
+      <span class="badge badge--primary">404</span>
+
+      <h1 class="error-card__title">Page Not Found</h1>
+      <p class="error-card__sub">
+        The page you're looking for doesn't exist or may have moved.
+      </p>
+
+      <div class="error-card__actions">
+        <a href="{{ url_for('main.index') }}" class="btn btn--primary btn--lg btn--pill">
+          <i data-lucide="home"></i>
+          Back to Home
+        </a>
+        <a href="{{ url_for('assessment.hub') }}" class="btn btn--secondary btn--lg btn--pill">
+          <i data-lucide="brain"></i>
+          Start Assessment
+        </a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+{% endblock %}

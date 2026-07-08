@@ -97,14 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
        Slots 10–14 : 5 incongruent
   ══════════════════════════════════════════════════════════ */
 
-  function shuffleArray(arr) {
-    var a = arr.slice();
-    for (var i = a.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var t = a[i]; a[i] = a[j]; a[j] = t;
-    }
-    return a;
-  }
+  function shuffleArray(arr) { return CT.shuffle(arr); }
 
   function makeCongruent(color) {
     return { word: color.name, colorName: color.name, colorClass: color.cssClass, isCongruent: true };
@@ -299,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     animateScore(perfStatusEl.querySelector('[data-target]'), score);
 
-    if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+    CT.renderIcons();
 
     goToPhase('summary');
 
@@ -340,15 +333,7 @@ document.addEventListener('DOMContentLoaded', function () {
     );
   }
 
-  function animateScore(el, target) {
-    if (!el) { return; }
-    var dur = 900; var begin = performance.now();
-    (function step(now) {
-      var p = Math.min((now - begin) / dur, 1);
-      el.textContent = Math.round(p * target);
-      if (p < 1) { requestAnimationFrame(step); }
-    }(performance.now()));
-  }
+  function animateScore(el, target) { CT.animateCounter(el, target); }
 
   /* ══════════════════════════════════════════════════════════
      SESSION RECOVERY

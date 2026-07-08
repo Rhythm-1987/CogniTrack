@@ -8,19 +8,32 @@
    02. Global Reset
    03. Typography
    04. Layout — Body, Container, Section
-   05. Shadows
-   06. Buttons
-   07. Cards
-   08. Form Inputs & Labels
-   09. Badge
-   10. Progress Bar
-   11. Section Heading
-   12. Grid Utilities
-   13. Flex Utilities
-   14. Spacing Utilities
-   15. Animations & Transitions
-   16. Scrollbar
-   17. Responsive Breakpoints
+   05. Buttons
+   06. Cards
+   07. Form Inputs & Labels
+   08. Badge
+   09. Progress Bar
+   10. Section Heading
+   11. Spacing & Display Utilities
+   12. Animations & Transitions
+   13. Scrollbar
+   14. Responsive Breakpoints
+   15. Navbar
+   16. Footer
+   17. Stat Strip
+   18. Scroll Reveal
+   19. Module Transition Card
+   20. Confetti Canvas Overlay
+   21. Standardised Assessment Summary Card
+   22. User Trust Note
+   23. Memory Trial Badge & Trial-2 Word Card Variant
+   24. Expanded Spatial Reference Canvas
+   25. Button Loading Spinner & Locked State
+   26. Navbar Session Progress Indicator
+   27. Grand Finale Completion Portal
+   28. Domain Pills
+   29. Noscript Banner
+   30. 404 Error Page
    ============================================================ */
 
 
@@ -299,44 +312,10 @@ em {
 
 .text-xs      { font-size: var(--text-xs); }
 .text-sm      { font-size: var(--text-sm); }
-.text-base    { font-size: var(--text-base); }
-.text-md      { font-size: var(--text-md); }
-.text-lg      { font-size: var(--text-lg); }
-.text-xl      { font-size: var(--text-xl); }
-.text-2xl     { font-size: var(--text-2xl); }
-.text-3xl     { font-size: var(--text-3xl); }
 
-.text-primary   { color: var(--color-text-primary); }
-.text-secondary { color: var(--color-text-secondary); }
 .text-muted     { color: var(--color-text-muted); }
-.text-accent    { color: var(--color-primary); }
-.text-success   { color: var(--color-success); }
-.text-warning   { color: var(--color-warning); }
-.text-danger    { color: var(--color-danger); }
-
-.font-light     { font-weight: var(--font-light); }
-.font-regular   { font-weight: var(--font-regular); }
-.font-medium    { font-weight: var(--font-medium); }
-.font-semibold  { font-weight: var(--font-semibold); }
-.font-bold      { font-weight: var(--font-bold); }
-
-.font-display   { font-family: var(--font-display); }
-.font-body      { font-family: var(--font-body); }
 
 .text-center  { text-align: center; }
-.text-left    { text-align: left; }
-.text-right   { text-align: right; }
-
-.leading-tight   { line-height: var(--leading-tight); }
-.leading-normal  { line-height: var(--leading-normal); }
-.leading-relaxed { line-height: var(--leading-relaxed); }
-
-.tracking-tight  { letter-spacing: var(--tracking-tight); }
-.tracking-wide   { letter-spacing: var(--tracking-wide); }
-.tracking-wider  { letter-spacing: var(--tracking-wider); }
-
-.uppercase    { text-transform: uppercase; }
-.capitalize   { text-transform: capitalize; }
 
 
 /* ============================================================
@@ -354,31 +333,15 @@ em {
   max-width: 800px;
 }
 
-.container--wide {
-  max-width: 1440px;
-}
-
 section {
   padding-block: var(--space-16);
 }
 
-.section--sm  { padding-block: var(--space-8); }
 .section--lg  { padding-block: var(--space-24); }
 
 
 /* ============================================================
-   05. SHADOWS (utility classes)
-   ============================================================ */
-
-.shadow-soft   { box-shadow: var(--shadow-soft); }
-.shadow-md     { box-shadow: var(--shadow-md); }
-.shadow-lg     { box-shadow: var(--shadow-lg); }
-.shadow-primary{ box-shadow: var(--shadow-primary); }
-.shadow-none   { box-shadow: none; }
-
-
-/* ============================================================
-   06. BUTTONS
+   05. BUTTONS
    ============================================================ */
 
 .btn {
@@ -477,12 +440,6 @@ section {
   border-radius: var(--radius-pill);
 }
 
-/* Icon-only Button */
-.btn--icon {
-  padding: var(--space-3);
-  border-radius: var(--radius-md);
-}
-
 /* Disabled State */
 .btn:disabled,
 .btn[aria-disabled="true"] {
@@ -495,7 +452,7 @@ section {
 
 
 /* ============================================================
-   07. CARDS
+   06. CARDS
    ============================================================ */
 
 .card {
@@ -522,35 +479,6 @@ section {
   box-shadow: var(--shadow-lg);
 }
 
-.card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-4);
-}
-
-.card__title {
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: var(--font-semibold);
-  color: var(--color-text-primary);
-}
-
-.card__body {
-  color: var(--color-text-secondary);
-  font-size: var(--text-sm);
-  line-height: var(--leading-relaxed);
-}
-
-.card__footer {
-  margin-top: var(--space-5);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-border);
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
 /* Glass Card */
 .card--glass {
   background: rgba(255, 255, 255, 0.72);
@@ -571,7 +499,7 @@ section {
 
 
 /* ============================================================
-   08. FORM INPUTS & LABELS
+   07. FORM INPUTS & LABELS
    ============================================================ */
 
 .form-group {
@@ -642,20 +570,14 @@ section {
 }
 
 /* Input States */
-.input--error,
-.textarea--error {
+.input--error {
   border-color: var(--color-danger);
 }
 
-.input--error:focus,
-.textarea--error:focus {
+.input--error:focus {
   box-shadow:
     var(--shadow-inset),
     0 0 0 3px rgba(239, 68, 68, 0.12);
-}
-
-.input--success {
-  border-color: var(--color-success);
 }
 
 .form-hint {
@@ -681,7 +603,7 @@ section {
 
 
 /* ============================================================
-   09. BADGE
+   08. BADGE
    ============================================================ */
 
 .badge {
@@ -706,24 +628,21 @@ section {
   color: #16A34A;
 }
 
-.badge--warning {
-  background-color: var(--color-warning-bg);
-  color: #D97706;
-}
-
-.badge--danger {
-  background-color: var(--color-danger-bg);
-  color: #DC2626;
-}
-
 .badge--neutral {
   background-color: var(--color-surface-alt);
   color: var(--color-text-secondary);
 }
 
+/* Small tag badge nested inside another element (e.g. a button label) */
+.badge--inline-tag {
+  margin-left: 6px;
+  font-size: 10px;
+  padding: 2px 10px;
+}
+
 
 /* ============================================================
-   10. PROGRESS BAR
+   09. PROGRESS BAR
    ============================================================ */
 
 .progress {
@@ -760,24 +679,11 @@ section {
   animation: progress-shimmer 2s infinite;
 }
 
-.progress--success .progress__bar {
-  background: linear-gradient(90deg, var(--color-success), #4ADE80);
-}
-
-.progress--warning .progress__bar {
-  background: linear-gradient(90deg, var(--color-warning), #FCD34D);
-}
-
-.progress--danger .progress__bar {
-  background: linear-gradient(90deg, var(--color-danger), #F87171);
-}
-
 .progress--sm { height: 4px; }
-.progress--lg { height: 12px; }
 
 
 /* ============================================================
-   11. SECTION HEADING
+   10. SECTION HEADING
    ============================================================ */
 
 .section-heading {
@@ -821,140 +727,17 @@ section {
 
 
 /* ============================================================
-   12. GRID UTILITIES
+   11. SPACING & DISPLAY UTILITIES
    ============================================================ */
 
-.grid {
-  display: grid;
-  gap: var(--space-6);
-}
-
-.grid--cols-1 { grid-template-columns: repeat(1, 1fr); }
-.grid--cols-2 { grid-template-columns: repeat(2, 1fr); }
-.grid--cols-3 { grid-template-columns: repeat(3, 1fr); }
-.grid--cols-4 { grid-template-columns: repeat(4, 1fr); }
-.grid--cols-auto { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-
-.grid--gap-sm  { gap: var(--space-3); }
-.grid--gap-md  { gap: var(--space-6); }
-.grid--gap-lg  { gap: var(--space-8); }
-
-.col-span-2 { grid-column: span 2; }
-.col-span-3 { grid-column: span 3; }
-.col-full   { grid-column: 1 / -1; }
-
-
-/* ============================================================
-   13. FLEX UTILITIES
-   ============================================================ */
-
-.flex         { display: flex; }
-.inline-flex  { display: inline-flex; }
-.flex-col     { flex-direction: column; }
-.flex-wrap    { flex-wrap: wrap; }
-
-.items-start    { align-items: flex-start; }
-.items-center   { align-items: center; }
-.items-end      { align-items: flex-end; }
-.items-stretch  { align-items: stretch; }
-
-.justify-start    { justify-content: flex-start; }
-.justify-center   { justify-content: center; }
-.justify-end      { justify-content: flex-end; }
-.justify-between  { justify-content: space-between; }
-.justify-around   { justify-content: space-around; }
-
-.flex-1     { flex: 1 1 0%; }
-.flex-auto  { flex: 1 1 auto; }
-.flex-none  { flex: none; }
-
-.gap-1   { gap: var(--space-1); }
-.gap-2   { gap: var(--space-2); }
-.gap-3   { gap: var(--space-3); }
-.gap-4   { gap: var(--space-4); }
-.gap-5   { gap: var(--space-5); }
-.gap-6   { gap: var(--space-6); }
-.gap-8   { gap: var(--space-8); }
-.gap-12  { gap: var(--space-12); }
-
-
-/* ============================================================
-   14. SPACING UTILITIES
-   ============================================================ */
-
-/* Margin */
-.m-auto   { margin: auto; }
-.mx-auto  { margin-inline: auto; }
-
-.mt-1  { margin-top: var(--space-1); }
-.mt-2  { margin-top: var(--space-2); }
 .mt-3  { margin-top: var(--space-3); }
-.mt-4  { margin-top: var(--space-4); }
-.mt-5  { margin-top: var(--space-5); }
 .mt-6  { margin-top: var(--space-6); }
-.mt-8  { margin-top: var(--space-8); }
-.mt-12 { margin-top: var(--space-12); }
-.mt-16 { margin-top: var(--space-16); }
 
-.mb-1  { margin-bottom: var(--space-1); }
-.mb-2  { margin-bottom: var(--space-2); }
-.mb-3  { margin-bottom: var(--space-3); }
-.mb-4  { margin-bottom: var(--space-4); }
-.mb-5  { margin-bottom: var(--space-5); }
-.mb-6  { margin-bottom: var(--space-6); }
-.mb-8  { margin-bottom: var(--space-8); }
-.mb-12 { margin-bottom: var(--space-12); }
-.mb-16 { margin-bottom: var(--space-16); }
-
-/* Padding */
-.p-1   { padding: var(--space-1); }
-.p-2   { padding: var(--space-2); }
-.p-3   { padding: var(--space-3); }
-.p-4   { padding: var(--space-4); }
-.p-5   { padding: var(--space-5); }
-.p-6   { padding: var(--space-6); }
-.p-8   { padding: var(--space-8); }
-.p-12  { padding: var(--space-12); }
-
-.px-4  { padding-inline: var(--space-4); }
-.px-6  { padding-inline: var(--space-6); }
-.px-8  { padding-inline: var(--space-8); }
-
-.py-4  { padding-block: var(--space-4); }
-.py-6  { padding-block: var(--space-6); }
-.py-8  { padding-block: var(--space-8); }
-.py-12 { padding-block: var(--space-12); }
-.py-16 { padding-block: var(--space-16); }
-
-/* Width & Height */
-.w-full    { width: 100%; }
-.h-full    { height: 100%; }
-.min-h-screen { min-height: 100vh; }
-
-/* Display */
-.block        { display: block; }
-.inline-block { display: inline-block; }
-.hidden       { display: none; }
-
-/* Overflow */
-.overflow-hidden { overflow: hidden; }
-.overflow-auto   { overflow: auto; }
-
-/* Position */
-.relative { position: relative; }
-.absolute { position: absolute; }
-.sticky   { position: sticky; }
-
-/* Border Radius Utilities */
-.rounded-sm   { border-radius: var(--radius-sm); }
-.rounded-md   { border-radius: var(--radius-md); }
-.rounded-lg   { border-radius: var(--radius-lg); }
-.rounded-xl   { border-radius: var(--radius-xl); }
-.rounded-pill { border-radius: var(--radius-pill); }
+.w-full { width: 100%; }
 
 
 /* ============================================================
-   15. ANIMATIONS & TRANSITIONS
+   12. ANIMATIONS & TRANSITIONS
    ============================================================ */
 
 /* --- Keyframes --- */
@@ -967,33 +750,6 @@ section {
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
   }
 }
 
@@ -1015,18 +771,6 @@ section {
 
 .anim-fade-up {
   animation: fadeUp var(--transition-slow) both;
-}
-
-.anim-fade-in {
-  animation: fadeIn var(--transition-base) both;
-}
-
-.anim-scale-in {
-  animation: scaleIn var(--transition-base) cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.anim-slide-left {
-  animation: slideInLeft var(--transition-slow) both;
 }
 
 /* Stagger delays for lists/grids */
@@ -1060,7 +804,7 @@ section {
 
 
 /* ============================================================
-   16. SCROLLBAR
+   13. SCROLLBAR
    ============================================================ */
 
 /* Chrome / Edge / Safari */
@@ -1090,7 +834,7 @@ section {
 
 
 /* ============================================================
-   17. RESPONSIVE BREAKPOINTS
+   14. RESPONSIVE BREAKPOINTS
    ============================================================
    Mobile-first approach:
      Mobile  (default) — < 640px
@@ -1105,9 +849,6 @@ section {
     --container-pad: var(--space-8);
   }
 
-  .grid--cols-2-sm { grid-template-columns: repeat(2, 1fr); }
-  .grid--cols-3-sm { grid-template-columns: repeat(3, 1fr); }
-
   h1 { font-size: clamp(var(--text-3xl), 5vw, var(--text-5xl)); }
   h2 { font-size: clamp(var(--text-2xl), 4vw, var(--text-4xl)); }
   h3 { font-size: clamp(var(--text-xl),  3vw, var(--text-3xl)); }
@@ -1115,11 +856,6 @@ section {
   .section-heading__title {
     font-size: clamp(var(--text-2xl), 4vw, var(--text-4xl));
   }
-
-  .sm\:flex-row { flex-direction: row; }
-  .sm\:hidden   { display: none; }
-  .sm\:block    { display: block; }
-  .sm\:text-center { text-align: center; }
 }
 
 /* --- Desktop (≥ 1024px) --- */
@@ -1127,14 +863,6 @@ section {
   :root {
     --container-pad: var(--space-12);
   }
-
-  .grid--cols-2-lg { grid-template-columns: repeat(2, 1fr); }
-  .grid--cols-3-lg { grid-template-columns: repeat(3, 1fr); }
-  .grid--cols-4-lg { grid-template-columns: repeat(4, 1fr); }
-
-  .lg\:flex-row  { flex-direction: row; }
-  .lg\:hidden    { display: none; }
-  .lg\:block     { display: block; }
 }
 
 /* --- Wide (≥ 1280px) --- */
@@ -1150,17 +878,6 @@ section {
     padding-block: var(--space-12);
   }
 
-  .grid--cols-2,
-  .grid--cols-3,
-  .grid--cols-4 {
-    grid-template-columns: 1fr;
-  }
-
-  .col-span-2,
-  .col-span-3 {
-    grid-column: span 1;
-  }
-
   h1 { font-size: var(--text-3xl); }
   h2 { font-size: var(--text-2xl); }
   h3 { font-size: var(--text-xl); }
@@ -1172,15 +889,11 @@ section {
     padding: var(--space-3) var(--space-6);
     font-size: var(--text-base);
   }
-
-  .xs\:hidden  { display: none; }
-  .xs\:block   { display: block; }
-  .xs\:w-full  { width: 100%; }
 }
 
 
 /* ============================================================
-   18. NAVBAR
+   15. NAVBAR
    ============================================================ */
 
 /* ---- Shell ---- */
@@ -1422,7 +1135,7 @@ section {
 
 
 /* ============================================================
-   19. FOOTER
+   16. FOOTER
    ============================================================ */
 
 .footer {
@@ -1497,7 +1210,7 @@ section {
 
 
 /* ============================================================
-   20. STAT STRIP
+   17. STAT STRIP
    ============================================================ */
 
 .stat-strip {
@@ -1565,7 +1278,7 @@ section {
 
 
 /* ============================================================
-   21. SCROLL REVEAL  (driven by IntersectionObserver in main.js)
+   18. SCROLL REVEAL  (driven by IntersectionObserver in main.js)
    ============================================================ */
 
 .scroll-reveal {
@@ -1600,7 +1313,7 @@ section {
 
 
 /* ============================================================
-   22. MODULE TRANSITION CARD  (Sprint 4.1 — Decelerated)
+   19. MODULE TRANSITION CARD  (Sprint 4.1 — Decelerated)
    Full-screen overlay between assessment modules.
    Shown by CT.showTransitionCard() in cognitrack-core.js.
    Total sequence: ~2.7 s with domain accent colour switching.
@@ -1806,7 +1519,7 @@ section {
 
 
 /* ============================================================
-   23. CONFETTI CANVAS OVERLAY
+   20. CONFETTI CANVAS OVERLAY
    ============================================================ */
 
 .ct-confetti-canvas {
@@ -1818,7 +1531,7 @@ section {
 
 
 /* ============================================================
-   24. STANDARDISED ASSESSMENT SUMMARY CARD
+   21. STANDARDISED ASSESSMENT SUMMARY CARD
    Used on all 5 module completion screens.
    ============================================================ */
 
@@ -1940,7 +1653,7 @@ section {
 
 
 /* ============================================================
-   25. USER TRUST NOTE  (user.html)
+   22. USER TRUST NOTE  (user.html)
    ============================================================ */
 
 .user-trust-note {
@@ -1971,7 +1684,7 @@ section {
 
 
 /* ============================================================
-   26. MEMORY TRIAL BADGE & TRIAL-2 WORD CARD VARIANT
+   23. MEMORY TRIAL BADGE & TRIAL-2 WORD CARD VARIANT
    ============================================================ */
 
 .memory-trial-badge {
@@ -1988,7 +1701,7 @@ section {
 
 
 /* ============================================================
-   27. EXPANDED SPATIAL REFERENCE CANVAS
+   24. EXPANDED SPATIAL REFERENCE CANVAS
    ============================================================ */
 
 .vis-shape-card--lg {
@@ -2007,7 +1720,7 @@ section {
 
 
 /* ============================================================
-   28. BUTTON LOADING SPINNER & LOCKED STATE
+   25. BUTTON LOADING SPINNER & LOCKED STATE
    Applied instantly by CT.lockButton() on any activation of
    a navigation / submission button to block double-clicks.
    ============================================================ */
@@ -2036,7 +1749,7 @@ section {
 
 
 /* ============================================================
-   29. NAVBAR SESSION PROGRESS INDICATOR
+   26. NAVBAR SESSION PROGRESS INDICATOR
    Injected by initNavbarProgress() in main.js when the user
    has completed at least one assessment module.
    ============================================================ */
@@ -2076,7 +1789,7 @@ section {
 
 
 /* ============================================================
-   30. GRAND FINALE COMPLETION PORTAL
+   27. GRAND FINALE COMPLETION PORTAL
    Full-screen celebration shown by CT.showFinalePortal()
    after the Spatial Reasoning module completes.
    ============================================================ */
@@ -2216,7 +1929,7 @@ section {
 
 
 /* ============================================================
-   31. DOMAIN PILLS
+   28. DOMAIN PILLS
    Small colour-coded chips naming the five cognitive domains.
    Promoted here from user.css in Sprint 6.2 once the Assessment
    Hub page needed the same component — shared, not duplicated.
@@ -2249,3 +1962,73 @@ section {
 .domain-pill--emerald { background: rgba(5, 150, 105, 0.10);  color: #059669; }
 .domain-pill--amber   { background: rgba(217, 119, 6, 0.10);  color: #D97706; }
 .domain-pill--cyan    { background: rgba(8, 145, 178, 0.10);  color: #0891B2; }
+
+
+/* ============================================================
+   29. NOSCRIPT BANNER
+   ============================================================ */
+
+.noscript-banner {
+  background: var(--color-warning-bg);
+  color: #92400E;
+  text-align: center;
+  padding: var(--space-4) var(--container-pad);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+}
+
+
+/* ============================================================
+   30. 404 ERROR PAGE
+   ============================================================ */
+
+.error-section {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  padding: var(--space-16) 0;
+}
+
+.error-card {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-8);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.error-card__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(37, 99, 235, 0.1);
+  margin-bottom: var(--space-6);
+}
+
+.error-card__icon svg { width: 28px; height: 28px; stroke: var(--color-primary); }
+
+.error-card__title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-extrabold);
+  color: var(--color-text-primary);
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.error-card__sub {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-8);
+}
+
+.error-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+}

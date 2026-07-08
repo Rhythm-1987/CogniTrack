@@ -1095,7 +1095,7 @@
   }
 
   function refreshIcons() {
-    if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    if (typeof CT !== 'undefined') { CT.renderIcons(); }
   }
 
   /* Retaking must always start clean. From a REAL dashboard that

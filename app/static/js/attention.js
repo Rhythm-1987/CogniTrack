@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     animateScore(perfStatusEl.querySelector('[data-target]'), score);
 
-    if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+    CT.renderIcons();
 
     /* Persist standardised session */
     if (typeof CT !== 'undefined') {
@@ -322,15 +322,7 @@ document.addEventListener('DOMContentLoaded', function () {
     );
   }
 
-  function animateScore(el, target) {
-    if (!el) { return; }
-    var dur = 900; var begin = performance.now();
-    (function step(now) {
-      var p = Math.min((now - begin) / dur, 1);
-      el.textContent = Math.round(p * target);
-      if (p < 1) { requestAnimationFrame(step); }
-    }(performance.now()));
-  }
+  function animateScore(el, target) { CT.animateCounter(el, target); }
 
   /* ══════════════════════════════════════════════════════════
      SESSION RECOVERY
