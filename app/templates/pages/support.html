@@ -24,6 +24,10 @@
 
     <div class="card legal-card scroll-reveal">
       <div class="legal-prose">
+        <p>
+          CogniTrack is a hackathon prototype, so a few things work differently than a
+          finished product would. Here are the questions people ask most.
+        </p>
         <h2>Frequently Asked Questions</h2>
       </div>
 
@@ -87,6 +91,43 @@
             No. CogniTrack is for informational and self-insight purposes only — not a
             diagnostic or clinical tool. See our <a href="{{ url_for('main.terms') }}">Terms of Use</a>
             for details.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <p class="faq-item__q">Does CogniTrack work on my phone or tablet?</p>
+          <p class="faq-item__a">
+            Yes — every page is responsive and the assessments work on modern mobile browsers.
+            For the reaction-time and timed modules, a larger screen and a physical keyboard
+            can make responses slightly faster and more consistent, but nothing is blocked
+            on mobile.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <p class="faq-item__q">Do I need to install anything or create an internet connection mid-test?</p>
+          <p class="faq-item__a">
+            No installation — CogniTrack runs entirely in your browser. You do need an
+            internet connection to load the page initially (it pulls fonts and icons from a
+            CDN), but once a page has loaded, the assessment logic itself runs locally.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <p class="faq-item__q">Can I retake an assessment or take it more than once?</p>
+          <p class="faq-item__a">
+            Yes. "Retake Assessment" on your dashboard clears your current session data and
+            sends you back to Memory Recall for a fresh run. Each attempt overwrites the
+            previous one — there's no history log across multiple attempts yet.
+          </p>
+        </div>
+
+        <div class="faq-item">
+          <p class="faq-item__q">Can I download or print my results?</p>
+          <p class="faq-item__a">
+            Not yet. "Download Report" is visible on the dashboard as a preview of what's
+            coming, but it's disabled in this prototype. You can still screenshot or print
+            the dashboard page directly from your browser in the meantime.
           </p>
         </div>
 

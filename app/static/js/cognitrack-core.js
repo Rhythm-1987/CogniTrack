@@ -700,6 +700,7 @@
     portal.setAttribute('role', 'dialog');
     portal.setAttribute('aria-modal', 'true');
     portal.setAttribute('aria-label', 'All Assessments Complete');
+    portal.setAttribute('tabindex', '-1');
 
     portal.innerHTML =
       '<div class="ct-finale-inner">' +
@@ -737,6 +738,11 @@
       '</div>';
 
     document.body.appendChild(portal);
+
+    /* Move focus into the dialog so screen readers announce it —
+       there's nothing interactive inside (it auto-navigates away),
+       so a full focus trap isn't needed, just the initial landing. */
+    portal.focus();
 
     /* Fade in */
     requestAnimationFrame(function () {

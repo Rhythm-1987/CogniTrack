@@ -35,6 +35,8 @@
 
 <body>
 
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
   <noscript>
     <div class="noscript-banner" role="alert">
       CogniTrack requires JavaScript to run its assessments and dashboard. Please enable JavaScript in your browser to continue.
@@ -45,7 +47,7 @@
   {% include 'navbar.html' %}
 
   <!-- Primary Content -->
-  <main>
+  <main id="main-content">
     {% block content %}{% endblock %}
   </main>
 

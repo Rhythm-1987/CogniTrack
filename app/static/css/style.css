@@ -70,9 +70,11 @@
   --color-info:           #0EA5E9;
   --color-info-bg:        #F0F9FF;
 
-  /* --- Typography --- */
-  --font-display:   'Poppins', sans-serif;
-  --font-body:      'Inter', sans-serif;
+  /* --- Typography ---
+     System-font fallback stack so text keeps a native, legible look
+     while Poppins/Inter load (or if the Google Fonts request fails). */
+  --font-display:   'Poppins', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-body:      'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   --text-xs:    0.75rem;    /* 12px */
   --text-sm:    0.875rem;   /* 14px */
@@ -239,6 +241,25 @@ hr {
   border: none;
   border-top: 1px solid var(--color-border);
   margin: var(--space-6) 0;
+}
+
+/* Skip-to-content link — off-screen until focused, so keyboard users
+   tabbing from the top of the page can jump past the navbar. */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--space-4);
+  z-index: var(--z-toast);
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  font-weight: var(--font-semibold);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  transition: top var(--transition-fast);
+}
+
+.skip-link:focus {
+  top: var(--space-4);
 }
 
 
@@ -987,6 +1008,12 @@ section {
   background-color: var(--color-surface-alt);
 }
 
+.nav-link:focus-visible,
+.brand:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
 .nav-link.is-active {
   color: var(--color-primary);
   font-weight: var(--font-semibold);
@@ -1050,6 +1077,11 @@ section {
   color: var(--color-text-primary);
 }
 
+.hamburger:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .hamburger svg {
   width: 1.25rem;
   height: 1.25rem;
@@ -1105,6 +1137,11 @@ section {
 .mobile-nav__link.is-active {
   background-color: var(--color-surface-alt);
   color: var(--color-primary);
+}
+
+.mobile-nav__link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 
 .mobile-menu__cta {
@@ -1183,6 +1220,12 @@ section {
 
 .footer__link:hover {
   color: var(--color-primary);
+}
+
+.footer__link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
 }
 
 .footer__bottom {
@@ -1804,6 +1847,7 @@ section {
   background: linear-gradient(135deg, #0F172A 0%, #1C3458 55%, #0F172A 100%);
   opacity: 0;
   transition: opacity 450ms ease;
+  outline: none; /* focused programmatically on open, not via pointer/keyboard */
 }
 
 .ct-finale-portal.is-visible {
