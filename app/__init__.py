@@ -1,6 +1,9 @@
 from flask import Flask, render_template, request
 
 from .config import Config
+from .core.database import db
+from .core.extensions import migrate
+from .core.security import login_manager
 
 # Every page in a given section of the app, used to drive a single
 # nav_section value the navbar highlights against — one source of
@@ -16,13 +19,21 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
+    db.init_app(app)
+    migrate.init_app(app, db)
+    login_manager.init_app(app)
+
+    from . import models  # noqa: F401 — registers models on db.metadata for migrations
+
     from .routes.main import main_bp
     from .routes.assessment import assessment_bp
     from .routes.dashboard import dashboard_bp
+    from .routes.auth import auth_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(assessment_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(auth_bp)
 
     @app.context_processor
     def inject_nav_section():

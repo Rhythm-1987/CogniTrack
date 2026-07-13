@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Profile — CogniTrack{% endblock %}
+
+{% block meta_description %}Your CogniTrack account overview.{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     PROFILE — guarded by @login_required (flask_login)
+     See app/routes/auth.py. Reflects the real persisted User +
+     Profile rows for current_user.
+============================================================ -->
+<section aria-label="Profile">
+  <div class="container container--narrow">
+    <div class="card anim-fade-up">
+
+      <div class="section-heading">
+        <span class="section-heading__eyebrow">
+          <i data-lucide="user-round" aria-hidden="true"></i>
+          Account
+        </span>
+        <h1 class="section-heading__title">Your Profile</h1>
+        <p class="section-heading__subtitle">
+          Account details on file for {{ current_user.email }}.
+        </p>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <span class="label">Name</span>
+          <p>{{ current_user.profile.full_name if current_user.profile and current_user.profile.full_name else '—' }}</p>
+        </div>
+
+        <div class="form-group">
+          <span class="label">Email</span>
+          <p>{{ current_user.email }}</p>
+        </div>
+
+        <div class="form-group">
+          <span class="label">Age</span>
+          <p>{{ current_user.profile.age if current_user.profile and current_user.profile.age else '—' }}</p>
+        </div>
+
+        <div class="form-group">
+          <span class="label">Gender</span>
+          <p>{{ current_user.profile.gender if current_user.profile and current_user.profile.gender else '—' }}</p>
+        </div>
+
+        <div class="form-group">
+          <span class="label">Education</span>
+          <p>{{ current_user.profile.education if current_user.profile and current_user.profile.education else '—' }}</p>
+        </div>
+
+        <div class="form-group">
+          <span class="label">Dominant Hand</span>
+          <p>{{ current_user.profile.dominant_hand if current_user.profile and current_user.profile.dominant_hand else '—' }}</p>
+        </div>
+
+        <div class="form-group">
+          <span class="label">Registration Date</span>
+          <p>{{ current_user.created_at.strftime('%B %d, %Y') if current_user.created_at else '—' }}</p>
+        </div>
+
+        <div class="form-group">
+          <span class="label">Last Login</span>
+          <p>{{ current_user.last_login.strftime('%B %d, %Y %H:%M UTC') if current_user.last_login else '—' }}</p>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <a href="{{ url_for('auth.logout') }}" class="btn btn--secondary">
+          <i data-lucide="log-out"></i>
+          Log Out
+        </a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+{% endblock %}

@@ -34,6 +34,7 @@
    28. Domain Pills
    29. Noscript Banner
    30. 404 Error Page
+   31. Flash Messages
    ============================================================ */
 
 
@@ -2075,4 +2076,102 @@ section {
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--space-3);
+}
+
+
+/* ============================================================
+   31. FLASH MESSAGES
+   Rendered in base.html from Flask's get_flashed_messages(), so
+   this lives in the global stylesheet rather than auth.css —
+   auth is the first feature to use it, but any route can flash.
+   Behaviour → static/js/main.js § initFlashMessages()
+   ============================================================ */
+
+.flash-stack {
+  position: fixed;
+  top: calc(4.5rem + var(--space-4));
+  right: var(--space-4);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: min(360px, calc(100vw - var(--space-8)));
+}
+
+.flash {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  animation: fadeUp var(--transition-base) both;
+  transition: opacity var(--transition-base), transform var(--transition-base);
+}
+
+.flash--closing {
+  opacity: 0;
+  transform: translateX(12px);
+}
+
+.flash svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.flash span {
+  flex: 1;
+  line-height: var(--leading-normal);
+}
+
+.flash__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.flash__close:hover {
+  background-color: var(--color-surface-alt);
+  color: var(--color-text-primary);
+}
+
+.flash__close:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.flash__close svg {
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.flash--success { border-left-color: var(--color-success); }
+.flash--success svg { color: var(--color-success); }
+
+.flash--danger { border-left-color: var(--color-danger); }
+.flash--danger svg { color: var(--color-danger); }
+
+.flash--info { border-left-color: var(--color-info); }
+.flash--info svg { color: var(--color-info); }
+
+@media (max-width: 639px) {
+  .flash-stack {
+    left: var(--space-4);
+    right: var(--space-4);
+    width: auto;
+  }
 }

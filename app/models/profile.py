@@ -1,0 +1,18 @@
+from ..core.database import db
+
+
+class Profile(db.Model):
+    __tablename__ = 'profiles'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), unique=True, nullable=False
+    )
+
+    full_name = db.Column(db.String(120), nullable=True)
+    age = db.Column(db.Integer, nullable=True)
+    gender = db.Column(db.String(30), nullable=True)
+    education = db.Column(db.String(50), nullable=True)
+    dominant_hand = db.Column(db.String(20), nullable=True)
+
+    user = db.relationship('User', back_populates='profile')

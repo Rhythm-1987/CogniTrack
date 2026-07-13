@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Log In — CogniTrack{% endblock %}
+
+{% block meta_description %}Log in to your CogniTrack account to view your cognitive assessment history and personalised dashboard.{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     LOG IN
+============================================================ -->
+<section class="auth-section" aria-label="Log In">
+  <div class="container">
+
+    <div class="auth-card anim-fade-up">
+
+      <div class="auth-card__header">
+        <div class="auth-card__icon" aria-hidden="true">
+          <i data-lucide="log-in"></i>
+        </div>
+        <h1 class="auth-card__title">Welcome Back</h1>
+        <p class="auth-card__subtitle">
+          Log in to view your cognitive assessment history and dashboard.
+        </p>
+      </div>
+
+      <form class="auth-form" id="login-form" action="{{ url_for('auth.login') }}" method="post" novalidate>
+        <input type="hidden" name="next" value="{{ request.args.get('next', '') }}" />
+
+        <div class="form-group">
+          <label class="label label--required" for="login-email">Email Address</label>
+          <input
+            class="input"
+            type="email"
+            id="login-email"
+            name="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="label label--required" for="login-password">Password</label>
+          <div class="auth-password-field">
+            <input
+              class="input"
+              type="password"
+              id="login-password"
+              name="password"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              required
+            />
+            <button
+              type="button"
+              class="auth-password-toggle"
+              data-password-toggle="login-password"
+              aria-label="Show password"
+              aria-pressed="false"
+            >
+              <i data-lucide="eye" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn--primary btn--lg btn--pill w-full">
+          Log In
+          <i data-lucide="arrow-right"></i>
+        </button>
+      </form>
+
+      <p class="auth-card__footer">
+        Don't have an account?
+        <a href="{{ url_for('auth.register') }}" class="auth-link">Create one</a>
+      </p>
+
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}

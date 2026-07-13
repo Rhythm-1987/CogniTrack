@@ -46,6 +46,21 @@
             Dashboard
           </a>
         </li>
+        {% if current_user.is_authenticated %}
+          <li>
+            <a href="{{ url_for('auth.profile') }}" class="nav-link">Profile</a>
+          </li>
+          <li>
+            <a href="{{ url_for('auth.logout') }}" class="nav-link">Logout</a>
+          </li>
+        {% else %}
+          <li>
+            <a href="{{ url_for('auth.login') }}" class="nav-link">Login</a>
+          </li>
+          <li>
+            <a href="{{ url_for('auth.register') }}" class="nav-link">Register</a>
+          </li>
+        {% endif %}
       </ul>
 
       <!-- Right: Primary CTA + Hamburger -->
@@ -96,6 +111,21 @@
             Dashboard
           </a>
         </li>
+        {% if current_user.is_authenticated %}
+          <li>
+            <a href="{{ url_for('auth.profile') }}" class="mobile-nav__link">Profile</a>
+          </li>
+          <li>
+            <a href="{{ url_for('auth.logout') }}" class="mobile-nav__link">Logout</a>
+          </li>
+        {% else %}
+          <li>
+            <a href="{{ url_for('auth.login') }}" class="mobile-nav__link">Login</a>
+          </li>
+          <li>
+            <a href="{{ url_for('auth.register') }}" class="mobile-nav__link">Register</a>
+          </li>
+        {% endif %}
       </ul>
 
       <div class="mobile-menu__cta">

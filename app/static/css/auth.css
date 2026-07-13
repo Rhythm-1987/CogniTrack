@@ -1,0 +1,254 @@
+/* ============================================================
+   CogniTrack — auth.css  (Login & Register Pages Only)
+   Depends on style.css design tokens + shared components
+   (.card-equivalent surfaces, .btn, .input, .form-group, .label,
+   .input--error, .form-error, .form-hint) — layout and
+   auth-specific components only, nothing duplicated here.
+   ============================================================
+   Table of Contents
+   ----------------------------------------------------------
+   01. Auth Section & Card Shell
+   02. Card Header
+   03. Form Layout
+   04. Password Field & Visibility Toggle
+   05. Password Strength Meter
+   06. Checkbox
+   07. Links & Footer
+   08. Responsive
+   ============================================================ */
+
+
+/* ============================================================
+   01. AUTH SECTION & CARD SHELL
+   ============================================================ */
+
+.auth-section {
+  min-height: calc(100vh - 4.5rem);
+  display: flex;
+  align-items: center;
+  background: linear-gradient(160deg, var(--color-bg) 0%, #eff6ff 55%, var(--color-bg) 100%);
+  padding-block: var(--space-12);
+}
+
+.auth-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-12);
+  box-shadow: var(--shadow-lg);
+  max-width: 440px;
+  width: 100%;
+  margin-inline: auto;
+}
+
+
+/* ============================================================
+   02. CARD HEADER
+   ============================================================ */
+
+.auth-card__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-8);
+}
+
+.auth-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-pill);
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--color-primary);
+}
+
+.auth-card__icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.auth-card__title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-extrabold);
+  color: var(--color-text-primary);
+  letter-spacing: var(--tracking-tight);
+}
+
+.auth-card__subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+
+/* ============================================================
+   03. FORM LAYOUT
+   ============================================================ */
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+
+/* ============================================================
+   04. PASSWORD FIELD & VISIBILITY TOGGLE
+   ============================================================ */
+
+.auth-password-field {
+  position: relative;
+}
+
+.auth-password-field .input {
+  padding-right: var(--space-12);
+}
+
+.auth-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: var(--space-2);
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  transition:
+    color            var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.auth-password-toggle:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-alt);
+}
+
+.auth-password-toggle:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.auth-password-toggle svg {
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+}
+
+
+/* ============================================================
+   05. PASSWORD STRENGTH METER
+   ============================================================ */
+
+.auth-strength {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.auth-strength__track {
+  flex: 1;
+  height: 4px;
+  background-color: var(--color-surface-alt);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.auth-strength__bar {
+  height: 100%;
+  width: 0%;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-border-strong);
+  transition:
+    width            var(--transition-base),
+    background-color var(--transition-base);
+}
+
+.auth-strength__bar[data-level="weak"]   { width: 33%;  background-color: var(--color-danger); }
+.auth-strength__bar[data-level="fair"]   { width: 66%;  background-color: var(--color-warning); }
+.auth-strength__bar[data-level="strong"] { width: 100%; background-color: var(--color-success); }
+
+.auth-strength__label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+
+/* ============================================================
+   06. CHECKBOX
+   ============================================================ */
+
+.auth-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-normal);
+  cursor: pointer;
+}
+
+.auth-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  accent-color: var(--color-primary);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+
+/* ============================================================
+   07. LINKS & FOOTER
+   ============================================================ */
+
+.auth-link {
+  color: var(--color-primary);
+  font-weight: var(--font-medium);
+}
+
+.auth-link:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
+}
+
+.auth-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.auth-card__footer {
+  margin-top: var(--space-8);
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+
+/* ============================================================
+   08. RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 639px) {
+  .auth-section {
+    align-items: flex-start;
+    padding-block: var(--space-8);
+  }
+
+  .auth-card {
+    padding: var(--space-8) var(--space-6);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+  }
+}

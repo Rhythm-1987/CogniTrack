@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account — CogniTrack{% endblock %}
+
+{% block meta_description %}Create a free CogniTrack account to save your cognitive assessment results and track your progress over time.{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     CREATE ACCOUNT
+============================================================ -->
+<section class="auth-section" aria-label="Create Account">
+  <div class="container">
+
+    <div class="auth-card anim-fade-up">
+
+      <div class="auth-card__header">
+        <div class="auth-card__icon" aria-hidden="true">
+          <i data-lucide="user-plus"></i>
+        </div>
+        <h1 class="auth-card__title">Create Your Account</h1>
+        <p class="auth-card__subtitle">
+          Save your results and track your cognitive baseline over time.
+        </p>
+      </div>
+
+      <form class="auth-form" id="register-form" action="{{ url_for('auth.register') }}" method="post" novalidate>
+
+        <div class="form-group">
+          <label class="label label--required" for="register-name">Full Name</label>
+          <input
+            class="input"
+            type="text"
+            id="register-name"
+            name="full_name"
+            placeholder="e.g. Alex Johnson"
+            autocomplete="name"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="label label--required" for="register-email">Email Address</label>
+          <input
+            class="input"
+            type="email"
+            id="register-email"
+            name="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="label label--required" for="register-password">Password</label>
+          <div class="auth-password-field">
+            <input
+              class="input"
+              type="password"
+              id="register-password"
+              name="password"
+              placeholder="Create a password"
+              autocomplete="new-password"
+              minlength="8"
+              required
+            />
+            <button
+              type="button"
+              class="auth-password-toggle"
+              data-password-toggle="register-password"
+              aria-label="Show password"
+              aria-pressed="false"
+            >
+              <i data-lucide="eye" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="auth-strength" data-strength-meter>
+            <div class="auth-strength__track">
+              <div class="auth-strength__bar" data-strength-bar></div>
+            </div>
+            <span class="auth-strength__label" data-strength-label>Password strength</span>
+          </div>
+          <p class="form-hint">At least 8 characters, with a mix of letters, numbers &amp; symbols.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="label label--required" for="register-confirm-password">Confirm Password</label>
+          <div class="auth-password-field">
+            <input
+              class="input"
+              type="password"
+              id="register-confirm-password"
+              name="confirm_password"
+              placeholder="Re-enter your password"
+              autocomplete="new-password"
+              required
+            />
+            <button
+              type="button"
+              class="auth-password-toggle"
+              data-password-toggle="register-confirm-password"
+              aria-label="Show password"
+              aria-pressed="false"
+            >
+              <i data-lucide="eye" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+
+        <label class="auth-checkbox">
+          <input type="checkbox" id="register-terms" name="agree_terms" required />
+          <span>
+            I agree to the
+            <a href="{{ url_for('main.terms') }}" class="auth-link">Terms</a>
+            and
+            <a href="{{ url_for('main.privacy') }}" class="auth-link">Privacy Policy</a>
+          </span>
+        </label>
+
+        <button type="submit" class="btn btn--primary btn--lg btn--pill w-full">
+          Create Account
+          <i data-lucide="arrow-right"></i>
+        </button>
+      </form>
+
+      <p class="auth-card__footer">
+        Already have an account?
+        <a href="{{ url_for('auth.login') }}" class="auth-link">Log in</a>
+      </p>
+
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}

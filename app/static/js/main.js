@@ -8,6 +8,8 @@
    01. Lucide Icons  — initialise all [data-lucide] elements
    02. Navbar        — scroll shadow + mobile drawer
    03. Scroll Reveal — IntersectionObserver for .scroll-reveal elements
+   04. Navbar Session Progress Indicator
+   05. Flash Messages
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -32,6 +34,11 @@ document.addEventListener('DOMContentLoaded', function () {
      04. NAVBAR SESSION PROGRESS INDICATOR
   ---------------------------------------------------------- */
   initNavbarProgress();
+
+  /* ----------------------------------------------------------
+     05. FLASH MESSAGES
+  ---------------------------------------------------------- */
+  initFlashMessages();
 
 });
 
@@ -184,4 +191,34 @@ function initScrollReveal() {
   });
 
   items.forEach(function (el) { observer.observe(el); });
+}
+
+
+/* ============================================================
+   initFlashMessages()
+   Wires the dismiss button on each server-rendered .flash and
+   auto-dismisses after 6s (paused on hover/focus so a message
+   isn't lost mid-read).
+   Reads/writes: .flash, .flash__close  → .flash--closing
+============================================================ */
+function initFlashMessages() {
+  document.querySelectorAll('.flash').forEach(function (el) {
+    var timer = window.setTimeout(function () { dismiss(el); }, 6000);
+
+    el.addEventListener('mouseenter', function () { window.clearTimeout(timer); });
+    el.addEventListener('focusin', function () { window.clearTimeout(timer); });
+
+    var closeBtn = el.querySelector('[data-flash-close]');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function () {
+        window.clearTimeout(timer);
+        dismiss(el);
+      });
+    }
+  });
+
+  function dismiss(el) {
+    el.classList.add('flash--closing');
+    el.addEventListener('transitionend', function () { el.remove(); }, { once: true });
+  }
 }

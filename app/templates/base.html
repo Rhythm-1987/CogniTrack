@@ -46,6 +46,24 @@
   <!-- Navigation -->
   {% include 'navbar.html' %}
 
+  <!-- Flash Messages — styles → static/css/style.css § 31. FLASH MESSAGES
+       behaviour → static/js/main.js § initFlashMessages() -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-stack" role="status" aria-live="polite">
+        {% for category, message in messages %}
+          <div class="flash flash--{{ category }}">
+            <i data-lucide="{{ 'check-circle' if category == 'success' else 'alert-triangle' if category == 'danger' else 'info' }}" aria-hidden="true"></i>
+            <span>{{ message }}</span>
+            <button type="button" class="flash__close" aria-label="Dismiss message" data-flash-close>
+              <i data-lucide="x" aria-hidden="true"></i>
+            </button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
   <!-- Primary Content -->
   <main id="main-content">
     {% block content %}{% endblock %}
