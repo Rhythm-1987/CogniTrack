@@ -41,6 +41,20 @@
   margin-inline: auto;
 }
 
+/* Register's card carries the extra demographic fields (Part 2, Sprint
+   7.4.5) — wider than the plain Login card so the two-column .form-grid
+   inside it doesn't feel cramped. */
+.auth-card--wide {
+  max-width: 620px;
+}
+
+.auth-section-label {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-5);
+}
+
 
 /* ============================================================
    02. CARD HEADER

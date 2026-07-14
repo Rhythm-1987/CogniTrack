@@ -1,15 +1,16 @@
 <!-- ============================================================
      Navbar — CogniTrack
      Sticky, responsive navigation with mobile drawer.
-     Styles  → static/css/style.css  § 18. NAVBAR
+     Styles  → static/css/style.css  § 18. NAVBAR, § 26. NAVBAR DROPDOWNS
      Behaviour → static/js/main.js   § 02. initNavbar()
-                                     § initProfileMenu()
+                                     § initDropdownMenu()
      Active state → nav_section, injected by a context processor
      in app/__init__.py from request.path (one source of truth
      instead of each link re-deriving it).
 
      Auth-aware links (single source of truth = current_user):
-       Logged out → Home · Assessment · Dashboard · Login · Register
+       Logged out → Home · Assessment · Dashboard · [Account ▾]
+                    (Account opens Create Account / Sign In)
        Logged in  → Home · Assessment · Dashboard · Profile avatar
      No "Start Assessment" CTA and no in-navbar progress indicator —
      starting/resuming an assessment lives only in the Assessment Hub.
@@ -56,17 +57,9 @@
             Dashboard
           </a>
         </li>
-        {% if not current_user.is_authenticated %}
-          <li>
-            <a href="{{ url_for('auth.login') }}" class="nav-link">Login</a>
-          </li>
-          <li>
-            <a href="{{ url_for('auth.register') }}" class="nav-link">Register</a>
-          </li>
-        {% endif %}
       </ul>
 
-      <!-- Right: Profile avatar (auth only) + Hamburger -->
+      <!-- Right: Profile avatar / Account menu + Hamburger -->
       <div class="nav-actions">
         {% if current_user.is_authenticated %}
           <div class="nav-profile" id="nav-profile">
@@ -99,6 +92,27 @@
                   Logout
                 </button>
               </form>
+            </div>
+          </div>
+        {% else %}
+          <div class="nav-account" id="nav-account">
+            <button class="nav-account__trigger"
+                    id="nav-account-trigger"
+                    type="button"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                    aria-controls="nav-account-menu">
+              <i data-lucide="user" aria-hidden="true"></i>
+              <span>Account</span>
+              <i data-lucide="chevron-down" class="nav-account__chevron" aria-hidden="true"></i>
+            </button>
+            <div class="nav-account__menu" id="nav-account-menu" role="menu" aria-hidden="true">
+              <a href="{{ url_for('auth.register') }}" class="btn btn--primary btn--sm nav-account__cta" role="menuitem">
+                Create Account
+              </a>
+              <a href="{{ url_for('auth.login') }}" class="nav-account__signin" role="menuitem">
+                Already have an account? <strong>Sign In</strong>
+              </a>
             </div>
           </div>
         {% endif %}
@@ -155,11 +169,10 @@
             </form>
           </li>
         {% else %}
-          <li>
-            <a href="{{ url_for('auth.login') }}" class="mobile-nav__link">Login</a>
-          </li>
-          <li>
-            <a href="{{ url_for('auth.register') }}" class="mobile-nav__link">Register</a>
+          <li class="mobile-nav__account">
+            <span class="mobile-nav__account-label">Account</span>
+            <a href="{{ url_for('auth.register') }}" class="btn btn--primary btn--pill w-full">Create Account</a>
+            <a href="{{ url_for('auth.login') }}" class="mobile-nav__link mobile-nav__signin">Already have an account? <strong>Sign In</strong></a>
           </li>
         {% endif %}
       </ul>

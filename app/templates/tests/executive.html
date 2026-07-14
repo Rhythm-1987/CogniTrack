@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Executive Function — CogniTrack{% endblock %}
+{% block title %}Decision Making — CogniTrack{% endblock %}
 
 {% block meta_description %}CogniTrack's Stroop Colour Test — measures inhibitory control and cognitive flexibility under interference.{% endblock %}
 
@@ -11,9 +11,9 @@
 {% block content %}
 
 <!-- ============================================================
-     EXECUTIVE FUNCTION — Step 5 of 7 — Stroop Colour Test
+     DECISION MAKING — Step 5 of 7 — Stroop Colour Test
 ============================================================ -->
-<section class="executive-section" aria-label="Executive Function Assessment">
+<section class="executive-section" aria-label="Decision Making Assessment">
   <div class="container container--narrow">
 
     <!-- ── Phase Progress Strip ────────────────────────────── -->
@@ -48,7 +48,7 @@
         </div>
 
         <div class="exec-card__badge">
-          <span class="badge badge--orange">Executive Function</span>
+          <span class="badge badge--orange">Decision Making</span>
         </div>
 
         <h1 class="exec-card__title">Stroop Colour Test</h1>
@@ -159,7 +159,7 @@
 
         <span class="badge badge--success exec-complete-badge">Assessment Complete</span>
 
-        <h2 class="exec-card__title">Executive Function Complete</h2>
+        <h2 class="exec-card__title">Decision Making Complete</h2>
 
         <p class="exec-card__lead">
           Your inhibitory control and cognitive flexibility data has been recorded.
@@ -174,7 +174,7 @@
         </div>
 
         <a href="{{ url_for('assessment.processing') }}" class="btn btn--lg btn--pill exec-continue-btn">
-          Continue to Processing Speed
+          Continue to Thinking Speed
           <i data-lucide="arrow-right"></i>
         </a>
 

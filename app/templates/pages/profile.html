@@ -5,7 +5,7 @@
 {% block meta_description %}Your CogniTrack account overview.{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/user.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}" />
 {% endblock %}
 
 {% block content %}
@@ -13,7 +13,9 @@
 <!-- ============================================================
      PROFILE — guarded by @login_required (flask_login)
      See app/routes/auth.py. Reflects the real persisted User +
-     Profile rows for current_user.
+     Profile rows for current_user. Editable fields are exactly the
+     permanent profile fields collected at Registration (Part 2,
+     Sprint 7.4.5) — Email and account dates stay read-only.
 ============================================================ -->
 <section aria-label="Profile">
   <div class="container container--narrow">
@@ -30,60 +32,179 @@
         </p>
       </div>
 
-      <div class="form-grid">
-        <div class="form-group">
-          <span class="label">Name</span>
-          <p>{{ current_user.profile.full_name if current_user.profile and current_user.profile.full_name else '—' }}</p>
+      <!-- ── View mode ─────────────────────────────────────────── -->
+      <div id="profile-view">
+
+        <div class="form-grid">
+          <div class="form-group">
+            <span class="label">Name</span>
+            <p>{{ current_user.profile.full_name if current_user.profile and current_user.profile.full_name else '—' }}</p>
+          </div>
+
+          <div class="form-group">
+            <span class="label">Email</span>
+            <p>{{ current_user.email }}</p>
+          </div>
+
+          <div class="form-group">
+            <span class="label">Age</span>
+            <p>{{ current_user.profile.age if current_user.profile and current_user.profile.age else '—' }}</p>
+          </div>
+
+          <div class="form-group">
+            <span class="label">Gender</span>
+            <p>{{ current_user.profile.gender if current_user.profile and current_user.profile.gender else '—' }}</p>
+          </div>
+
+          <div class="form-group">
+            <span class="label">Education</span>
+            <p>{{ current_user.profile.education if current_user.profile and current_user.profile.education else '—' }}</p>
+          </div>
+
+          <div class="form-group">
+            <span class="label">Dominant Hand</span>
+            <p>{{ current_user.profile.dominant_hand if current_user.profile and current_user.profile.dominant_hand else '—' }}</p>
+          </div>
+
+          <div class="form-group">
+            <span class="label">Native Language</span>
+            <p>{{ current_user.profile.native_language if current_user.profile and current_user.profile.native_language else '—' }}</p>
+          </div>
+
+          <div class="form-group">
+            <span class="label">Registration Date</span>
+            <p>{{ current_user.created_at.strftime('%B %d, %Y') if current_user.created_at else '—' }}</p>
+          </div>
+
+          <div class="form-group">
+            <span class="label">Last Login</span>
+            <p>{{ current_user.last_login.strftime('%B %d, %Y %H:%M UTC') if current_user.last_login else '—' }}</p>
+          </div>
         </div>
 
-        <div class="form-group">
-          <span class="label">Email</span>
-          <p>{{ current_user.email }}</p>
-        </div>
-
-        <div class="form-group">
-          <span class="label">Age</span>
-          <p>{{ current_user.profile.age if current_user.profile and current_user.profile.age else '—' }}</p>
-        </div>
-
-        <div class="form-group">
-          <span class="label">Gender</span>
-          <p>{{ current_user.profile.gender if current_user.profile and current_user.profile.gender else '—' }}</p>
-        </div>
-
-        <div class="form-group">
-          <span class="label">Education</span>
-          <p>{{ current_user.profile.education if current_user.profile and current_user.profile.education else '—' }}</p>
-        </div>
-
-        <div class="form-group">
-          <span class="label">Dominant Hand</span>
-          <p>{{ current_user.profile.dominant_hand if current_user.profile and current_user.profile.dominant_hand else '—' }}</p>
-        </div>
-
-        <div class="form-group">
-          <span class="label">Registration Date</span>
-          <p>{{ current_user.created_at.strftime('%B %d, %Y') if current_user.created_at else '—' }}</p>
-        </div>
-
-        <div class="form-group">
-          <span class="label">Last Login</span>
-          <p>{{ current_user.last_login.strftime('%B %d, %Y %H:%M UTC') if current_user.last_login else '—' }}</p>
-        </div>
-      </div>
-
-      <div class="mt-6">
-        <form method="post" action="{{ url_for('auth.logout') }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          <button type="submit" class="btn btn--secondary">
-            <i data-lucide="log-out"></i>
-            Log Out
+        <div class="profile-actions">
+          <button type="button" class="btn btn--primary" id="profile-edit-toggle">
+            <i data-lucide="pencil"></i>
+            Edit Profile
           </button>
-        </form>
+          <form method="post" action="{{ url_for('auth.logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn btn--secondary">
+              <i data-lucide="log-out"></i>
+              Log Out
+            </button>
+          </form>
+        </div>
+
       </div>
+
+      <!-- ── Edit mode ─────────────────────────────────────────── -->
+      <form id="profile-edit" class="profile-edit-form" method="post" action="{{ url_for('auth.profile') }}" novalidate hidden>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <div class="form-grid">
+
+          <div class="form-group form-grid__full">
+            <label class="label label--required" for="profile-name">Full Name</label>
+            <input
+              class="input"
+              type="text"
+              id="profile-name"
+              name="full_name"
+              maxlength="120"
+              value="{{ current_user.profile.full_name if current_user.profile else '' }}"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="label label--required" for="profile-age">Age</label>
+            <input
+              class="input"
+              type="number"
+              id="profile-age"
+              name="age"
+              min="1"
+              max="120"
+              value="{{ current_user.profile.age if current_user.profile and current_user.profile.age else '' }}"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="label label--required" for="profile-gender">Gender</label>
+            <select class="select" id="profile-gender" name="gender" required>
+              <option value="" disabled>Select gender</option>
+              {% set g = current_user.profile.gender if current_user.profile else '' %}
+              <option value="male" {% if g == 'male' %}selected{% endif %}>Male</option>
+              <option value="female" {% if g == 'female' %}selected{% endif %}>Female</option>
+              <option value="non-binary" {% if g == 'non-binary' %}selected{% endif %}>Non-binary</option>
+              <option value="prefer-not-to-say" {% if g == 'prefer-not-to-say' %}selected{% endif %}>Prefer not to say</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="label label--required" for="profile-education">Education Level</label>
+            <select class="select" id="profile-education" name="education" required>
+              <option value="" disabled>Select education level</option>
+              {% set e = current_user.profile.education if current_user.profile else '' %}
+              <option value="high-school" {% if e == 'high-school' %}selected{% endif %}>High School</option>
+              <option value="some-college" {% if e == 'some-college' %}selected{% endif %}>Some College</option>
+              <option value="bachelors" {% if e == 'bachelors' %}selected{% endif %}>Bachelor's Degree</option>
+              <option value="masters" {% if e == 'masters' %}selected{% endif %}>Master's Degree</option>
+              <option value="doctoral" {% if e == 'doctoral' %}selected{% endif %}>Doctoral Degree</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="label" for="profile-hand">
+              Dominant Hand
+              <span class="user-label-optional">(optional)</span>
+            </label>
+            <select class="select" id="profile-hand" name="dominant_hand">
+              <option value="">Select dominant hand</option>
+              {% set h = current_user.profile.dominant_hand if current_user.profile else '' %}
+              <option value="right" {% if h == 'right' %}selected{% endif %}>Right</option>
+              <option value="left" {% if h == 'left' %}selected{% endif %}>Left</option>
+              <option value="ambidextrous" {% if h == 'ambidextrous' %}selected{% endif %}>Ambidextrous</option>
+            </select>
+          </div>
+
+          <div class="form-group form-grid__full">
+            <label class="label" for="profile-native-language">
+              Native Language
+              <span class="user-label-optional">(optional)</span>
+            </label>
+            <input
+              class="input"
+              type="text"
+              id="profile-native-language"
+              name="native_language"
+              maxlength="60"
+              value="{{ current_user.profile.native_language if current_user.profile and current_user.profile.native_language else '' }}"
+            />
+          </div>
+
+        </div>
+
+        <div class="profile-actions">
+          <button type="submit" class="btn btn--primary">
+            <i data-lucide="check"></i>
+            Save Changes
+          </button>
+          <button type="button" class="btn btn--secondary" id="profile-edit-cancel">
+            Cancel
+          </button>
+        </div>
+
+      </form>
 
     </div>
   </div>
 </section>
 
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/profile.js') }}"></script>
 {% endblock %}

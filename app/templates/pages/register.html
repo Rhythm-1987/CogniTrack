@@ -16,7 +16,7 @@
 <section class="auth-section" aria-label="Create Account">
   <div class="container">
 
-    <div class="auth-card anim-fade-up">
+    <div class="auth-card auth-card--wide anim-fade-up">
 
       <div class="auth-card__header">
         <div class="auth-card__icon" aria-hidden="true">
@@ -115,6 +115,84 @@
             </button>
           </div>
         </div>
+
+        <hr />
+
+        <p class="auth-section-label">
+          A few details help personalise your cognitive baseline — collected once, never asked again before an assessment.
+        </p>
+
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label class="label label--required" for="register-age">Age</label>
+            <input
+              class="input"
+              type="number"
+              id="register-age"
+              name="age"
+              placeholder="e.g. 32"
+              min="1"
+              max="120"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="label label--required" for="register-gender">Gender</label>
+            <select class="select" id="register-gender" name="gender" required>
+              <option value="" disabled selected>Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="non-binary">Non-binary</option>
+              <option value="prefer-not-to-say">Prefer not to say</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="label label--required" for="register-education">Education Level</label>
+            <select class="select" id="register-education" name="education" required>
+              <option value="" disabled selected>Select education level</option>
+              <option value="high-school">High School</option>
+              <option value="some-college">Some College</option>
+              <option value="bachelors">Bachelor's Degree</option>
+              <option value="masters">Master's Degree</option>
+              <option value="doctoral">Doctoral Degree</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="label" for="register-hand">
+              Dominant Hand
+              <span class="user-label-optional">(optional)</span>
+            </label>
+            <select class="select" id="register-hand" name="dominant_hand">
+              <option value="" disabled selected>Select dominant hand</option>
+              <option value="right">Right</option>
+              <option value="left">Left</option>
+              <option value="ambidextrous">Ambidextrous</option>
+            </select>
+          </div>
+
+          <div class="form-group form-grid__full">
+            <label class="label" for="register-native-language">
+              Native Language
+              <span class="user-label-optional">(optional)</span>
+            </label>
+            <input
+              class="input"
+              type="text"
+              id="register-native-language"
+              name="native_language"
+              placeholder="e.g. English"
+              maxlength="60"
+              autocomplete="language"
+            />
+          </div>
+
+        </div>
+
+        <hr />
 
         <label class="auth-checkbox">
           <input type="checkbox" id="register-terms" name="agree_terms" required />

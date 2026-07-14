@@ -26,8 +26,7 @@ def assessment_start():
     body = _json_body()
     result = assessment_service.start_session(
         current_user,
-        profile_data=body.get('profile') or {},
-        full_name=body.get('name'),
+        checkin_data=body.get('checkin') or {},
     )
     return jsonify(result), 200
 

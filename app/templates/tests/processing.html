@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Processing Speed — CogniTrack{% endblock %}
+{% block title %}Thinking Speed — CogniTrack{% endblock %}
 
 {% block meta_description %}CogniTrack's Symbol Match Test — measures information processing speed and decision velocity.{% endblock %}
 
@@ -11,9 +11,9 @@
 {% block content %}
 
 <!-- ============================================================
-     PROCESSING SPEED — Step 6 of 7 — Symbol Match Test (DSST)
+     THINKING SPEED — Step 6 of 7 — Symbol Match Test (DSST)
 ============================================================ -->
-<section class="processing-section" aria-label="Processing Speed Assessment">
+<section class="processing-section" aria-label="Thinking Speed Assessment">
   <div class="container container--narrow">
 
     <!-- ── Phase Progress Strip ────────────────────────────── -->
@@ -48,7 +48,7 @@
         </div>
 
         <div class="proc-card__badge">
-          <span class="badge badge--teal">Processing Speed</span>
+          <span class="badge badge--teal">Thinking Speed</span>
         </div>
 
         <h1 class="proc-card__title">Symbol Match Test</h1>
@@ -163,7 +163,7 @@
 
         <span class="badge badge--success proc-complete-badge">Assessment Complete</span>
 
-        <h2 class="proc-card__title">Processing Speed Complete</h2>
+        <h2 class="proc-card__title">Thinking Speed Complete</h2>
 
         <p class="proc-card__lead">
           Your visual processing and decision speed data has been recorded.
@@ -178,7 +178,7 @@
         </div>
 
         <a href="{{ url_for('assessment.visual') }}" class="btn btn--lg btn--pill proc-continue-btn">
-          Continue to Visuospatial
+          Continue to Visual Reasoning
           <i data-lucide="arrow-right"></i>
         </a>
 

@@ -23,7 +23,19 @@ class AssessmentSession(db.Model):
     )
 
     status = db.Column(db.String(20), nullable=False, default='in_progress')
+
+    # Today's Assessment Check-In — temporary, per-session state (never
+    # part of the permanent Profile). Collected once per assessment run,
+    # immediately before the Overview page. See assessment_service.py
+    # start_session()/checkin validation.
     sleep_quality = db.Column(db.String(20), nullable=True)
+    stress_level = db.Column(db.String(20), nullable=True)
+    hours_slept = db.Column(db.Float, nullable=True)
+    caffeine_today = db.Column(db.String(20), nullable=True)
+    medication = db.Column(db.String(200), nullable=True)
+    current_mood = db.Column(db.String(20), nullable=True)
+    wearing_glasses = db.Column(db.Boolean, nullable=True)
+    distractions = db.Column(db.String(20), nullable=True)
 
     overall_score = db.Column(db.Float, nullable=True)
     duration = db.Column(db.Integer, nullable=True)
@@ -40,6 +52,10 @@ class AssessmentSession(db.Model):
             name='ck_assessment_sessions_overall_score_range',
         ),
         db.CheckConstraint('duration IS NULL OR duration >= 0', name='ck_assessment_sessions_duration_nonneg'),
+        db.CheckConstraint(
+            'hours_slept IS NULL OR (hours_slept >= 0 AND hours_slept <= 24)',
+            name='ck_assessment_sessions_hours_slept_range',
+        ),
         # Every dashboard/resume-state query filters by exactly this pair
         # (get_incomplete_session, get_user_assessment_state, get_dashboard_payload).
         db.Index('ix_assessment_sessions_user_id_status', 'user_id', 'status'),

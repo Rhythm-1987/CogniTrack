@@ -32,11 +32,11 @@
       </p>
 
       <div class="hub-domains">
-        <span class="domain-pill domain-pill--blue">Memory</span>
-        <span class="domain-pill domain-pill--purple">Attention</span>
-        <span class="domain-pill domain-pill--emerald">Executive Function</span>
-        <span class="domain-pill domain-pill--amber">Processing Speed</span>
-        <span class="domain-pill domain-pill--cyan">Visuospatial</span>
+        <span class="domain-pill domain-pill--blue">Memory Recall</span>
+        <span class="domain-pill domain-pill--purple">Focus &amp; Attention</span>
+        <span class="domain-pill domain-pill--emerald">Decision Making</span>
+        <span class="domain-pill domain-pill--amber">Thinking Speed</span>
+        <span class="domain-pill domain-pill--cyan">Visual Reasoning</span>
       </div>
 
       <!-- Three mutually-exclusive states, revealed by hub.js from the
@@ -80,6 +80,14 @@
           <p class="hub-resume-hint">Your last assessment is complete.</p>
         </div>
 
+      </div>
+
+      <div class="hub-demo-link">
+        <span>New here?</span>
+        <a href="{{ url_for('dashboard.demo') }}">
+          <i data-lucide="sparkles"></i>
+          Explore a Demo Dashboard <span class="hub-demo-link__tag">(Sample Data)</span>
+        </a>
       </div>
 
     </div>

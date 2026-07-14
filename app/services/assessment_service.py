@@ -26,21 +26,20 @@ MODULE_ORDER = ['memory', 'attention', 'executive', 'processing', 'spatial']
 # measured from avoids a schema change for a single derived field.
 _DURATION_KEY = '_duration'
 
-# Profile fields are optional demographic metadata, not security- or
-# integrity-critical — invalid/oversized values are clamped or dropped
-# rather than rejecting the whole request, so a malformed age can't
-# block someone from starting their assessment. Lengths mirror the
-# Profile columns (models/profile.py).
-_MAX_FULL_NAME_LENGTH = 120
 _MAX_RATING_LENGTH = 20
+_MAX_MEDICATION_LENGTH = 200
 
-# Mirrors the <select> options on the User Information page
-# (templates/pages/user.html) — kept here, not just enforced client-side,
-# so a direct API call can't write an arbitrary string into these columns.
-_GENDER_VALUES = {'male', 'female', 'non-binary', 'prefer-not-to-say'}
-_EDUCATION_VALUES = {'high-school', 'some-college', 'bachelors', 'masters', 'doctoral'}
-_HAND_VALUES = {'right', 'left', 'ambidextrous'}
+# Today's Assessment Check-In fields are temporary, per-session state (see
+# models/assessment.py) — never part of the permanent Profile (that's
+# profile_service.py, used by registration/Edit Profile instead). Same
+# clamp-don't-reject philosophy: an invalid/oversized value is dropped
+# rather than blocking someone from starting their assessment. Mirrors the
+# <select> options on templates/pages/user.html (Today's Check-In page).
 _SLEEP_VALUES = {'excellent', 'good', 'average', 'poor'}
+_STRESS_VALUES = {'low', 'moderate', 'high'}
+_CAFFEINE_VALUES = {'none', 'one-two', 'three-plus'}
+_MOOD_VALUES = {'energized', 'calm', 'neutral', 'tired', 'stressed'}
+_DISTRACTION_VALUES = {'none', 'some', 'significant'}
 
 
 def _clean_str(value, max_len):
@@ -51,7 +50,7 @@ def _clean_str(value, max_len):
 
 
 def _clean_enum(value, allowed):
-    """Same clamp-don't-reject philosophy as the other profile fields
+    """Same clamp-don't-reject philosophy as the other check-in fields
     below: an unrecognised value is dropped rather than failing the
     whole start_session request."""
     if not isinstance(value, str):
@@ -60,11 +59,15 @@ def _clean_enum(value, allowed):
     return value if value in allowed else None
 
 
-def _clean_age(value):
+def _clean_hours_slept(value):
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return None
-    age = int(value)
-    return age if 1 <= age <= 120 else None
+    value = float(value)
+    return value if 0 <= value <= 24 else None
+
+
+def _clean_bool(value):
+    return value if isinstance(value, bool) else None
 
 
 def _validate_numeric(label, value, min_val, max_val):
@@ -107,9 +110,28 @@ def _get_owned_session(user, assessment_id):
     return session
 
 
-def start_session(user, profile_data=None, full_name=None):
+def _checkin_fields(checkin_data):
+    """Cleans the 8 Today's Assessment Check-In fields out of an untrusted
+    dict, returning only the ones that pass validation — used for both a
+    new session and updating an existing (resumed) one."""
+    return {
+        'sleep_quality': _clean_enum(checkin_data.get('sleepQuality'), _SLEEP_VALUES),
+        'stress_level': _clean_enum(checkin_data.get('stressLevel'), _STRESS_VALUES),
+        'hours_slept': _clean_hours_slept(checkin_data.get('hoursSlept')),
+        'caffeine_today': _clean_enum(checkin_data.get('caffeineToday'), _CAFFEINE_VALUES),
+        'medication': _clean_str(checkin_data.get('medication'), _MAX_MEDICATION_LENGTH),
+        'current_mood': _clean_enum(checkin_data.get('currentMood'), _MOOD_VALUES),
+        'wearing_glasses': _clean_bool(checkin_data.get('wearingGlasses')),
+        'distractions': _clean_enum(checkin_data.get('distractions'), _DISTRACTION_VALUES),
+    }
+
+
+def start_session(user, checkin_data=None):
     """Idempotent: resumes an existing in-progress session for this user
-    instead of creating a second one."""
+    instead of creating a second one. Permanent profile fields (name, age,
+    gender, education, dominant hand, native language) are set at
+    registration or via Edit Profile only — never here; this only ever
+    writes Today's Assessment Check-In's temporary, per-session fields."""
     existing = (
         AssessmentSession.query
         .filter_by(user_id=user.id, status='in_progress')
@@ -117,47 +139,23 @@ def start_session(user, profile_data=None, full_name=None):
         .first()
     )
 
-    profile_data = profile_data or {}
-    if not isinstance(profile_data, dict):
-        raise AssessmentError('profile must be an object.', 400)
+    checkin_data = checkin_data or {}
+    if not isinstance(checkin_data, dict):
+        raise AssessmentError('checkin must be an object.', 400)
 
-    profile = user.profile
-    if profile is None:
-        profile = Profile(user_id=user.id)
-        db.session.add(profile)
+    if user.profile is None:
+        db.session.add(Profile(user_id=user.id))
 
-    full_name = _clean_str(full_name, _MAX_FULL_NAME_LENGTH)
-    if full_name:
-        profile.full_name = full_name
-
-    age = _clean_age(profile_data.get('age'))
-    if age is not None:
-        profile.age = age
-
-    gender = _clean_enum(profile_data.get('gender'), _GENDER_VALUES)
-    if gender:
-        profile.gender = gender
-
-    education = _clean_enum(profile_data.get('education'), _EDUCATION_VALUES)
-    if education:
-        profile.education = education
-
-    dominant_hand = _clean_enum(profile_data.get('dominantHand'), _HAND_VALUES)
-    if dominant_hand:
-        profile.dominant_hand = dominant_hand
-
-    sleep_quality = _clean_enum(profile_data.get('sleepQuality'), _SLEEP_VALUES)
+    cleaned = _checkin_fields(checkin_data)
 
     if existing:
-        if sleep_quality:
-            existing.sleep_quality = sleep_quality
+        for field, value in cleaned.items():
+            if value is not None:
+                setattr(existing, field, value)
         db.session.commit()
         return {'assessment_id': existing.id, 'status': existing.status, 'resumed': True}
 
-    session = AssessmentSession(
-        user_id=user.id,
-        sleep_quality=sleep_quality,
-    )
+    session = AssessmentSession(user_id=user.id, **cleaned)
     db.session.add(session)
     db.session.commit()
 
@@ -363,4 +361,5 @@ def _profile_payload(profile):
         'gender': profile.gender,
         'education': profile.education,
         'dominantHand': profile.dominant_hand,
+        'nativeLanguage': profile.native_language,
     }

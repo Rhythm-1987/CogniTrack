@@ -2,7 +2,7 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from ..core.extensions import limiter
-from ..services import auth_service
+from ..services import auth_service, profile_service
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -54,7 +54,17 @@ def register_post():
     password = request.form.get('password', '')
     confirm_password = request.form.get('confirm_password', '')
 
-    result = auth_service.register_user(email, password, full_name, confirm_password)
+    profile_fields = {
+        'age': request.form.get('age'),
+        'gender': request.form.get('gender'),
+        'education': request.form.get('education'),
+        'dominant_hand': request.form.get('dominant_hand'),
+        'native_language': request.form.get('native_language'),
+    }
+
+    result = auth_service.register_user(
+        email, password, full_name, confirm_password, profile_fields=profile_fields
+    )
 
     if not result['success']:
         flash(result['message'], 'danger')
@@ -71,7 +81,15 @@ def logout():
     return redirect(url_for('main.index'))
 
 
-@auth_bp.route('/profile')
+@auth_bp.route('/profile', methods=['GET'])
 @login_required
 def profile():
     return render_template('pages/profile.html')
+
+
+@auth_bp.route('/profile', methods=['POST'])
+@login_required
+def profile_update():
+    profile_service.update_profile(current_user, request.form)
+    flash('Profile updated.', 'success')
+    return redirect(url_for('auth.profile'))

@@ -14,6 +14,7 @@ class Profile(db.Model):
     gender = db.Column(db.String(30), nullable=True)
     education = db.Column(db.String(50), nullable=True)
     dominant_hand = db.Column(db.String(20), nullable=True)
+    native_language = db.Column(db.String(60), nullable=True)
 
     user = db.relationship('User', back_populates='profile')
 

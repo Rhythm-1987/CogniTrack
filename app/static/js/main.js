@@ -7,7 +7,7 @@
    Table of Contents
    01. Lucide Icons  — initialise all [data-lucide] elements
    02. Navbar        — scroll shadow + mobile drawer
-   03. Profile Menu  — authenticated avatar dropdown
+   03. Dropdown Menus — authenticated avatar dropdown + guest Account menu
    04. Scroll Reveal — IntersectionObserver for .scroll-reveal elements
    05. Flash Messages
    ============================================================ */
@@ -26,9 +26,10 @@ document.addEventListener('DOMContentLoaded', function () {
   initNavbar();
 
   /* ----------------------------------------------------------
-     03. PROFILE MENU
+     03. DROPDOWN MENUS
   ---------------------------------------------------------- */
-  initProfileMenu();
+  initDropdownMenu('nav-profile', 'nav-profile-trigger', 'nav-profile-menu');
+  initDropdownMenu('nav-account', 'nav-account-trigger', 'nav-account-menu');
 
   /* ----------------------------------------------------------
      04. SCROLL REVEAL
@@ -113,17 +114,19 @@ function initNavbar() {
 
 
 /* ============================================================
-   initProfileMenu()
-   Toggles the authenticated account dropdown (avatar -> menu with
-   View Profile / Dashboard / Logout). Closes on outside click,
-   Escape, or focus leaving the menu. No-op when the trigger isn't
-   present (i.e. logged-out pages), so it is safe to call globally.
-   Reads/writes: #nav-profile, #nav-profile-trigger, #nav-profile-menu
+   initDropdownMenu(rootId, triggerId, menuId)
+   Generic trigger -> popover-menu toggle, shared by the
+   authenticated Profile menu (avatar -> View Profile / Dashboard /
+   Logout) and the guest Account menu (Account -> Create Account /
+   Sign In). Closes on outside click, Escape, or focus leaving the
+   menu. No-op when the elements aren't present on the current page
+   (only one of the two ever renders, depending on auth state), so
+   it is safe to call for both unconditionally on every page.
 ============================================================ */
-function initProfileMenu() {
-  var root    = document.getElementById('nav-profile');
-  var trigger = document.getElementById('nav-profile-trigger');
-  var menu    = document.getElementById('nav-profile-menu');
+function initDropdownMenu(rootId, triggerId, menuId) {
+  var root    = document.getElementById(rootId);
+  var trigger = document.getElementById(triggerId);
+  var menu    = document.getElementById(menuId);
 
   if (!root || !trigger || !menu) { return; }
 

@@ -1,19 +1,24 @@
 {% extends "base.html" %}
 
-{% block title %}User Information — CogniTrack{% endblock %}
+{% block title %}Today's Assessment Check-In — CogniTrack{% endblock %}
 
-{% block meta_description %}Enter a few details to personalise your CogniTrack cognitive baseline before starting your five-part assessment.{% endblock %}
+{% block meta_description %}A few quick questions about how you're feeling today — helps contextualise your CogniTrack results. Nothing here is stored on your permanent profile.{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/user.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/checkin.css') }}" />
 {% endblock %}
 
 {% block content %}
 
 <!-- ============================================================
-     USER INFORMATION — Step 1 of 7
+     TODAY'S ASSESSMENT CHECK-IN — Step 1 of 7
+     Temporary, per-session state only (route/endpoint kept as
+     `main.user` / `/user` — see routes/main.py). Permanent profile
+     fields (name, age, gender, education, dominant hand) are
+     collected once at Registration or via Edit Profile and are
+     never asked here — see routes/auth.py + templates/pages/register.html.
 ============================================================ -->
-<section class="onboarding-section" aria-label="User Information">
+<section class="onboarding-section" aria-label="Today's Assessment Check-In">
   <div class="container">
 
     <div class="onboarding-card anim-fade-up">
@@ -31,10 +36,10 @@
 
       <!-- ── Heading ─────────────────────────────────────────── -->
       <div class="onboarding-card__header">
-        <h1 class="onboarding-card__title">Before We Begin</h1>
+        <h1 class="onboarding-card__title">Today's Assessment Check-In</h1>
         <p class="onboarding-card__subtitle">
-          A few details help us personalise your cognitive baseline and compare
-          your results against age-matched peers across all five domains.
+          A few quick questions about how you're feeling right now — they help
+          contextualise today's results and are stored with this assessment only.
         </p>
       </div>
 
@@ -44,57 +49,25 @@
 
         <div class="form-grid">
 
-          <!-- Full Name -->
+          {% if not current_user.is_authenticated %}
+          <!-- Guests only: optional name for dashboard personalisation.
+               Never stored as permanent profile data. -->
           <div class="form-group form-grid__full">
-            <label class="label label--required" for="full-name">Full Name</label>
+            <label class="label" for="guest-name">
+              Your Name
+              <span class="user-label-optional">(optional)</span>
+            </label>
             <input
               class="input"
               type="text"
-              id="full-name"
-              name="full_name"
+              id="guest-name"
+              name="guest_name"
               placeholder="e.g. Alex Johnson"
               autocomplete="name"
+              maxlength="120"
             />
           </div>
-
-          <!-- Age -->
-          <div class="form-group">
-            <label class="label label--required" for="age">Age</label>
-            <input
-              class="input"
-              type="number"
-              id="age"
-              name="age"
-              placeholder="e.g. 32"
-              min="18"
-              max="99"
-            />
-          </div>
-
-          <!-- Gender -->
-          <div class="form-group">
-            <label class="label label--required" for="gender">Gender</label>
-            <select class="select" id="gender" name="gender">
-              <option value="" disabled selected>Select gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="non-binary">Non-binary</option>
-              <option value="prefer-not-to-say">Prefer not to say</option>
-            </select>
-          </div>
-
-          <!-- Education Level -->
-          <div class="form-group">
-            <label class="label label--required" for="education">Education Level</label>
-            <select class="select" id="education" name="education">
-              <option value="" disabled selected>Select education level</option>
-              <option value="high-school">High School</option>
-              <option value="some-college">Some College</option>
-              <option value="bachelors">Bachelor's Degree</option>
-              <option value="masters">Master's Degree</option>
-              <option value="doctoral">Doctoral Degree</option>
-            </select>
-          </div>
+          {% endif %}
 
           <!-- Sleep Quality -->
           <div class="form-group">
@@ -108,18 +81,94 @@
             </select>
           </div>
 
-          <!-- Dominant Hand -->
-          <div class="form-group form-grid__full">
-            <label class="label" for="dominant-hand">
-              Dominant Hand
+          <!-- Hours Slept -->
+          <div class="form-group">
+            <label class="label label--required" for="hours-slept">Hours Slept Last Night</label>
+            <input
+              class="input"
+              type="number"
+              id="hours-slept"
+              name="hours_slept"
+              placeholder="e.g. 7"
+              min="0"
+              max="24"
+              step="0.5"
+            />
+          </div>
+
+          <!-- Stress Level -->
+          <div class="form-group">
+            <label class="label label--required" for="stress-level">Stress Level</label>
+            <select class="select" id="stress-level" name="stress_level">
+              <option value="" disabled selected>Select stress level</option>
+              <option value="low">Low</option>
+              <option value="moderate">Moderate</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+
+          <!-- Caffeine Today -->
+          <div class="form-group">
+            <label class="label label--required" for="caffeine-today">Caffeine Today</label>
+            <select class="select" id="caffeine-today" name="caffeine_today">
+              <option value="" disabled selected>Select caffeine intake</option>
+              <option value="none">None</option>
+              <option value="one-two">1–2 cups</option>
+              <option value="three-plus">3+ cups</option>
+            </select>
+          </div>
+
+          <!-- Current Mood -->
+          <div class="form-group">
+            <label class="label label--required" for="current-mood">Current Mood</label>
+            <select class="select" id="current-mood" name="current_mood">
+              <option value="" disabled selected>Select current mood</option>
+              <option value="energized">Energized</option>
+              <option value="calm">Calm</option>
+              <option value="neutral">Neutral</option>
+              <option value="tired">Tired</option>
+              <option value="stressed">Stressed</option>
+            </select>
+          </div>
+
+          <!-- Current Distractions -->
+          <div class="form-group">
+            <label class="label label--required" for="distractions">Current Distractions</label>
+            <select class="select" id="distractions" name="distractions">
+              <option value="" disabled selected>Select distraction level</option>
+              <option value="none">None — quiet environment</option>
+              <option value="some">Some — a little noise/activity</option>
+              <option value="significant">Significant — busy or noisy environment</option>
+            </select>
+          </div>
+
+          <!-- Wearing Glasses -->
+          <div class="form-group">
+            <label class="label" for="wearing-glasses">
+              Wearing Glasses
               <span class="user-label-optional">(optional)</span>
             </label>
-            <select class="select" id="dominant-hand" name="dominant_hand">
-              <option value="" disabled selected>Select dominant hand</option>
-              <option value="right">Right</option>
-              <option value="left">Left</option>
-              <option value="ambidextrous">Ambidextrous</option>
+            <select class="select" id="wearing-glasses" name="wearing_glasses">
+              <option value="" selected>Prefer not to say</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
             </select>
+          </div>
+
+          <!-- Medication -->
+          <div class="form-group form-grid__full">
+            <label class="label" for="medication">
+              Medication
+              <span class="user-label-optional">(optional)</span>
+            </label>
+            <input
+              class="input"
+              type="text"
+              id="medication"
+              name="medication"
+              placeholder="e.g. antihistamine, stimulant — anything that may affect focus today"
+              maxlength="200"
+            />
           </div>
 
         </div>
@@ -128,8 +177,8 @@
         <div class="user-trust-note" role="note">
           <i data-lucide="shield-check" aria-hidden="true"></i>
           <p>
-            Your information is processed safely on the client-side for this simulation session
-            and is never stored permanently on an external server.
+            Your check-in answers are stored with today's assessment session only —
+            they help contextualise your results and are never saved to your permanent profile.
           </p>
         </div>
 
@@ -145,11 +194,11 @@
           </div>
 
           <div class="domain-pills">
-            <span class="domain-pill domain-pill--blue">Memory</span>
-            <span class="domain-pill domain-pill--purple">Attention</span>
-            <span class="domain-pill domain-pill--emerald">Executive Function</span>
-            <span class="domain-pill domain-pill--amber">Processing Speed</span>
-            <span class="domain-pill domain-pill--cyan">Visuospatial</span>
+            <span class="domain-pill domain-pill--blue">Memory Recall</span>
+            <span class="domain-pill domain-pill--purple">Focus &amp; Attention</span>
+            <span class="domain-pill domain-pill--emerald">Decision Making</span>
+            <span class="domain-pill domain-pill--amber">Thinking Speed</span>
+            <span class="domain-pill domain-pill--cyan">Visual Reasoning</span>
           </div>
 
         </div>
@@ -172,5 +221,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/user.js') }}"></script>
+<script src="{{ url_for('static', filename='js/checkin.js') }}"></script>
 {% endblock %}

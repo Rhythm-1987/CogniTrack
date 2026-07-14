@@ -405,19 +405,13 @@
   }
 
   function startSessionTask() {
-    var user = {};
+    var checkin = {};
     try {
-      var raw = sessionStorage.getItem('cognitrack_user');
-      if (raw) { user = JSON.parse(raw); }
+      var raw = sessionStorage.getItem('cognitrack_checkin');
+      if (raw) { checkin = JSON.parse(raw); }
     } catch (e) {}
 
-    return apiPost('/api/assessment/start', {
-      name: user.name,
-      profile: {
-        age: user.age, gender: user.gender, education: user.education,
-        sleepQuality: user.sleepQuality, dominantHand: user.dominantHand
-      }
-    });
+    return apiPost('/api/assessment/start', { checkin: checkin });
   }
 
   /* Resolves once the current progress record has a server-confirmed

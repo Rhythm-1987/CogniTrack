@@ -1,0 +1,17 @@
+/* ============================================================
+   CogniTrack — profile.css  (Profile Page Only)
+   Depends on style.css being loaded first — .card, .form-grid,
+   .label, .select, .input, .section-heading all come from there.
+   ============================================================ */
+
+.profile-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.profile-edit-form {
+  margin-top: 0;
+}

@@ -1,0 +1,164 @@
+/* ============================================================
+   CogniTrack — Today's Assessment Check-In
+   checkin.js   Sprint 7.4.5
+
+   Replaces the old User Information form (user.js). Collects only
+   temporary, per-session state (sleep, stress, caffeine, mood, etc.) —
+   permanent profile fields (name, age, gender, education, dominant
+   hand) are now collected once at Registration or via Edit Profile
+   and are never asked here. The one exception is an optional "Your
+   Name" field shown only to guests (no account => no Profile row to
+   read a name from), used purely for dashboard-greeting personalisation.
+
+   Writes to sessionStorage under 'cognitrack_checkin' — read by
+   cognitrack-core.js's startSessionTask() and sent as the `checkin`
+   object to POST /api/assessment/start.
+   ============================================================ */
+
+document.addEventListener('DOMContentLoaded', function () {
+  'use strict';
+
+  var form = document.querySelector('.onboarding-form');
+  if (!form) return;
+
+  var isSubmitting = false;
+
+  var REQUIRED_IDS = [
+    'sleep-quality', 'stress-level', 'hours-slept',
+    'caffeine-today', 'current-mood', 'distractions'
+  ];
+
+  form.addEventListener('submit', function (e) {
+    if (isSubmitting) return;
+    e.preventDefault();
+
+    clearErrors();
+
+    var sleepEl      = document.getElementById('sleep-quality');
+    var stressEl     = document.getElementById('stress-level');
+    var hoursEl      = document.getElementById('hours-slept');
+    var caffeineEl   = document.getElementById('caffeine-today');
+    var medicationEl = document.getElementById('medication');
+    var moodEl       = document.getElementById('current-mood');
+    var glassesEl    = document.getElementById('wearing-glasses');
+    var distractEl   = document.getElementById('distractions');
+    var nameEl       = document.getElementById('guest-name'); /* guests only */
+
+    var valid = true;
+
+    if (sleepEl && !sleepEl.value) {
+      markInvalid(sleepEl, 'Please select your sleep quality.');
+      valid = false;
+    }
+    if (stressEl && !stressEl.value) {
+      markInvalid(stressEl, 'Please select your stress level.');
+      valid = false;
+    }
+
+    var hoursVal = hoursEl ? parseFloat(hoursEl.value) : NaN;
+    if (!hoursEl || !hoursEl.value.trim() || isNaN(hoursVal) || hoursVal < 0 || hoursVal > 24) {
+      markInvalid(hoursEl, 'Please enter a realistic number of hours (0 – 24).');
+      valid = false;
+    }
+    if (caffeineEl && !caffeineEl.value) {
+      markInvalid(caffeineEl, 'Please select your caffeine intake today.');
+      valid = false;
+    }
+    if (moodEl && !moodEl.value) {
+      markInvalid(moodEl, 'Please select your current mood.');
+      valid = false;
+    }
+    if (distractEl && !distractEl.value) {
+      markInvalid(distractEl, 'Please select your current distraction level.');
+      valid = false;
+    }
+
+    /* Medication and Wearing Glasses are optional — no validation. */
+
+    if (!valid) {
+      var firstError = form.querySelector('.user-field-error');
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+      return;
+    }
+
+    var checkinData = {
+      sleepQuality:   sleepEl    ? sleepEl.value    : '',
+      stressLevel:    stressEl   ? stressEl.value   : '',
+      hoursSlept:     hoursVal,
+      caffeineToday:  caffeineEl ? caffeineEl.value : '',
+      medication:     medicationEl ? medicationEl.value.trim() : '',
+      currentMood:    moodEl     ? moodEl.value     : '',
+      wearingGlasses: glassesEl && glassesEl.value ? glassesEl.value === 'yes' : null,
+      distractions:   distractEl ? distractEl.value : ''
+    };
+
+    try {
+      sessionStorage.setItem('cognitrack_checkin', JSON.stringify(checkinData));
+    } catch (e) { /* private browsing / storage full — proceed anyway */ }
+
+    /* Guests only: optional name, kept separate from checkinData since
+       it's dashboard-greeting personalisation, not check-in state. */
+    if (nameEl) {
+      var nameVal = nameEl.value.trim();
+      if (nameVal) {
+        try { sessionStorage.setItem('cognitrack_user', JSON.stringify({ name: nameVal })); } catch (e) {}
+      }
+    }
+
+    /* Clear any prior real assessment run — Check-In precedes a fresh
+       attempt, so stale progress from an earlier run shouldn't linger. */
+    if (typeof CT !== 'undefined' && CT.clearAssessmentData) {
+      CT.clearAssessmentData();
+    }
+
+    var submitBtn = form.querySelector('[type="submit"]');
+    if (submitBtn && typeof CT !== 'undefined' && CT.lockButton) {
+      CT.lockButton(submitBtn);
+    }
+
+    isSubmitting = true;
+    form.submit();
+  });
+
+  function clearErrors() {
+    form.querySelectorAll('.user-field-error').forEach(function (el) {
+      el.remove();
+    });
+    form.querySelectorAll('[aria-invalid="true"]').forEach(function (el) {
+      el.classList.remove('input--error');
+      el.removeAttribute('aria-invalid');
+    });
+  }
+
+  function markInvalid(el, msg) {
+    if (!el) return;
+    el.classList.add('input--error');
+    el.setAttribute('aria-invalid', 'true');
+
+    var err = document.createElement('p');
+    err.className   = 'form-error user-field-error';
+    err.setAttribute('role', 'alert');
+    err.textContent = msg;
+
+    el.parentNode.insertBefore(err, el.nextSibling);
+  }
+
+  REQUIRED_IDS.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input',  function () { clearFieldError(this); });
+    el.addEventListener('change', function () { clearFieldError(this); });
+  });
+
+  function clearFieldError(el) {
+    el.classList.remove('input--error');
+    el.removeAttribute('aria-invalid');
+    var next = el.nextSibling;
+    if (next && next.classList && next.classList.contains('user-field-error')) {
+      next.remove();
+    }
+  }
+
+});

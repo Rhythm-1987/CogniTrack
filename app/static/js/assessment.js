@@ -2,9 +2,9 @@
    CogniTrack — Assessment Overview
    assessment.js
 
-   This page should only ever be reached by submitting the User
-   Information form. If someone lands here directly (bookmark,
-   typed URL, browser back after clearing storage) with no user
+   This page should only ever be reached by submitting Today's
+   Assessment Check-In form. If someone lands here directly (bookmark,
+   typed URL, browser back after clearing storage) with no check-in
    data on file, send them to /user first rather than showing a
    "Step 2 of 7" page with nothing behind it.
 
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
   'use strict';
 
   try {
-    if (!sessionStorage.getItem('cognitrack_user')) {
+    if (!sessionStorage.getItem('cognitrack_checkin')) {
       window.location.replace('/user');
       return;
     }

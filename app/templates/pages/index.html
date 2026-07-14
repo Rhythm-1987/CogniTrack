@@ -66,7 +66,7 @@
         <div class="hero__trust">
           <div class="trust-item">
             <i data-lucide="shield-check"></i>
-            <span>Clinically Validated</span>
+            <span>Clinically Inspired</span>
           </div>
           <div class="trust-separator" aria-hidden="true"></div>
           <div class="trust-item">
@@ -170,7 +170,7 @@
         <span class="stat-strip__value">
           25<span class="stat-strip__unit">+</span>
         </span>
-        <span class="stat-strip__label">Vital Biomarkers</span>
+        <span class="stat-strip__label">Cognitive Performance Metrics</span>
       </div>
 
       <div class="stat-strip__divider" aria-hidden="true"></div>
@@ -301,10 +301,10 @@
             <i data-lucide="user-check"></i>
           </div>
           <span class="step__num">01</span>
-          <h3 class="step__title">Enter Details</h3>
+          <h3 class="step__title">Quick Check-In</h3>
           <p class="step__desc">
-            Provide basic demographic information so we can personalise your
-            cognitive baseline benchmarks.
+            Answer a few quick questions about how you're feeling today so we
+            can contextualise your results.
           </p>
         </div>
 
@@ -329,8 +329,8 @@
           <span class="step__num">03</span>
           <h3 class="step__title">Analyze Results</h3>
           <p class="step__desc">
-            Our engine scores your performance against age-matched norms
-            and peer groups in real time.
+            Our engine scores your performance across all five cognitive
+            domains in real time.
           </p>
         </div>
 
@@ -378,7 +378,7 @@
         </h2>
 
         <p class="cta-card__sub">
-          Join thousands who have taken control of their mental wellbeing.
+          Take control of your cognitive wellbeing.
           A 15-minute assessment can reveal insights that take years to notice otherwise.
           Know your brain, before it matters most.
         </p>
@@ -409,6 +409,11 @@
             View Dashboard
           </a>
         </div>
+
+        <a href="{{ url_for('dashboard.demo') }}" class="cta-card__demo-link">
+          <i data-lucide="sparkles"></i>
+          Curious first? Preview a Demo Dashboard (Sample Data)
+        </a>
 
       </div>
 

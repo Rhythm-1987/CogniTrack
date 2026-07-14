@@ -16,6 +16,7 @@ from ..models.profile import Profile
 from ..models.user import User
 from ..utils.helpers import hash_password, verify_password
 from ..utils.validators import MAX_PASSWORD_LENGTH, is_valid_email, is_valid_password
+from . import profile_service
 
 _MAX_FULL_NAME_LENGTH = 120
 
@@ -30,11 +31,14 @@ _REGISTRATION_FAILED_MESSAGE = (
 )
 
 
-def register_user(email, password, full_name=None, confirm_password=None):
+def register_user(email, password, full_name=None, confirm_password=None, profile_fields=None):
     """Validate, enforce email uniqueness, hash the password, create
-    the User + Profile, commit, and start the Flask-Login session."""
+    the User + Profile (including the permanent demographic fields
+    collected on the Registration form — see profile_service), commit,
+    and start the Flask-Login session."""
     email = (email or '').strip().lower()
     full_name = (full_name or '').strip()[:_MAX_FULL_NAME_LENGTH] or None
+    profile_fields = profile_fields or {}
 
     if not is_valid_email(email):
         return {'success': False, 'message': 'Enter a valid email address.'}
@@ -49,7 +53,16 @@ def register_user(email, password, full_name=None, confirm_password=None):
         return {'success': False, 'message': _REGISTRATION_FAILED_MESSAGE}
 
     user = User(email=email, password_hash=hash_password(password))
-    user.profile = Profile(full_name=full_name)
+    profile = Profile(full_name=full_name)
+    profile_service.apply_profile_fields(
+        profile,
+        age=profile_fields.get('age'),
+        gender=profile_fields.get('gender'),
+        education=profile_fields.get('education'),
+        dominant_hand=profile_fields.get('dominant_hand'),
+        native_language=profile_fields.get('native_language'),
+    )
+    user.profile = profile
 
     db.session.add(user)
     try:

@@ -86,3 +86,42 @@
   margin-inline: auto;
   max-width: 40ch;
 }
+
+/* Secondary, low-emphasis link to the Demo Dashboard — Part 8: discoverable,
+   never a competing primary CTA next to Start/Resume Assessment. */
+.hub-demo-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border);
+  width: 100%;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.hub-demo-link a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-primary);
+  font-weight: var(--font-medium);
+  text-decoration: none;
+}
+
+.hub-demo-link a:hover {
+  text-decoration: underline;
+}
+
+.hub-demo-link a svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.hub-demo-link__tag {
+  color: var(--color-text-muted);
+  font-weight: var(--font-regular);
+}

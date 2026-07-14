@@ -193,7 +193,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!form) return;
 
     var isSubmitting = false;
-    wireClearOnInput(['register-name', 'register-email', 'register-password', 'register-confirm-password']);
+    wireClearOnInput([
+      'register-name', 'register-email', 'register-password', 'register-confirm-password',
+      'register-age', 'register-gender', 'register-education'
+    ]);
 
     form.addEventListener('submit', function (e) {
       if (isSubmitting) return;
@@ -204,6 +207,9 @@ document.addEventListener('DOMContentLoaded', function () {
       var passwordEl = document.getElementById('register-password');
       var confirmEl  = document.getElementById('register-confirm-password');
       var termsEl    = document.getElementById('register-terms');
+      var ageEl      = document.getElementById('register-age');
+      var genderEl   = document.getElementById('register-gender');
+      var eduEl      = document.getElementById('register-education');
       var valid = true;
 
       if (!nameEl.value.trim() || nameEl.value.trim().length < 2) {
@@ -220,6 +226,21 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       if (!confirmEl.value || confirmEl.value !== passwordEl.value) {
         markInvalid(confirmEl, 'Passwords do not match.');
+        valid = false;
+      }
+      if (ageEl) {
+        var ageVal = parseInt(ageEl.value, 10);
+        if (!ageEl.value.trim() || isNaN(ageVal) || ageVal < 1 || ageVal > 120) {
+          markInvalid(ageEl, 'Please enter a valid age (1 – 120).');
+          valid = false;
+        }
+      }
+      if (genderEl && !genderEl.value) {
+        markInvalid(genderEl, 'Please select your gender.');
+        valid = false;
+      }
+      if (eduEl && !eduEl.value) {
+        markInvalid(eduEl, 'Please select your education level.');
         valid = false;
       }
       if (termsEl && !termsEl.checked) {

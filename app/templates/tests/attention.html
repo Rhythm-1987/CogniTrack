@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Attention Assessment — CogniTrack{% endblock %}
+{% block title %}Focus &amp; Attention — CogniTrack{% endblock %}
 
 {% block meta_description %}CogniTrack's Reaction Time Test — measures sustained focus and response speed across five timed rounds.{% endblock %}
 
@@ -11,9 +11,9 @@
 {% block content %}
 
 <!-- ============================================================
-     ATTENTION ASSESSMENT — Step 4 of 7
+     FOCUS & ATTENTION — Step 4 of 7
 ============================================================ -->
-<section class="attention-section" aria-label="Attention Assessment">
+<section class="attention-section" aria-label="Focus &amp; Attention Assessment">
   <div class="container container--narrow">
 
     <!-- ── Progress Strip (shared across all phases) ───────── -->
@@ -48,7 +48,7 @@
         </div>
 
         <div class="attn-card__badge">
-          <span class="badge badge--purple">Attention Assessment</span>
+          <span class="badge badge--purple">Focus &amp; Attention</span>
         </div>
 
         <h1 class="attn-card__title">Reaction Time Test</h1>
@@ -144,7 +144,7 @@
 
         <span class="badge badge--success attn-complete-badge">Assessment Complete</span>
 
-        <h2 class="attn-card__title">Attention Assessment Complete</h2>
+        <h2 class="attn-card__title">Focus &amp; Attention Complete</h2>
 
         <p class="attn-card__lead">
           Your reaction time data has been recorded. Here is your performance summary.
@@ -159,7 +159,7 @@
         </div>
 
         <a href="{{ url_for('assessment.executive') }}" class="btn btn--lg btn--pill attn-continue-btn" id="btn-continue">
-          Continue to Executive Assessment
+          Continue to Decision Making
           <i data-lucide="arrow-right"></i>
         </a>
 

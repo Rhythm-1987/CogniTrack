@@ -528,6 +528,28 @@
   padding-top: var(--space-3);
 }
 
+/* Secondary, low-emphasis link to the Demo Dashboard — never the primary
+   CTA (that stays Start Assessment / View Dashboard above). */
+.cta-card__demo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  font-size: var(--text-sm);
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
+}
+
+.cta-card__demo-link:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.cta-card__demo-link svg {
+  width: 1rem;
+  height: 1rem;
+}
+
 /* Override btn inside the dark card */
 .cta-btn--primary {
   background: #ffffff;
