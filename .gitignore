@@ -1,5 +1,6 @@
 # Python
 __pycache__/
+migrations/__pycache__/
 *.py[cod]
 *.pyo
 
@@ -12,19 +13,28 @@ env/
 # Database
 *.db
 *.sqlite3
+instance/
 
-# VS Code
-.vscode/
+# Test / lint / coverage caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# OS Files
-.DS_Store
-Thumbs.db
+# Logs
+*.log
 
 # Environment variables
 .env
 
-# macOS
-.DS_Store
+# Claude Code
+.claude/
 
-# Windows
+# Editors
+.vscode/
+.idea/
+
+# OS Files
+.DS_Store
 Thumbs.db
