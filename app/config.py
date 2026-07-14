@@ -17,7 +17,15 @@ class Config:
     SECRET_KEY_FROM_ENV = os.environ.get('SECRET_KEY')
     SECRET_KEY = SECRET_KEY_FROM_ENV or secrets.token_hex(32)
 
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+    # Supabase/Render (like Heroku before them) commonly hand out
+    # connection strings using the legacy 'postgres://' scheme, which
+    # SQLAlchemy 1.4+ no longer recognizes as a dialect — it must be
+    # 'postgresql://'. Normalize so DATABASE_URL works verbatim as given.
+    _database_url = os.environ.get('DATABASE_URL')
+    if _database_url and _database_url.startswith('postgres://'):
+        _database_url = _database_url.replace('postgres://', 'postgresql://', 1)
+
+    SQLALCHEMY_DATABASE_URI = _database_url or \
         'sqlite:///' + os.path.join(BASE_DIR, 'app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # Recycles dead connections instead of surfacing them as errors —
