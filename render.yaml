@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: CogniTrack
+    env: python
+
+    buildCommand: |
+      pip install -r requirements.txt
+
+    startCommand: |
+      flask --app run.py db upgrade && gunicorn run:app
