@@ -29,6 +29,7 @@
       </div>
 
       <form class="auth-form" id="login-form" action="{{ url_for('auth.login') }}" method="post" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <input type="hidden" name="next" value="{{ request.args.get('next', '') }}" />
 
         <div class="form-group">
@@ -54,6 +55,7 @@
               name="password"
               placeholder="Enter your password"
               autocomplete="current-password"
+              maxlength="128"
               required
             />
             <button

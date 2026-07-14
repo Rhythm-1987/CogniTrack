@@ -88,10 +88,20 @@
 
   var Data = {
 
-    user:         null,
-    sessions:     {},
-    scores:       {},
-    overallScore: 0,
+    user:            null,
+    sessions:        {},
+    scores:          {},
+    overallScore:    0,
+
+    /* Real completed-assessment history, oldest → latest. Populated by
+       setHistory() from /api/history for a signed-in user, or backfilled
+       to a single real entry by finalizeHistory() for guests/demo (see
+       below) — never fabricated. assessmentCount === history.length is
+       the single source of truth for "is this a baseline profile?" used
+       throughout the UI layer. */
+    history:         [],
+    assessmentCount: 0,
+    remoteHistory:   null,
 
     /* mode is 'real' or 'demo' — selects which sessionStorage
        namespace to read from. Never both, never guessed. */
@@ -127,10 +137,7 @@
 
     getRating: function (score) {
       if (score === null || score === undefined) return { label: 'N/A', sub: 'No data available', cls: 'neutral' };
-      if (score >= 90) return { label: 'Excellent',   sub: '↑ Above Average',        cls: 'excellent' };
-      if (score >= 75) return { label: 'Good',        sub: 'Within Normal Range',    cls: 'good' };
-      if (score >= 60) return { label: 'Average',     sub: 'Room for Improvement',   cls: 'average' };
-      return               { label: 'Needs Review', sub: 'Consider Re-assessment', cls: 'needs-review' };
+      return CT.getRating(score);
     },
 
     getGreeting: function () {
@@ -177,46 +184,125 @@
       return { avg: avg, fastest: fastest, slowest: slowest };
     },
 
-    /* Overall trend status */
-    getOverallStatus: function () {
-      var score = this.overallScore;
-      if (score >= 85) return { label: 'Peak Performance', cls: 'excellent',   icon: 'trending-up' };
-      if (score >= 75) return { label: 'Improving',        cls: 'good',        icon: 'trending-up' };
-      if (score >= 60) return { label: 'Stable',           cls: 'average',     icon: 'minus' };
-      return                   { label: 'Needs Monitoring', cls: 'needs-review', icon: 'trending-down' };
+    /* A domain's key in DOMAINS vs. the key it's stored under server-side
+       ('visual' locally, 'spatial' in the DB/API — see cognitrack-core.js
+       MODULE_ORDER) — the one place that mapping needs to happen when
+       reading history entries. */
+    domainHistoryKey: function (key) { return key === 'visual' ? 'spatial' : key; },
+
+    /* Normalizes the raw /api/history payload (newest-first, per-domain
+       scores keyed by the server's domain names) into Data.history:
+       oldest → latest, every entry a real completed AssessmentSession.
+       Called with null/undefined for guests, the demo route, or a failed
+       fetch — in all of those cases history stays empty here and
+       finalizeHistory() below decides what (if anything) to backfill. */
+    setHistory: function (rawEntries) {
+      var normalized = (rawEntries || []).map(function (e) {
+        return {
+          assessmentId: e.assessmentId,
+          completedAt:  e.completedAt ? new Date(e.completedAt) : null,
+          overallScore: typeof e.overallScore === 'number' ? Math.round(e.overallScore) : null,
+          duration:     e.duration,
+          domains:      e.domains || {}
+        };
+      }).filter(function (e) { return e.completedAt && e.overallScore !== null; });
+
+      normalized.sort(function (a, b) { return a.completedAt - b.completedAt; });
+      this.history = normalized;
+      this.assessmentCount = normalized.length;
     },
 
-    /* Simulated previous score for trend display (±3–8 points below current) */
-    getPreviousScore: function () {
-      if (!this.overallScore) return null;
-      var delta = 3 + Math.floor(this.overallScore % 7);
-      return Math.max(0, this.overallScore - delta);
-    },
+    /* If no real backend history came back (guest, demo route, or an
+       authenticated fetch that failed) but a completed assessment IS
+       sitting in sessionStorage, that one assessment is itself real data
+       — wrap it as a single history entry rather than inventing a second
+       point to draw a line against. This is what makes assessmentCount
+       correctly settle at 1 (baseline) instead of 0 for every caller
+       that already has a completed run in hand. */
+    finalizeHistory: function () {
+      if (this.history.length > 0) { return; }
+      if (this.getCompletedCount() === 0) { this.assessmentCount = 0; return; }
 
-    /* Assessment history: only real session data — no synthetic entries */
-    getHistory: function () {
-      var current = this.overallScore;
-      if (current === null) { return []; }
-      var dur = this.getTotalDuration();
-      var dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-      return [{
-        date:      dateStr,
-        score:     current,
-        prevScore: current,
-        rating:    Data.getRating(current).label,
-        ratingCls: Data.getRating(current).cls,
-        duration:  dur,
-        isLatest:  true
+      var domains = {};
+      DOMAINS.forEach(function (d) {
+        var s = Data.sessions[d.key];
+        if (s && typeof s.score === 'number') {
+          domains[Data.domainHistoryKey(d.key)] = Math.round(s.score);
+        }
+      });
+
+      this.history = [{
+        assessmentId: null,
+        completedAt:  new Date(),
+        overallScore: this.overallScore,
+        duration:     this.getTotalDuration(),
+        domains:      domains
       }];
+      this.assessmentCount = 1;
     },
 
-    /* Three historical scores per domain for sparkline (oldest→latest) */
-    getDomainHistory: function (domainKey) {
-      var current = this.scores[domainKey];
-      if (current === null) return null;
-      var p1 = Math.max(0, current - (3 + (current % 7)));
-      var p2 = Math.max(0, p1     - (2 + (current % 5)));
-      return [p2, p1, current];
+    /* Real trend vs. the immediately preceding real assessment — null
+       (not zero, not estimated) until a second real assessment exists.
+       This is the only thing allowed to answer "is the user improving?" */
+    getOverallTrend: function () {
+      if (this.history.length < 2) { return null; }
+      var latest   = this.history[this.history.length - 1];
+      var previous = this.history[this.history.length - 2];
+      var delta    = latest.overallScore - previous.overallScore;
+      var pct      = previous.overallScore > 0 ? Math.round((delta / previous.overallScore) * 100) : 0;
+      return { delta: delta, pct: pct };
+    },
+
+    /* Overall trend status. "Improving"/"Declining" only ever appear once
+       a real second assessment exists to compare against — a single
+       assessment is always presented as a baseline, never a trend. */
+    getOverallStatus: function () {
+      if (this.assessmentCount < 2) {
+        return { label: 'Baseline Assessment', cls: 'neutral', icon: 'flag' };
+      }
+      var trend = this.getOverallTrend();
+      if (trend && trend.delta > 0) return { label: 'Improving', cls: 'good',          icon: 'trending-up'   };
+      if (trend && trend.delta < 0) return { label: 'Declining', cls: 'needs-review',  icon: 'trending-down' };
+      return                              { label: 'Stable',    cls: 'average',       icon: 'minus'          };
+    },
+
+    /* Real assessment history for the History section — one row per real
+       completed AssessmentSession, latest first. Each row's trend is
+       computed against the assessment immediately before it; the oldest
+       row (and every row when assessmentCount === 1) has no comparison. */
+    getHistory: function () {
+      var list = this.history.slice().reverse(); /* latest -> oldest */
+      return list.map(function (h, i) {
+        var rating  = Data.getRating(h.overallScore);
+        var earlier = list[i + 1]; /* chronologically-previous entry */
+        var hasComparison = !!earlier;
+        return {
+          date:          h.completedAt
+            ? h.completedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            : '—',
+          score:         h.overallScore,
+          rating:        rating.label,
+          ratingCls:     rating.cls,
+          duration:      h.duration,
+          isLatest:      i === 0,
+          isOldest:      i === list.length - 1,
+          hasComparison: hasComparison,
+          delta:         hasComparison ? h.overallScore - earlier.overallScore : null
+        };
+      });
+    },
+
+    /* Real per-domain score series (oldest → latest), one point per real
+       completed assessment that included that domain. Returns null only
+       when there is no real data for the domain at all. Length is always
+       >= 1 whenever the dashboard itself is showing data, and callers
+       must handle length === 1 (baseline — no line, no trend) themselves. */
+    getDomainSeries: function (domainKey) {
+      var apiKey = this.domainHistoryKey(domainKey);
+      var series = this.history
+        .filter(function (h) { return typeof h.domains[apiKey] === 'number'; })
+        .map(function (h) { return { score: Math.round(h.domains[apiKey]), date: h.completedAt }; });
+      return series.length ? series : null;
     },
 
     /* Richer recommendations — up to 3 per weak domain, max 6 total */
@@ -566,17 +652,27 @@
 
   /* ══════════════════════════════════════════════════════════
      TREND SPARKLINE (SVG)
-     Each sparkline takes 3 data points (oldest → latest)
-     and draws a smooth animated polyline with gradient fill.
+     Renders any real number of data points (oldest → latest):
+       1 point   → a single centered baseline dot, no line, no fill
+       2+ points → the polyline/area/dot chart, generalized to N
+                   (no assumption of exactly 3 anywhere below)
   ══════════════════════════════════════════════════════════ */
 
   var Trend = {
 
     SVG_NS: 'http://www.w3.org/2000/svg',
+    W: 120, H: 48, PAD: 6,
 
-    /* Build a single SVG sparkline and append it to `container` */
+    /* Build a single SVG sparkline and append it to `container`.
+       points.length is always >= 1 — callers never pass an empty
+       series (Data.getDomainSeries returns null for that case). */
     render: function (container, points, color, domainKey) {
-      var W = 120, H = 48, pad = 6;
+      if (points.length === 1) {
+        this._renderBaseline(container, color);
+        return;
+      }
+
+      var W = this.W, H = this.H, pad = this.PAD;
       var min  = Math.min.apply(null, points) - 5;
       var max  = Math.max.apply(null, points) + 5;
       min = Math.max(0, min); max = Math.min(100, max);
@@ -605,6 +701,8 @@
       defs.appendChild(lg);
       svg.appendChild(defs);
 
+      /* points.length >= 2 here, so this division is always safe —
+         and works identically whether there are 2, 3, or 50 points. */
       var xStep = (W - pad * 2) / (points.length - 1);
       var coords = points.map(function (v, i) {
         return {
@@ -640,12 +738,16 @@
       lineEl.style.strokeDashoffset = len;
       svg.appendChild(lineEl);
 
-      /* Dots */
+      /* Dots — animation delay is set inline per index rather than via
+         fixed trend-dot--0/1/2 classes, so any real N (not just 3)
+         animates in correctly instead of dots beyond index 2 staying
+         permanently invisible. */
       coords.forEach(function (c, i) {
         var dot = document.createElementNS(ns, 'circle');
         dot.setAttribute('cx', c.x); dot.setAttribute('cy', c.y); dot.setAttribute('r', '3');
         dot.setAttribute('fill', color); dot.setAttribute('stroke', '#fff'); dot.setAttribute('stroke-width', '1.5');
-        dot.setAttribute('class', 'trend-dot trend-dot--' + i);
+        dot.setAttribute('class', 'trend-dot');
+        dot.style.animationDelay = (0.5 + i * 0.12) + 's';
         svg.appendChild(dot);
       });
 
@@ -656,6 +758,31 @@
         lineEl.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1)';
         lineEl.style.strokeDashoffset = '0';
       }, 200);
+    },
+
+    /* A single real assessment has nothing to draw a line against —
+       one centered dot on a flat guide, no connecting line, no
+       fabricated slope. */
+    _renderBaseline: function (container, color) {
+      var W = this.W, H = this.H, ns = this.SVG_NS;
+      var svg = document.createElementNS(ns, 'svg');
+      svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+      svg.setAttribute('class', 'trend-svg trend-svg--baseline');
+      svg.setAttribute('aria-hidden', 'true');
+
+      var guide = document.createElementNS(ns, 'line');
+      guide.setAttribute('x1', 10); guide.setAttribute('y1', H / 2);
+      guide.setAttribute('x2', W - 10); guide.setAttribute('y2', H / 2);
+      guide.setAttribute('class', 'trend-baseline-guide');
+      svg.appendChild(guide);
+
+      var dot = document.createElementNS(ns, 'circle');
+      dot.setAttribute('cx', W / 2); dot.setAttribute('cy', H / 2); dot.setAttribute('r', '4');
+      dot.setAttribute('fill', color); dot.setAttribute('stroke', '#fff'); dot.setAttribute('stroke-width', '1.5');
+      dot.setAttribute('class', 'trend-dot trend-dot--baseline');
+      svg.appendChild(dot);
+
+      container.appendChild(svg);
     },
 
     _polylineLength: function (coords) {
@@ -707,18 +834,19 @@
 
     /* ── Score Ring ────────────────────────────────────────── */
     score: function () {
-      var scoreEl  = document.getElementById('js-overall-score');
-      var badgeEl  = document.getElementById('js-rating-badge');
-      var subEl    = document.getElementById('js-rating-sub');
-      var ringEl   = document.getElementById('js-ring-fill');
-      var statusEl = document.getElementById('js-overall-status');
-      var trendEl  = document.getElementById('js-trend-badge');
-      var changeEl = document.getElementById('js-score-change');
+      var scoreEl      = document.getElementById('js-overall-score');
+      var badgeEl      = document.getElementById('js-rating-badge');
+      var subEl        = document.getElementById('js-rating-sub');
+      var ringEl       = document.getElementById('js-ring-fill');
+      var statusEl     = document.getElementById('js-overall-status');
+      var trendEl      = document.getElementById('js-trend-badge');
+      var changeLblEl  = document.getElementById('js-score-change-label');
+      var changeEl     = document.getElementById('js-score-change');
 
-      var score   = Data.overallScore;
-      var rating  = Data.getRating(score);
-      var status  = Data.getOverallStatus();
-      var prevScr = Data.getPreviousScore();
+      var score  = Data.overallScore;
+      var rating = Data.getRating(score);
+      var status = Data.getOverallStatus();
+      var trend  = Data.getOverallTrend(); /* null until a real 2nd assessment exists */
 
       if (scoreEl) UI._counter(scoreEl, 0, score, 1300);
 
@@ -733,20 +861,29 @@
         statusEl.className  = 'dash-overall-status dash-overall-status--' + status.cls;
       }
 
-      if (trendEl && prevScr !== null) {
-        var delta    = score - prevScr;
-        var sign     = delta >= 0 ? '+' : '';
-        var pct      = prevScr > 0 ? Math.round((delta / prevScr) * 100) : 0;
-        trendEl.innerHTML  = '<i data-lucide="' + (delta >= 0 ? 'trending-up' : 'trending-down') + '"></i>' +
-                             sign + pct + '% since last assessment';
-        trendEl.className  = 'dash-trend-badge dash-trend-badge--' + (delta >= 0 ? 'up' : 'down');
+      if (trendEl) {
+        if (trend) {
+          var sign = trend.delta >= 0 ? '+' : '';
+          trendEl.innerHTML = '<i data-lucide="' + (trend.delta >= 0 ? 'trending-up' : 'trending-down') + '"></i>' +
+                               sign + trend.pct + '% since last assessment';
+          trendEl.className = 'dash-trend-badge dash-trend-badge--' + (trend.delta >= 0 ? 'up' : 'down');
+        } else {
+          trendEl.innerHTML = '<i data-lucide="info"></i>No comparison available yet';
+          trendEl.className = 'dash-trend-badge dash-trend-badge--neutral';
+        }
       }
 
-      if (changeEl && prevScr !== null) {
-        var chg   = score - prevScr;
-        var chgSign = chg >= 0 ? '+' : '';
-        changeEl.textContent = chgSign + chg + ' pts';
-        changeEl.className   = 'dash-score-change ' + (chg >= 0 ? 'dash-score-change--up' : 'dash-score-change--down');
+      if (changeLblEl) changeLblEl.textContent = trend ? 'vs. Previous Assessment' : 'Comparison';
+
+      if (changeEl) {
+        if (trend) {
+          var chgSign = trend.delta >= 0 ? '+' : '';
+          changeEl.textContent = chgSign + trend.delta + ' pts';
+          changeEl.className   = 'dash-score-change ' + (trend.delta >= 0 ? 'dash-score-change--up' : 'dash-score-change--down');
+        } else {
+          changeEl.textContent = 'No comparison available yet';
+          changeEl.className   = 'dash-score-change dash-score-change--neutral';
+        }
       }
 
       if (ringEl) {
@@ -785,7 +922,7 @@
         var score   = Data.scores[d.key];
         var rating  = Data.getRating(score);
         var delay   = Math.min(idx + 1, 5);
-        var history = Data.getDomainHistory(d.key);
+        var series  = Data.getDomainSeries(d.key);
 
         var card = document.createElement('div');
         card.className = 'card dash-domain-card scroll-reveal anim-delay-' + delay;
@@ -798,9 +935,12 @@
           ? '<span class="dash-domain-card__time"><i data-lucide="clock"></i>' + UI._dur(session.duration) + '</span>'
           : '';
 
+        /* Only ever shown once a real second assessment gives this
+           domain something real to compare against — a baseline domain
+           card never carries a trend arrow. */
         var trendHtml = '';
-        if (history) {
-          var delta      = history[2] - history[1];
+        if (series && series.length >= 2) {
+          var delta      = series[series.length - 1].score - series[series.length - 2].score;
           var sign       = delta >= 0 ? '+' : '';
           var trendCls   = delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat';
           var trendIcon  = delta > 0 ? '▲' : delta < 0 ? '▼' : '—';
@@ -837,89 +977,139 @@
       }, 650);
     },
 
-    /* ── Trend Graphs (5 SVG sparklines) ──────────────────── */
+    /* ── Trend Graphs (5 SVG sparklines) ──────────────────────
+       Renders correctly for any real series length (1, 2, 3, 10+) —
+       see Trend.render's own length===1 branch for the no-line,
+       no-arrow baseline case. Nothing here is ever fabricated: a
+       domain with only one real assessment shows exactly one point. */
     trendGraphs: function () {
       var container = document.getElementById('js-trend-graphs');
+      var subEl      = document.getElementById('js-trend-section-sub');
       if (!container) return;
 
+      if (subEl) {
+        subEl.textContent = Data.assessmentCount >= 2
+          ? 'Score trajectory across your ' + Data.assessmentCount + ' completed assessments per domain'
+          : 'Your baseline scores — trends appear after your next assessment';
+      }
+
       DOMAINS.forEach(function (d) {
-        var history = Data.getDomainHistory(d.key);
-        if (!history) return;
+        var series = Data.getDomainSeries(d.key);
+        if (!series) return;
+
+        var isBaseline = series.length < 2;
+        var latest     = series[series.length - 1];
 
         var card = document.createElement('div');
-        card.className = 'trend-card scroll-reveal';
+        card.className = 'trend-card scroll-reveal' + (isBaseline ? ' trend-card--baseline' : '');
         card.style.setProperty('--domain-color', d.color);
 
         var svgWrap = document.createElement('div');
         svgWrap.className = 'trend-card__graph';
 
-        Trend.render(svgWrap, history, d.color, d.key);
+        Trend.render(svgWrap, series.map(function (p) { return p.score; }), d.color, d.key);
 
-        var pts  = history;
-        var delta    = pts[2] - pts[1];
-        var sign     = delta >= 0 ? '+' : '';
-        var trendCls = delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat';
+        var deltaHtml;
+        if (isBaseline) {
+          deltaHtml = '<span class="trend-card__delta trend-card__delta--baseline">Baseline</span>';
+        } else {
+          var prev     = series[series.length - 2];
+          var delta    = latest.score - prev.score;
+          var sign     = delta >= 0 ? '+' : '';
+          var trendCls = delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat';
+          deltaHtml =
+            '<span class="trend-card__delta trend-card__delta--' + trendCls + '">' +
+              (delta > 0 ? '▲' : delta < 0 ? '▼' : '—') + ' ' + sign + delta + ' pts' +
+            '</span>';
+        }
 
         card.innerHTML =
           '<div class="trend-card__header">' +
             '<div class="trend-card__icon-wrap"><i data-lucide="' + d.icon + '"></i></div>' +
             '<div class="trend-card__meta">' +
               '<span class="trend-card__label">' + d.label + '</span>' +
-              '<span class="trend-card__delta trend-card__delta--' + trendCls + '">' +
-                (delta > 0 ? '▲' : delta < 0 ? '▼' : '—') + ' ' + sign + delta + ' pts' +
-              '</span>' +
+              deltaHtml +
             '</div>' +
-            '<span class="trend-card__score">' + pts[2] + '</span>' +
+            '<span class="trend-card__score">' + latest.score + '</span>' +
           '</div>';
 
         card.appendChild(svgWrap);
 
-        var labels = document.createElement('div');
-        labels.className = 'trend-card__labels';
-        labels.innerHTML =
-          '<span>' + pts[0] + '</span>' +
-          '<span>' + pts[1] + '</span>' +
-          '<span>' + pts[2] + '</span>';
+        if (isBaseline) {
+          var note = document.createElement('div');
+          note.className = 'trend-card__baseline-note';
+          note.textContent = 'No comparison available yet';
+          card.appendChild(note);
+        } else {
+          var labels = document.createElement('div');
+          labels.className = 'trend-card__labels';
+          labels.innerHTML = series.map(function (p) { return '<span>' + p.score + '</span>'; }).join('');
+          card.appendChild(labels);
 
-        card.appendChild(labels);
-
-        var sublabels = document.createElement('div');
-        sublabels.className = 'trend-card__sublabels';
-        sublabels.innerHTML = '<span>14 days ago</span><span>7 days ago</span><span>Today</span>';
-        card.appendChild(sublabels);
+          var sublabels = document.createElement('div');
+          sublabels.className = 'trend-card__sublabels';
+          var firstDate = UI._shortDate(series[0].date);
+          var lastDate  = UI._shortDate(series[series.length - 1].date);
+          sublabels.innerHTML = series.length === 2
+            ? '<span>' + firstDate + '</span><span>' + lastDate + '</span>'
+            : '<span>' + firstDate + '</span><span>' + series.length + ' assessments</span><span>' + lastDate + '</span>';
+          card.appendChild(sublabels);
+        }
 
         container.appendChild(card);
       });
     },
 
-    /* ── Assessment History ────────────────────────────────── */
+    /* ── Assessment History ────────────────────────────────────
+       One row per real completed AssessmentSession — never a
+       fabricated entry, never an "(estimated)" placeholder. Renders
+       correctly whether there's 1 real session or 50. */
     history: function () {
       var container = document.getElementById('js-history-list');
+      var subEl      = document.getElementById('js-history-section-sub');
       if (!container) return;
 
       var hist = Data.getHistory();
 
-      container.innerHTML = hist.map(function (h, i) {
-        var delta    = h.score - h.prevScore;
-        var sign     = delta >= 0 ? '+' : '';
-        var trendCls = delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat';
-        var trendTxt = sign + delta + '%';
+      if (subEl) {
+        subEl.textContent = Data.assessmentCount === 1
+          ? 'Baseline Established — no comparison available yet'
+          : 'Latest and previous sessions at a glance';
+      }
+
+      container.innerHTML = hist.map(function (h) {
+        var trendHtml;
+        if (h.hasComparison) {
+          var sign     = h.delta >= 0 ? '+' : '';
+          var trendCls = h.delta > 0 ? 'up' : h.delta < 0 ? 'down' : 'flat';
+          trendHtml =
+            '<span class="hist-trend hist-trend--' + trendCls + '">' +
+              '<i data-lucide="' + (h.delta >= 0 ? 'trending-up' : 'trending-down') + '"></i>' +
+              sign + h.delta + ' pts' +
+            '</span>';
+        } else {
+          trendHtml = '<span class="hist-trend hist-trend--neutral">No comparison available yet</span>';
+        }
+
+        var badgeHtml = '';
+        if (Data.assessmentCount === 1) {
+          badgeHtml = '<span class="hist-latest-badge">First Assessment</span>';
+        } else if (h.isLatest) {
+          badgeHtml = '<span class="hist-latest-badge">Latest</span>';
+        } else if (h.isOldest) {
+          badgeHtml = '<span class="hist-baseline-badge">Baseline</span>';
+        }
 
         return (
           '<div class="hist-item' + (h.isLatest ? ' hist-item--latest' : '') + '">' +
             '<div class="hist-item__left">' +
-              (h.isLatest ? '<span class="hist-latest-badge">Latest</span>' : '') +
-              '<span class="hist-item__date"><i data-lucide="calendar"></i>' + h.date +
-                (!h.isLatest ? ' <span class="hist-item__simulated">(estimated)</span>' : '') +
-              '</span>' +
+              badgeHtml +
+              '<span class="hist-item__date"><i data-lucide="calendar"></i>' + h.date + '</span>' +
             '</div>' +
             '<div class="hist-item__center">' +
               '<span class="hist-item__score">' + h.score + '</span>' +
               '<span class="hist-item__denom">/100</span>' +
-              '<span class="hist-trend hist-trend--' + trendCls + '">' +
-                '<i data-lucide="' + (delta >= 0 ? 'trending-up' : 'trending-down') + '"></i>' +
-                trendTxt +
-              '</span>' +
+              trendHtml +
             '</div>' +
             '<div class="hist-item__right">' +
               '<span class="dash-rating-badge dash-rating-badge--' + h.ratingCls + '">' + h.rating + '</span>' +
@@ -1056,6 +1246,10 @@
       return m + 'm ' + (s > 0 ? s + 's' : '');
     },
 
+    _shortDate: function (d) {
+      return d ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+    },
+
     _escape: function (str) {
       return (str || '')
         .replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -1153,9 +1347,48 @@
 
   /* ══════════════════════════════════════════════════════════
      INIT
+     For a signed-in user (not on /dashboard/demo), the database is
+     the source of truth: fetch /api/dashboard once and, if it has a
+     completed assessment, mirror it into the same sessionStorage
+     keys resolveMode()/Data.load() already read via
+     CT.hydrateDashboardData() — every rendering function below is
+     unaware anything changed. A fetch failure, or no completed
+     assessment yet, simply falls through to the existing
+     sessionStorage-only resolution. Guests and the demo route never
+     touch the network here.
   ══════════════════════════════════════════════════════════ */
 
   function init() {
+    var isDemoRoute = window.location.pathname.indexOf('/dashboard/demo') === 0;
+    var isAuthed    = typeof CT !== 'undefined' && CT.isAuthenticated && CT.isAuthenticated();
+
+    if (!isDemoRoute && isAuthed) {
+      /* /api/dashboard hydrates the current (latest) assessment into
+         sessionStorage as before; /api/history is the real source of
+         every completed assessment — Data.setHistory() below is the
+         only thing allowed to populate trend/history data, so both
+         are fetched up front. A failure on either falls back to
+         Data.finalizeHistory()'s single-real-entry behaviour rather
+         than fabricating anything. */
+      Promise.all([
+        CT.apiGet('/api/dashboard').catch(function () { return null; }),
+        CT.apiGet('/api/history').catch(function () { return null; })
+      ]).then(function (results) {
+        var dashboardData = results[0];
+        var historyData   = results[1];
+        if (dashboardData && dashboardData.modules && CT.hydrateDashboardData) {
+          CT.hydrateDashboardData(dashboardData);
+        }
+        Data.remoteHistory = Array.isArray(historyData) ? historyData : null;
+        renderDashboard();
+      });
+      return;
+    }
+
+    renderDashboard();
+  }
+
+  function renderDashboard() {
     var mode        = resolveMode();
     var emptyEl     = document.getElementById('js-dashboard-empty');
     var dashboardEl = document.getElementById('js-dashboard');
@@ -1173,6 +1406,8 @@
     if (dashboardEl) dashboardEl.hidden = false;
 
     Data.load(mode);
+    Data.setHistory(Data.remoteHistory);
+    Data.finalizeHistory();
 
     UI.demoBadge(mode);
     UI.hero();

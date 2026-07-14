@@ -9,11 +9,14 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 
 class Config:
-    # Falls back to a per-process random key when SECRET_KEY is unset
-    # (e.g. no .env yet) so sessions still work in local dev. Sessions
-    # simply invalidate on restart — set a real SECRET_KEY in .env for
-    # anything beyond local dev.
-    SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
+    # The real value from the environment, if any — create_app() checks
+    # this directly (not SECRET_KEY below) to refuse starting outside
+    # DEBUG mode without one. SECRET_KEY itself still falls back to a
+    # per-process random value so local dev without a .env keeps
+    # working; sessions simply invalidate on restart in that case.
+    SECRET_KEY_FROM_ENV = os.environ.get('SECRET_KEY')
+    SECRET_KEY = SECRET_KEY_FROM_ENV or secrets.token_hex(32)
+
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(BASE_DIR, 'app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -22,3 +25,18 @@ class Config:
     # close idle connections out from under a long-lived pool.
     SQLALCHEMY_ENGINE_OPTIONS = {'pool_pre_ping': True}
     DEBUG = os.environ.get('FLASK_DEBUG', '').lower() in ('1', 'true')
+
+    # ---- Session cookie hardening ----
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    # Secure cookies require HTTPS, which local DEBUG dev usually doesn't
+    # have — on everywhere else so the session cookie is never sent over
+    # plain HTTP.
+    SESSION_COOKIE_SECURE = not DEBUG
+
+    # ---- Rate limiting ----
+    # In-process memory storage — adequate for a single-process
+    # deployment; does not share limit state across multiple gunicorn
+    # workers or instances. Override via RATELIMIT_STORAGE_URI (e.g. a
+    # redis:// URL) if that starts to matter.
+    RATELIMIT_STORAGE_URI = os.environ.get('RATELIMIT_STORAGE_URI', 'memory://')

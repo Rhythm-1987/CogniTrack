@@ -29,7 +29,7 @@
    23. Memory Trial Badge & Trial-2 Word Card Variant
    24. Expanded Spatial Reference Canvas
    25. Button Loading Spinner & Locked State
-   26. Navbar Session Progress Indicator
+   26. Navbar Profile Menu
    27. Grand Finale Completion Portal
    28. Domain Pills
    29. Noscript Banner
@@ -676,6 +676,13 @@ section {
 }
 
 .progress__bar {
+  /* Server-rendered bars pass their first-paint value via the
+     --progress custom property (see tests/*.html) instead of an
+     inline width, so this is the only place width is declared. JS
+     phase transitions still set .style.width directly afterwards —
+     an inline style always wins the cascade, so that keeps working
+     unchanged. */
+  width: var(--progress, 0%);
   height: 100%;
   border-radius: var(--radius-pill);
   background: linear-gradient(
@@ -1058,6 +1065,10 @@ section {
   flex-shrink: 0;
 }
 
+/* ---- Profile Avatar Dropdown (authenticated only) ----
+   Full styles live in § 26. NAVBAR PROFILE MENU, paired with
+   main.js § initProfileMenu(). ---- */
+
 /* ---- Hamburger (mobile only, hidden on desktop) ---- */
 .hamburger {
   display: none;
@@ -1145,17 +1156,14 @@ section {
   outline-offset: -2px;
 }
 
-.mobile-menu__cta {
-  padding-block: var(--space-4) var(--space-5);
-  border-top: 1px solid var(--color-border);
-  margin-top: var(--space-2);
-}
+/* .mobile-nav__link--danger → § 26. NAVBAR PROFILE MENU */
 
 /* ---- Navbar Responsive ---- */
 @media (max-width: 767px) {
-  /* Hide desktop links and CTA; reveal hamburger */
+  /* Hide desktop links and the profile avatar (both live in the drawer
+     on mobile); reveal the hamburger. */
   .nav-links,
-  .nav-cta {
+  .nav-profile {
     display: none;
   }
 
@@ -1793,42 +1801,176 @@ section {
 
 
 /* ============================================================
-   26. NAVBAR SESSION PROGRESS INDICATOR
-   Injected by initNavbarProgress() in main.js when the user
-   has completed at least one assessment module.
+   26. NAVBAR PROFILE MENU
+   Authenticated-only avatar + dropdown (View Profile / Dashboard
+   / Logout). Behaviour → main.js § initProfileMenu().
    ============================================================ */
 
-.nav-progress {
+.nav-profile {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.nav-profile__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+
+.nav-profile__trigger:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.nav-profile__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #7C3AED 100%);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+  line-height: 1;
+  user-select: none;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.nav-profile__trigger:hover .nav-profile__avatar {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.nav-profile__menu {
+  position: absolute;
+  top: calc(100% + var(--space-3));
+  right: 0;
+  min-width: 15rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-2);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition:
+    opacity    var(--transition-fast),
+    transform  var(--transition-fast),
+    visibility 0s var(--transition-fast);
+  z-index: 60;
+}
+
+.nav-profile.is-open .nav-profile__menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition:
+    opacity   var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.nav-profile__header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-2);
+}
+
+.nav-profile__name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-profile__email {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-profile__item {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  margin-right: var(--space-2);
-}
-
-.nav-progress__track {
-  width: 84px;
-  height: 5px;
-  background: var(--color-border);
-  border-radius: var(--radius-pill);
-  overflow: hidden;
-}
-
-.nav-progress__fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--color-primary) 0%, #7C3AED 100%);
-  border-radius: var(--radius-pill);
-  transition: width 600ms ease;
-}
-
-.nav-progress__badge {
-  font-size: 11px;
-  font-weight: 700;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
   color: var(--color-text-secondary);
-  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color var(--transition-fast),
+    color            var(--transition-fast);
 }
 
-@media (max-width: 640px) {
-  .nav-progress { display: none; }
+.nav-profile__item svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.nav-profile__item:hover {
+  background-color: var(--color-surface-alt);
+  color: var(--color-text-primary);
+}
+
+.nav-profile__item:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* Logout is a <button> inside a <form> (POST, CSRF-protected) rather
+   than an <a> — these undo the browser's default button chrome so it
+   still looks identical to the other <a>.nav-profile__item rows. */
+button.nav-profile__item {
+  width: 100%;
+  background: none;
+  border: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nav-profile__item--danger { color: var(--color-danger); }
+
+.nav-profile__item--danger:hover {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+/* Danger modifier for the mobile drawer's Logout link */
+/* Same button-in-a-form reset as .nav-profile__item above, for the
+   mobile drawer's Logout entry. */
+button.mobile-nav__link {
+  width: 100%;
+  background: none;
+  border: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mobile-nav__link--danger { color: var(--color-danger); }
+
+.mobile-nav__link--danger:hover {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
 }
 
 

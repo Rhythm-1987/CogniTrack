@@ -369,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function () {
      SUMMARY — clinical metrics + standardised session + confetti
   ══════════════════════════════════════════════════════════ */
 
-  function buildSummary() {
+  function buildSummary(isRecovery) {
     var correct   = results.filter(function (r) { return r.correct; }).length;
     var incorrect = TOTAL_QUESTIONS - correct;
     var accuracy  = Math.round((correct / TOTAL_QUESTIONS) * 100);
@@ -385,7 +385,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     var score     = accuracy;
-    var ratingObj = (typeof CT !== 'undefined') ? CT.getRating(score) : legacyRating(accuracy);
+    var ratingObj = CT.getRating(score);
 
     summaryGridEl.innerHTML =
       visTile('Accuracy',   accuracy + '%',    'highlight')                  +
@@ -413,6 +413,18 @@ document.addEventListener('DOMContentLoaded', function () {
     goToPhase('summary');
 
     if (typeof CT !== 'undefined') {
+      if (isRecovery) {
+        /* Module was already completed — this is a render-only revisit
+           (refresh, back button). Never re-write the session, re-run
+           results consolidation, or re-show the finale portal; only
+           resume a background save if the previous attempt never
+           reached the server. */
+        if (CT.isAuthenticated() && !CT.isModuleSynced('spatial')) {
+          CT.syncModule('spatial', function () {});
+        }
+        return;
+      }
+
       CT.writeSession('spatial', startedAt, score, accuracy, avgRt, {
         questions:       TOTAL_QUESTIONS,
         results:         results,
@@ -420,8 +432,6 @@ document.addEventListener('DOMContentLoaded', function () {
         q4_7Accuracy:    pAcc(p2),
         q8_10Accuracy:   pAcc(p3)
       });
-
-      CT.completeModule('spatial');
 
       /* Consolidate all 5 modules into cognitrack_results */
       CT.consolidateResults();
@@ -431,14 +441,10 @@ document.addEventListener('DOMContentLoaded', function () {
       if (continueEl && CT.lockButton) { CT.lockButton(continueEl); }
 
       /* Finale portal — confetti + report generation + redirect */
-      CT.showFinalePortal();
+      CT.syncModule('spatial', function () {
+        CT.showFinalePortal();
+      });
     }
-  }
-
-  function legacyRating(accuracy) {
-    if (accuracy >= 87) return { label: 'Excellent',    sub: '↑ Above Average',       cls: 'excellent'    };
-    if (accuracy >= 67) return { label: 'Good',         sub: 'Within Normal Range',    cls: 'good'         };
-    return                     { label: 'Needs Review', sub: 'Consider Re-assessment', cls: 'needs-review' };
   }
 
   function visTile(label, value, modifier) {
@@ -464,14 +470,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!progress) { return false; }
 
     if (progress.modules && progress.modules.spatial) {
-      var session = null;
-      try { session = JSON.parse(sessionStorage.getItem('cognitrack_session_spatial') || 'null'); } catch (e) {}
+      var session = CT.readSession('spatial');
       if (session && session.rawData) {
         startedAt       = session.startedAt;
         results         = session.rawData.results || [];
         currentQuestion = TOTAL_QUESTIONS;
         questions       = generateAllQuestions();
-        buildSummary();
+        buildSummary(true);
         return true;
       }
     }

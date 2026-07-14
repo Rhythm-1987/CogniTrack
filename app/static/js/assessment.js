@@ -36,10 +36,21 @@ document.addEventListener('DOMContentLoaded', function () {
   if (url) { btn.href = url; }
 
   /* The assessment is considered "started" only from this click onward.
-     CT.initProgress() is a no-op if progress already exists (e.g. the
-     user came back to Overview mid-assessment), so it's always safe to
-     call here without disturbing an in-progress run. */
-  btn.addEventListener('click', function () {
-    if (CT.initProgress) { CT.initProgress(); }
+     CT.beginAssessment() calls CT.initProgress() (a no-op if progress
+     already exists — e.g. the user came back to Overview mid-assessment)
+     and, for a signed-in user, blocks until the server has confirmed an
+     assessment_id, retrying automatically behind a banner on failure.
+     Navigation to Module 1 only ever happens after that resolves, so an
+     assessment can never be entered without a database record backing
+     it. Guests resolve immediately — there's no server session to wait
+     on. */
+  btn.addEventListener('click', function (e) {
+    e.preventDefault();
+    if (btn.classList.contains('btn--loading')) { return; } /* double-click guard */
+    if (CT.lockButton) { CT.lockButton(btn); }
+
+    CT.beginAssessment().then(function () {
+      window.location.href = url;
+    });
   });
 });

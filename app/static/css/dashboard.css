@@ -19,7 +19,7 @@
    exists yet.
 ============================================================ */
 
-.dash-empty {
+.dash-empty:not([hidden]) {
   min-height: 80vh;
   display: flex;
   align-items: center;
@@ -127,6 +127,10 @@
 .dash-hero__greeting-badge svg {
   width: 14px;
   height: 14px;
+}
+
+.dash-demo-badge[hidden] {
+  display: none;
 }
 
 .dash-demo-badge {
@@ -1141,6 +1145,7 @@
 .dash-overall-status--good         { background: rgba(37,99,235,0.1);     color: var(--color-primary-dark); }
 .dash-overall-status--average      { background: var(--color-warning-bg); color: #92400E; }
 .dash-overall-status--needs-review { background: var(--color-danger-bg);  color: #B91C1C; }
+.dash-overall-status--neutral      { background: var(--color-surface-alt); color: var(--color-text-secondary); }
 
 .dash-trend-badge {
   display: inline-flex;
@@ -1154,8 +1159,9 @@
 
 .dash-trend-badge svg { width: 12px; height: 12px; }
 
-.dash-trend-badge--up   { background: var(--color-success-bg); color: #15803D; }
-.dash-trend-badge--down { background: var(--color-danger-bg);  color: #B91C1C; }
+.dash-trend-badge--up      { background: var(--color-success-bg); color: #15803D; }
+.dash-trend-badge--down    { background: var(--color-danger-bg);  color: #B91C1C; }
+.dash-trend-badge--neutral { background: var(--color-surface-alt); color: var(--color-text-secondary); }
 
 .dash-score-change-wrap {
   display: flex;
@@ -1182,8 +1188,9 @@
   font-weight: var(--font-bold);
 }
 
-.dash-score-change--up   { color: var(--color-success); }
-.dash-score-change--down { color: var(--color-danger); }
+.dash-score-change--up      { color: var(--color-success); }
+.dash-score-change--down    { color: var(--color-danger); }
+.dash-score-change--neutral { color: var(--color-text-muted); font-weight: var(--font-medium); font-size: var(--text-xs); }
 
 
 /* ============================================================
@@ -1280,9 +1287,10 @@
   width: fit-content;
 }
 
-.trend-card__delta--up   { background: var(--color-success-bg); color: #15803D; }
-.trend-card__delta--down { background: var(--color-danger-bg);  color: #B91C1C; }
-.trend-card__delta--flat { background: var(--color-surface-alt); color: var(--color-text-muted); }
+.trend-card__delta--up       { background: var(--color-success-bg); color: #15803D; }
+.trend-card__delta--down     { background: var(--color-danger-bg);  color: #B91C1C; }
+.trend-card__delta--flat     { background: var(--color-surface-alt); color: var(--color-text-muted); }
+.trend-card__delta--baseline { background: var(--color-surface-alt); color: var(--color-text-secondary); }
 
 .trend-card__score {
   font-family: var(--font-display);
@@ -1304,10 +1312,12 @@
 }
 
 .trend-line { transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
-.trend-dot  { opacity: 0; animation: trend-dot-in 0.3s ease forwards; }
-.trend-dot--0 { animation-delay: 0.5s; }
-.trend-dot--1 { animation-delay: 0.85s; }
-.trend-dot--2 { animation-delay: 1.2s; }
+
+/* animation-delay is set inline per dot (see Trend.render in
+   dashboard.js) so any real number of points fades in correctly —
+   fixed trend-dot--0/1/2 classes previously capped this at 3 dots,
+   leaving a 4th+ point permanently invisible (opacity never left 0). */
+.trend-dot { opacity: 0; animation: trend-dot-in 0.3s ease forwards; }
 
 @keyframes trend-dot-in {
   from { opacity: 0; transform: scale(0); }
@@ -1329,6 +1339,28 @@
   font-size: 9px;
   color: var(--color-text-muted);
   margin-top: -2px;
+}
+
+/* ── Baseline (single real assessment) state ──────────────── */
+
+.trend-svg--baseline { opacity: 0.9; }
+
+.trend-baseline-guide {
+  stroke: var(--color-border);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+}
+
+.trend-dot--baseline {
+  opacity: 0;
+  animation: trend-dot-in 0.4s ease 0.4s forwards;
+}
+
+.trend-card__baseline-note {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  text-align: center;
+  font-style: italic;
 }
 
 
@@ -1453,10 +1485,18 @@
 
 .hist-item__date svg { width: 13px; height: 13px; stroke: var(--color-text-muted); }
 
-.hist-item__simulated {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-  font-style: italic;
+.hist-baseline-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: var(--font-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-alt);
+  color: var(--color-text-secondary);
+  width: fit-content;
 }
 
 .hist-item__center {
@@ -1491,9 +1531,10 @@
 
 .hist-trend svg { width: 11px; height: 11px; }
 
-.hist-trend--up   { background: var(--color-success-bg); color: #15803D; }
-.hist-trend--down { background: var(--color-danger-bg);  color: #B91C1C; }
-.hist-trend--flat { background: var(--color-surface-alt); color: var(--color-text-muted); }
+.hist-trend--up      { background: var(--color-success-bg); color: #15803D; }
+.hist-trend--down    { background: var(--color-danger-bg);  color: #B91C1C; }
+.hist-trend--flat    { background: var(--color-surface-alt); color: var(--color-text-muted); }
+.hist-trend--neutral { background: var(--color-surface-alt); color: var(--color-text-muted); font-style: italic; }
 
 .hist-item__right {
   display: flex;

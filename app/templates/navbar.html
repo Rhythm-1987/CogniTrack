@@ -3,10 +3,20 @@
      Sticky, responsive navigation with mobile drawer.
      Styles  → static/css/style.css  § 18. NAVBAR
      Behaviour → static/js/main.js   § 02. initNavbar()
+                                     § initProfileMenu()
      Active state → nav_section, injected by a context processor
      in app/__init__.py from request.path (one source of truth
      instead of each link re-deriving it).
+
+     Auth-aware links (single source of truth = current_user):
+       Logged out → Home · Assessment · Dashboard · Login · Register
+       Logged in  → Home · Assessment · Dashboard · Profile avatar
+     No "Start Assessment" CTA and no in-navbar progress indicator —
+     starting/resuming an assessment lives only in the Assessment Hub.
      ============================================================ -->
+{% set _display_name = (current_user.profile.full_name if (current_user.is_authenticated and current_user.profile and current_user.profile.full_name)
+                        else current_user.email if current_user.is_authenticated else '') %}
+{% set _avatar_initial = (_display_name[:1] | upper) if _display_name else 'U' %}
 <nav class="navbar" id="navbar" aria-label="Main navigation">
 
   <!-- ── Top bar ─────────────────────────────────────────── -->
@@ -41,19 +51,12 @@
         </li>
         <li>
           <a href="{{ url_for('dashboard.dashboard') }}"
-             class="nav-link nav-link--dim {% if nav_section == 'dashboard' %}is-active{% endif %}"
+             class="nav-link {% if nav_section == 'dashboard' %}is-active{% endif %}"
              {% if nav_section == 'dashboard' %}aria-current="page"{% endif %}>
             Dashboard
           </a>
         </li>
-        {% if current_user.is_authenticated %}
-          <li>
-            <a href="{{ url_for('auth.profile') }}" class="nav-link">Profile</a>
-          </li>
-          <li>
-            <a href="{{ url_for('auth.logout') }}" class="nav-link">Logout</a>
-          </li>
-        {% else %}
+        {% if not current_user.is_authenticated %}
           <li>
             <a href="{{ url_for('auth.login') }}" class="nav-link">Login</a>
           </li>
@@ -63,12 +66,42 @@
         {% endif %}
       </ul>
 
-      <!-- Right: Primary CTA + Hamburger -->
+      <!-- Right: Profile avatar (auth only) + Hamburger -->
       <div class="nav-actions">
-        <a href="{{ url_for('assessment.hub') }}"
-           class="btn btn--primary btn--sm nav-cta">
-          Start Assessment
-        </a>
+        {% if current_user.is_authenticated %}
+          <div class="nav-profile" id="nav-profile">
+            <button class="nav-profile__trigger"
+                    id="nav-profile-trigger"
+                    type="button"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                    aria-controls="nav-profile-menu"
+                    aria-label="Account menu">
+              <span class="nav-profile__avatar" aria-hidden="true">{{ _avatar_initial }}</span>
+            </button>
+            <div class="nav-profile__menu" id="nav-profile-menu" role="menu" aria-hidden="true">
+              <div class="nav-profile__header">
+                <span class="nav-profile__name">{{ _display_name }}</span>
+                <span class="nav-profile__email">{{ current_user.email }}</span>
+              </div>
+              <a href="{{ url_for('auth.profile') }}" class="nav-profile__item" role="menuitem">
+                <i data-lucide="user"></i>
+                View Profile
+              </a>
+              <a href="{{ url_for('dashboard.dashboard') }}" class="nav-profile__item" role="menuitem">
+                <i data-lucide="layout-dashboard"></i>
+                Dashboard
+              </a>
+              <form method="post" action="{{ url_for('auth.logout') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="nav-profile__item nav-profile__item--danger" role="menuitem">
+                  <i data-lucide="log-out"></i>
+                  Logout
+                </button>
+              </form>
+            </div>
+          </div>
+        {% endif %}
 
         <button class="hamburger"
                 id="nav-toggle"
@@ -113,10 +146,13 @@
         </li>
         {% if current_user.is_authenticated %}
           <li>
-            <a href="{{ url_for('auth.profile') }}" class="mobile-nav__link">Profile</a>
+            <a href="{{ url_for('auth.profile') }}" class="mobile-nav__link">View Profile</a>
           </li>
           <li>
-            <a href="{{ url_for('auth.logout') }}" class="mobile-nav__link">Logout</a>
+            <form method="post" action="{{ url_for('auth.logout') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <button type="submit" class="mobile-nav__link mobile-nav__link--danger">Logout</button>
+            </form>
           </li>
         {% else %}
           <li>
@@ -127,13 +163,6 @@
           </li>
         {% endif %}
       </ul>
-
-      <div class="mobile-menu__cta">
-        <a href="{{ url_for('assessment.hub') }}"
-           class="btn btn--primary w-full">
-          Start Assessment
-        </a>
-      </div>
 
     </div>
   </div>

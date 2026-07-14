@@ -226,6 +226,14 @@
   gap: var(--space-4);
 }
 
+/* Trial 2 has 6 words, not 5 — the shared 5-column grid above would
+   fill one full row and strand the 6th word alone on its own row
+   with four empty column tracks beside it. 3 columns gives two even
+   rows instead. */
+#trial2-words {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .word-card {
   background: var(--color-surface-alt);
   border: 1.5px solid var(--color-border);
@@ -436,6 +444,12 @@
 @media (max-width: 479px) {
 
   .memory-words {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Keep trial 2's 6 words balanced (3 rows of 2) instead of
+     inheriting the 3-column desktop/tablet override above. */
+  #trial2-words {
     grid-template-columns: repeat(2, 1fr);
   }
 

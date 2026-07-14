@@ -2,6 +2,8 @@
 
 {% block title %}Spatial Reasoning — CogniTrack{% endblock %}
 
+{% block meta_description %}CogniTrack's Spatial Reasoning Assessment — measures mental rotation and visuospatial orientation.{% endblock %}
+
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/visual.css') }}" />
 {% endblock %}
@@ -23,7 +25,7 @@
       </span>
 
       <div class="progress progress--sm vis-progress mt-3">
-        <div class="progress__bar" id="vis-phase-bar" style="width: 33.33%"></div>
+        <div class="progress__bar" id="vis-phase-bar" style="--progress: 33.33%"></div>
       </div>
 
       <div class="vis-progress-labels">
@@ -104,7 +106,7 @@
           Question&ensp;<span id="q-current">1</span>&thinsp;of&thinsp;10
         </span>
         <div class="progress progress--sm vis-q-progress">
-          <div class="progress__bar vis-q-bar" id="vis-q-bar" style="width: 0%"></div>
+          <div class="progress__bar vis-q-bar" id="vis-q-bar"></div>
         </div>
       </div>
 
@@ -182,7 +184,7 @@
         <div class="vis-perf-status" id="vis-perf-status">
         </div>
 
-        <a href="/dashboard" class="btn btn--lg btn--pill vis-continue-btn">
+        <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn--lg btn--pill vis-continue-btn">
           View Full Results
           <i data-lucide="arrow-right"></i>
         </a>

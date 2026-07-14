@@ -182,9 +182,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     disableButtons();
 
-    var clickedBtn = document.querySelector(
-      '#color-buttons .exec-btn[data-color="' + colorName + '"]'
-    );
+    var clickedBtn = colorButtonEls.filter(function (btn) {
+      return btn.getAttribute('data-color') === colorName;
+    })[0];
     if (clickedBtn) {
       clickedBtn.classList.add(isCorrect ? 'is-correct' : 'is-incorrect');
     }
@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function () {
      SUMMARY — clinical metrics + standardised session write
   ══════════════════════════════════════════════════════════ */
 
-  function buildSummary() {
+  function buildSummary(isRecovery) {
     var correct       = results.filter(function (r) { return r.correct; }).length;
     var incorrect     = TOTAL_QUESTIONS - correct;
     var accuracy      = Math.round((correct / TOTAL_QUESTIONS) * 100);
@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', function () {
       : 0;
 
     var score     = accuracy;   /* accuracy directly maps to 0-100 */
-    var ratingObj = (typeof CT !== 'undefined') ? CT.getRating(score) : legacyRating(accuracy);
+    var ratingObj = CT.getRating(score);
 
     summaryGridEl.innerHTML =
       execTile('Accuracy',    accuracy + '%',  'highlight')                  +
@@ -297,6 +297,17 @@ document.addEventListener('DOMContentLoaded', function () {
     goToPhase('summary');
 
     if (typeof CT !== 'undefined') {
+      if (isRecovery) {
+        /* Module was already completed — this is a render-only revisit
+           (refresh, back button). Never re-write the session or re-show
+           the transition card; only resume a background save if the
+           previous attempt never reached the server. */
+        if (CT.isAuthenticated() && !CT.isModuleSynced('executive')) {
+          CT.syncModule('executive', function () {});
+        }
+        return;
+      }
+
       CT.writeSession('executive', startedAt, score, accuracy, avgRt, {
         questions:           TOTAL_QUESTIONS,
         results:             results,
@@ -304,22 +315,16 @@ document.addEventListener('DOMContentLoaded', function () {
         incongruentAccuracy: p3Acc
       });
 
-      CT.completeModule('executive');
-
       /* Lock continue link to block accidental nav during transition */
       var continueEl = phases.summary ? phases.summary.querySelector('a.btn') : null;
       if (continueEl) { CT.lockButton(continueEl); }
 
-      setTimeout(function () {
-        CT.showTransitionCard(CT.getNextModuleUrl(), CT.getNextModuleName());
-      }, 1800);
+      CT.syncModule('executive', function () {
+        setTimeout(function () {
+          CT.showTransitionCard();
+        }, 1800);
+      });
     }
-  }
-
-  function legacyRating(accuracy) {
-    if (accuracy >= 85) return { label: 'Excellent',    sub: '↑ Above Average',       cls: 'excellent'    };
-    if (accuracy >= 70) return { label: 'Good',         sub: 'Within Normal Range',    cls: 'good'         };
-    return                     { label: 'Needs Review', sub: 'Consider Re-assessment', cls: 'needs-review' };
   }
 
   function execTile(label, value, modifier) {
@@ -345,14 +350,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!progress) { return false; }
 
     if (progress.modules && progress.modules.executive) {
-      var session = null;
-      try { session = JSON.parse(sessionStorage.getItem('cognitrack_session_executive') || 'null'); } catch (e) {}
+      var session = CT.readSession('executive');
       if (session && session.rawData) {
         startedAt       = session.startedAt;
         results         = session.rawData.results || [];
         currentQuestion = TOTAL_QUESTIONS;
         questions       = generateQuestions();
-        buildSummary();
+        buildSummary(true);
         return true;
       }
     }

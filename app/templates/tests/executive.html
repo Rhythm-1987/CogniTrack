@@ -2,6 +2,8 @@
 
 {% block title %}Executive Function — CogniTrack{% endblock %}
 
+{% block meta_description %}CogniTrack's Stroop Colour Test — measures inhibitory control and cognitive flexibility under interference.{% endblock %}
+
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/executive.css') }}" />
 {% endblock %}
@@ -23,7 +25,7 @@
       </span>
 
       <div class="progress progress--sm exec-progress mt-3">
-        <div class="progress__bar" id="exec-phase-bar" style="width: 33.33%"></div>
+        <div class="progress__bar" id="exec-phase-bar" style="--progress: 33.33%"></div>
       </div>
 
       <div class="exec-progress-labels">
@@ -120,7 +122,7 @@
           Question&ensp;<span id="q-current">1</span>&thinsp;of&thinsp;15
         </span>
         <div class="progress progress--sm exec-q-progress">
-          <div class="progress__bar exec-q-bar" id="exec-q-bar" style="width: 0%"></div>
+          <div class="progress__bar exec-q-bar" id="exec-q-bar"></div>
         </div>
       </div>
 
@@ -171,7 +173,7 @@
         <div class="exec-perf-status" id="exec-perf-status">
         </div>
 
-        <a href="/processing" class="btn btn--lg btn--pill exec-continue-btn">
+        <a href="{{ url_for('assessment.processing') }}" class="btn btn--lg btn--pill exec-continue-btn">
           Continue to Processing Speed
           <i data-lucide="arrow-right"></i>
         </a>

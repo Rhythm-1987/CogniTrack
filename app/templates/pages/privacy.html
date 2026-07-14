@@ -2,7 +2,7 @@
 
 {% block title %}Privacy Policy — CogniTrack{% endblock %}
 
-{% block meta_description %}How CogniTrack handles your data — what's collected, where it lives, and how session storage keeps everything on your device.{% endblock %}
+{% block meta_description %}How CogniTrack handles your data — what's collected, where it lives as a guest versus a signed-in user, and how to have it deleted.{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}" />
@@ -19,17 +19,16 @@
         Privacy
       </span>
       <h1 class="legal-header__title">Privacy Policy</h1>
-      <p class="legal-header__meta">Last updated for the current CogniTrack prototype release</p>
+      <p class="legal-header__meta">Last updated for the current CogniTrack release</p>
     </div>
 
     <div class="card legal-card scroll-reveal">
       <div class="legal-prose">
 
         <p>
-          CogniTrack is a hackathon prototype — a browser-based cognitive assessment tool,
-          not a finished commercial product. This page explains, in plain terms, exactly what
-          information the app touches and — just as importantly — where that information
-          actually lives.
+          This page explains, in plain terms, exactly what information CogniTrack collects
+          and where it actually lives — and it's different depending on whether you're signed
+          in or using the app as a guest.
         </p>
 
         <h2>What We Collect</h2>
@@ -38,29 +37,34 @@
           gender, education level, sleep quality, and (optionally) your dominant hand. As you
           move through the five assessment modules — Memory Recall, Focus &amp; Attention,
           Decision Making, Thinking Speed, and Visual Reasoning — the app also records your
-          responses, timing, and computed scores for each domain.
+          responses, timing, and computed scores for each domain. If you register an account,
+          we also store your email address and a securely hashed password — we never store
+          your password in plain text and cannot look it up on your behalf.
         </p>
 
         <h2>Where Your Data Lives</h2>
         <div class="legal-callout">
           <i data-lucide="lock" aria-hidden="true"></i>
           <p>
-            Everything above is stored exclusively in your browser's <strong>session storage</strong>.
-            It is never transmitted to a server, never written to a database, and is
-            automatically erased the moment you close the tab or browser window.
+            As a <strong>guest</strong>, everything above stays in your browser's session
+            storage — it is never transmitted to a server or written to a database, and is
+            erased the moment you close the tab. As a <strong>signed-in user</strong>, your
+            profile details and assessment results are saved to our database against your
+            account, so your dashboard and history are available whenever you log back in
+            from any device.
           </p>
         </div>
         <p>
-          CogniTrack currently has no backend, no database, and no user accounts. There is
-          nothing for anyone — including us — to access once your browser session ends.
+          Your account session is tracked with a secure, HTTP-only cookie used solely to keep
+          you signed in — it is not used for advertising or cross-site tracking.
         </p>
 
         <h2>Demo Mode</h2>
         <p>
           The "View Demo Dashboard" option loads a separate, clearly-labeled sample dataset
           (a fictional profile) so you can preview the dashboard experience before completing
-          your own assessment. Demo data lives in its own storage namespace and never mixes
-          with, overwrites, or is mistaken for your real results.
+          your own assessment. Demo data lives only in your browser's session storage and
+          never mixes with, overwrites, or is mistaken for your real results.
         </p>
 
         <h2>Third-Party Resources</h2>
@@ -74,17 +78,10 @@
 
         <h2>Clearing Your Data</h2>
         <ul>
-          <li>Closing the browser tab or window clears your session immediately.</li>
-          <li>Starting a new assessment from the User Information page resets any prior progress.</li>
-          <li>There is no "delete my account" control, because there is no account or server-side storage to delete from.</li>
+          <li>As a guest, closing the browser tab or window clears your session immediately.</li>
+          <li>Starting a new assessment resets any prior in-progress attempt.</li>
+          <li>Signed-in users can request deletion of their account and all associated data at any time by emailing us below — we don't yet have a self-serve "delete my account" button, but every request is honored promptly.</li>
         </ul>
-
-        <h2>What's Changing Next</h2>
-        <p>
-          A future release will introduce optional accounts and persistent storage so you can
-          save results across sessions. This policy will be updated well before that ships,
-          and nothing described above will change retroactively without clear notice.
-        </p>
 
       </div>
 

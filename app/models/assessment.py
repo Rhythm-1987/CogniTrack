@@ -15,18 +15,34 @@ class AssessmentSession(db.Model):
         db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
     )
     completed_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     status = db.Column(db.String(20), nullable=False, default='in_progress')
     sleep_quality = db.Column(db.String(20), nullable=True)
 
     overall_score = db.Column(db.Float, nullable=True)
-    cci = db.Column(db.Float, nullable=True)
-    risk_level = db.Column(db.String(20), nullable=True)
     duration = db.Column(db.Integer, nullable=True)
 
     user = db.relationship('User', back_populates='assessment_sessions')
     results = db.relationship(
         'AssessmentResult', back_populates='assessment_session', cascade='all, delete-orphan'
+    )
+
+    __table_args__ = (
+        db.CheckConstraint("status IN ('in_progress', 'completed')", name='ck_assessment_sessions_status'),
+        db.CheckConstraint(
+            'overall_score IS NULL OR (overall_score >= 0 AND overall_score <= 100)',
+            name='ck_assessment_sessions_overall_score_range',
+        ),
+        db.CheckConstraint('duration IS NULL OR duration >= 0', name='ck_assessment_sessions_duration_nonneg'),
+        # Every dashboard/resume-state query filters by exactly this pair
+        # (get_incomplete_session, get_user_assessment_state, get_dashboard_payload).
+        db.Index('ix_assessment_sessions_user_id_status', 'user_id', 'status'),
     )
 
 
@@ -47,5 +63,19 @@ class AssessmentResult(db.Model):
     average_time = db.Column(db.Float, nullable=True)
     rating = db.Column(db.String(20), nullable=True)
     raw_data = db.Column(db.JSON, nullable=True)
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     assessment_session = db.relationship('AssessmentSession', back_populates='results')
+
+    __table_args__ = (
+        db.UniqueConstraint('assessment_id', 'domain', name='uq_assessment_results_assessment_id_domain'),
+        db.CheckConstraint('score IS NULL OR (score >= 0 AND score <= 100)', name='ck_assessment_results_score_range'),
+        db.CheckConstraint(
+            'accuracy IS NULL OR (accuracy >= 0 AND accuracy <= 100)', name='ck_assessment_results_accuracy_range'
+        ),
+    )

@@ -11,9 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
   'use strict';
 
   /* ── Config ─────────────────────────────────────────────── */
-  var TOTAL_ROUNDS        = 5;
-  var THRESHOLD_EXCELLENT = 250;   /* ms — avg RT for Excellent */
-  var THRESHOLD_GOOD      = 400;   /* ms — avg RT for Good     */
+  var TOTAL_ROUNDS = 5;
 
   /* Per-round delay windows (0-indexed round index)
      min = 4000 - round*500,  max = 5000 - round*500         */
@@ -238,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function () {
      SUMMARY — clinical metrics + standardised session write
   ══════════════════════════════════════════════════════════ */
 
-  function buildSummary() {
+  function buildSummary(isRecovery) {
     var avg, fastest, slowest;
     if (reactionTimes.length === 0) {
       avg = 0; fastest = 0; slowest = 0;
@@ -254,9 +252,7 @@ document.addEventListener('DOMContentLoaded', function () {
        capped [0, 100]                                        */
     var score = Math.max(0, Math.min(100, Math.round(90 + (250 - avg) * 0.1)));
 
-    var ratingObj = (typeof CT !== 'undefined')
-      ? CT.getRating(score)
-      : legacyRating(avg);
+    var ratingObj = CT.getRating(score);
 
     var falseStartClass = falseStarts > 0 ? 'warn' : '';
     summaryGridEl.innerHTML =
@@ -286,6 +282,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* Persist standardised session */
     if (typeof CT !== 'undefined') {
+      if (isRecovery) {
+        /* Module was already completed — this is a render-only revisit
+           (refresh, back button). Never re-write the session or re-show
+           the transition card; only resume a background save if the
+           previous attempt never reached the server. */
+        if (CT.isAuthenticated() && !CT.isModuleSynced('attention')) {
+          CT.syncModule('attention', function () {});
+        }
+        return;
+      }
+
       CT.writeSession('attention', startedAt, score, score, avg, {
         reactionTimes: reactionTimes,
         falseStarts:   falseStarts,
@@ -293,22 +300,16 @@ document.addEventListener('DOMContentLoaded', function () {
         slowest:       slowest
       });
 
-      CT.completeModule('attention');
-
       /* Lock continue link to block accidental nav during transition */
       var continueEl = phases.summary ? phases.summary.querySelector('a.btn') : null;
       if (continueEl) { CT.lockButton(continueEl); }
 
-      setTimeout(function () {
-        CT.showTransitionCard(CT.getNextModuleUrl(), CT.getNextModuleName());
-      }, 1800);
+      CT.syncModule('attention', function () {
+        setTimeout(function () {
+          CT.showTransitionCard();
+        }, 1800);
+      });
     }
-  }
-
-  function legacyRating(avg) {
-    if (avg <= THRESHOLD_EXCELLENT) return { label: 'Excellent', sub: '↑ Above Average', cls: 'excellent' };
-    if (avg <= THRESHOLD_GOOD)      return { label: 'Good',      sub: 'Within Normal Range', cls: 'good' };
-    return                                  { label: 'Needs Review', sub: 'Consider Re-assessment', cls: 'needs-review' };
   }
 
   function metricTile(label, value, modifier) {
@@ -335,14 +336,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (progress.modules && progress.modules.attention) {
       buildPips();
-      var session = null;
-      try { session = JSON.parse(sessionStorage.getItem('cognitrack_session_attention') || 'null'); } catch (e) {}
+      var session = CT.readSession('attention');
       if (session && session.rawData) {
         startedAt      = session.startedAt;
         reactionTimes  = session.rawData.reactionTimes || [];
         falseStarts    = session.rawData.falseStarts   || 0;
         currentRound   = TOTAL_ROUNDS;
-        buildSummary();
+        buildSummary(true);
         goToPhase('summary');
         return true;
       }

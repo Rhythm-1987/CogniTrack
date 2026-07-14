@@ -1,6 +1,7 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
+from ..core.extensions import limiter
 from ..services import auth_service
 
 auth_bp = Blueprint('auth', __name__)
@@ -22,6 +23,7 @@ def login():
 
 
 @auth_bp.route('/login', methods=['POST'])
+@limiter.limit('10 per minute')
 def login_post():
     email = request.form.get('email', '').strip()
     password = request.form.get('password', '')
@@ -45,17 +47,14 @@ def register():
 
 
 @auth_bp.route('/register', methods=['POST'])
+@limiter.limit('5 per minute')
 def register_post():
     full_name = request.form.get('full_name', '').strip()
     email = request.form.get('email', '').strip()
     password = request.form.get('password', '')
     confirm_password = request.form.get('confirm_password', '')
 
-    if password != confirm_password:
-        flash('Passwords do not match.', 'danger')
-        return redirect(url_for('auth.register'))
-
-    result = auth_service.register_user(email, password, full_name)
+    result = auth_service.register_user(email, password, full_name, confirm_password)
 
     if not result['success']:
         flash(result['message'], 'danger')
@@ -65,7 +64,7 @@ def register_post():
     return redirect(url_for('assessment.hub'))
 
 
-@auth_bp.route('/logout')
+@auth_bp.route('/logout', methods=['POST'])
 def logout():
     auth_service.logout_user()
     flash('You have been logged out.', 'info')

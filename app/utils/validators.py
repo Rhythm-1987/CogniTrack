@@ -1,5 +1,11 @@
 from email_validator import EmailNotValidError, validate_email
 
+# Werkzeug's PBKDF2 hashing cost scales with input length — an
+# unbounded password field is a cheap CPU-exhaustion vector (submit a
+# multi-megabyte "password" repeatedly). 128 is generous for any real
+# passphrase while closing that off.
+MAX_PASSWORD_LENGTH = 128
+
 
 def is_valid_email(email):
     if not email:
@@ -12,6 +18,7 @@ def is_valid_email(email):
 
 
 def is_valid_password(password):
-    """Minimum viable password policy: at least 8 characters.
-    Sprint 7.3 may layer additional complexity rules here."""
-    return bool(password) and len(password) >= 8
+    """Minimum viable password policy: 8-128 characters."""
+    if not password:
+        return False
+    return 8 <= len(password) <= MAX_PASSWORD_LENGTH

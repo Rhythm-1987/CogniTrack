@@ -101,7 +101,7 @@
             </span>
           </div>
           <div class="dash-score-change-wrap">
-            <span class="dash-score-proto-label">Estimated Trend</span>
+            <span class="dash-score-proto-label" id="js-score-change-label">Comparison</span>
             <span class="dash-score-change" id="js-score-change">—</span>
           </div>
         </div>
@@ -158,7 +158,7 @@
     <section class="dash-section anim-fade-up" aria-label="Domain trend graphs">
       <div class="dash-section__header">
         <h2 class="dash-section__title">Performance Trends</h2>
-        <span class="dash-section__sub">Score trajectory across the past 3 assessments per domain</span>
+        <span class="dash-section__sub" id="js-trend-section-sub">Score trajectory per domain</span>
       </div>
       <div class="dash-trend-grid" id="js-trend-graphs">
         <!-- Trend cards injected by dashboard.js -->
@@ -194,7 +194,7 @@
     <section class="dash-section anim-fade-up" aria-label="Assessment history">
       <div class="dash-section__header">
         <h2 class="dash-section__title">Assessment History</h2>
-        <span class="dash-section__sub">Latest and previous sessions at a glance</span>
+        <span class="dash-section__sub" id="js-history-section-sub">Latest and previous sessions at a glance</span>
       </div>
       <div class="card dash-history-card">
         <div class="hist-list" id="js-history-list">
@@ -299,7 +299,7 @@
          ROW 9: Controls
     ═══════════════════════════════════════════════════════ -->
     <section class="dash-controls anim-fade-up" aria-label="Dashboard actions">
-      <a href="/memory" id="js-retake-btn" class="btn btn--primary btn--lg btn--pill">
+      <a href="{{ url_for('assessment.memory') }}" id="js-retake-btn" class="btn btn--primary btn--lg btn--pill">
         <i data-lucide="rotate-ccw"></i>
         Retake Assessment
       </a>
@@ -310,7 +310,7 @@
           Coming Soon
         </span>
       </button>
-      <a href="/" class="btn btn--ghost btn--lg btn--pill">
+      <a href="{{ url_for('main.index') }}" class="btn btn--ghost btn--lg btn--pill">
         <i data-lucide="home"></i>
         Back Home
       </a>

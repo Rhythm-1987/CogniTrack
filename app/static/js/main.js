@@ -7,8 +7,8 @@
    Table of Contents
    01. Lucide Icons  — initialise all [data-lucide] elements
    02. Navbar        — scroll shadow + mobile drawer
-   03. Scroll Reveal — IntersectionObserver for .scroll-reveal elements
-   04. Navbar Session Progress Indicator
+   03. Profile Menu  — authenticated avatar dropdown
+   04. Scroll Reveal — IntersectionObserver for .scroll-reveal elements
    05. Flash Messages
    ============================================================ */
 
@@ -26,14 +26,14 @@ document.addEventListener('DOMContentLoaded', function () {
   initNavbar();
 
   /* ----------------------------------------------------------
-     03. SCROLL REVEAL
+     03. PROFILE MENU
   ---------------------------------------------------------- */
-  initScrollReveal();
+  initProfileMenu();
 
   /* ----------------------------------------------------------
-     04. NAVBAR SESSION PROGRESS INDICATOR
+     04. SCROLL REVEAL
   ---------------------------------------------------------- */
-  initNavbarProgress();
+  initScrollReveal();
 
   /* ----------------------------------------------------------
      05. FLASH MESSAGES
@@ -101,62 +101,61 @@ function initNavbar() {
   });
 
   /* ---- Close when viewport expands past the mobile breakpoint ---- */
-  window.matchMedia('(min-width: 768px)').addEventListener('change', function (e) {
-    if (e.matches) { closeDrawer(); }
-  });
+  var mq = window.matchMedia('(min-width: 768px)');
+  var onBreakpointChange = function (e) { if (e.matches) { closeDrawer(); } };
+  if (mq.addEventListener) {
+    mq.addEventListener('change', onBreakpointChange);
+  } else if (mq.addListener) {
+    /* Safari < 14 has no addEventListener on MediaQueryList */
+    mq.addListener(onBreakpointChange);
+  }
 }
 
 
 /* ============================================================
-   initNavbarProgress()
-   Reads cognitrack_progress from sessionStorage and injects a
-   compact progress bar + badge into .navbar__inner whenever a
-   REAL assessment is currently in progress or has been completed.
-
-   "cognitrack_progress" is the real-assessment key only — demo
-   sessions live entirely under separate "cognitrack_demo_*" keys
-   (see cognitrack-core.js) and never touch this one, so this
-   indicator can never appear for a demo session.
-   Reads/writes: .navbar__inner → injects .nav-progress
+   initProfileMenu()
+   Toggles the authenticated account dropdown (avatar -> menu with
+   View Profile / Dashboard / Logout). Closes on outside click,
+   Escape, or focus leaving the menu. No-op when the trigger isn't
+   present (i.e. logged-out pages), so it is safe to call globally.
+   Reads/writes: #nav-profile, #nav-profile-trigger, #nav-profile-menu
 ============================================================ */
-function initNavbarProgress() {
-  var progress = null;
-  try {
-    var raw = sessionStorage.getItem('cognitrack_progress');
-    progress = raw ? JSON.parse(raw) : null;
-  } catch (e) { return; }
+function initProfileMenu() {
+  var root    = document.getElementById('nav-profile');
+  var trigger = document.getElementById('nav-profile-trigger');
+  var menu    = document.getElementById('nav-profile-menu');
 
-  /* Show as soon as a real assessment has started (assessmentStarted is
-     set on the "Begin Assessment" click, immediately before Memory Recall
-     loads — see assessment.js) through to completion — not just once at
-     least one full module is done. */
-  if (!progress || !progress.assessmentStarted) { return; }
+  if (!root || !trigger || !menu) { return; }
 
-  var inner = document.querySelector('.navbar__inner');
-  if (!inner) { return; }
-
-  var completed = progress.completedCount;
-  var total     = 5;
-  var pct       = Math.round((completed / total) * 100);
-
-  var el = document.createElement('div');
-  el.className = 'nav-progress';
-  el.setAttribute('aria-label', completed + ' of ' + total + ' modules completed');
-
-  el.innerHTML =
-    '<div class="nav-progress__track" aria-hidden="true">' +
-      '<div class="nav-progress__fill" style="width:' + pct + '%"></div>' +
-    '</div>' +
-    '<span class="nav-progress__badge">' +
-      completed + ' / ' + total + ' Modules' +
-    '</span>';
-
-  var navActions = inner.querySelector('.nav-actions');
-  if (navActions) {
-    inner.insertBefore(el, navActions);
-  } else {
-    inner.appendChild(el);
+  function open() {
+    root.classList.add('is-open');
+    trigger.setAttribute('aria-expanded', 'true');
+    menu.setAttribute('aria-hidden', 'false');
+    document.addEventListener('click', onOutsideClick, true);
   }
+
+  function close() {
+    root.classList.remove('is-open');
+    trigger.setAttribute('aria-expanded', 'false');
+    menu.setAttribute('aria-hidden', 'true');
+    document.removeEventListener('click', onOutsideClick, true);
+  }
+
+  function onOutsideClick(e) {
+    if (!root.contains(e.target)) { close(); }
+  }
+
+  trigger.addEventListener('click', function (e) {
+    e.stopPropagation();
+    root.classList.contains('is-open') ? close() : open();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && root.classList.contains('is-open')) {
+      close();
+      trigger.focus();
+    }
+  });
 }
 
 

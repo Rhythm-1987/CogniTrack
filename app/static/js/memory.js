@@ -393,7 +393,7 @@ document.addEventListener('DOMContentLoaded', function () {
      PHASE 7: CLINICAL SUMMARY + SESSION PERSISTENCE
   ══════════════════════════════════════════════════════════ */
 
-  function buildSummary() {
+  function buildSummary(isRecovery) {
     var targetLower = targetWords.map(function (w) { return w.toLowerCase(); });
     var normalised  = recallText.toLowerCase().replace(/[^a-z\s]/g, '');
 
@@ -414,10 +414,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var recognitionPct = Math.round((recognitionCount / totalTargets) * 100);
     var score          = Math.round(recognitionPct * 0.6 + recallPct * 0.4);
 
-    var ratingObj = (typeof CT !== 'undefined') ? CT.getRating(score) : null;
-    var ratingLabel = ratingObj ? ratingObj.label : (
-      score >= 90 ? 'Excellent' : score >= 75 ? 'Good' : score >= 60 ? 'Average' : 'Needs Review'
-    );
+    var ratingObj = CT.getRating(score);
 
     /* ── Rich assessment summary card ──────────────────── */
     completeStats.className = 'ct-summary-card';
@@ -433,16 +430,26 @@ document.addEventListener('DOMContentLoaded', function () {
         summaryTile('Recall Accuracy', recallPct + '%')                      +
         summaryTile('Time Taken',      timeTaken + 's')                      +
       '</div>' +
-      '<div class="ct-summary-rating ct-summary-rating--' +
-          (ratingObj ? ratingObj.cls : 'good') + '">' +
-        '<span class="ct-summary-rating__label">' + ratingLabel + '</span>' +
-        (ratingObj ? '<span class="ct-summary-rating__sub">' + ratingObj.sub + '</span>' : '') +
+      '<div class="ct-summary-rating ct-summary-rating--' + ratingObj.cls + '">' +
+        '<span class="ct-summary-rating__label">' + ratingObj.label + '</span>' +
+        '<span class="ct-summary-rating__sub">' + ratingObj.sub + '</span>' +
       '</div>';
 
     animateScore(completeStats.querySelector('[data-target]'), score);
 
     /* ── Persist standardised session ────────────────────── */
     if (typeof CT !== 'undefined') {
+      if (isRecovery) {
+        /* Module was already completed — this is a render-only revisit
+           (refresh, back button). Never re-write the session or re-show
+           the transition card; only resume a background save if the
+           previous attempt never reached the server. */
+        if (CT.isAuthenticated() && !CT.isModuleSynced('memory')) {
+          CT.syncModule('memory', function () {});
+        }
+        return;
+      }
+
       CT.writeSession('memory', startedAt, score, recognitionPct, 0, {
         trial1Words:        trial1Words,
         trial2Words:        trial2Words,
@@ -457,12 +464,12 @@ document.addEventListener('DOMContentLoaded', function () {
         selectedWords:      Object.keys(selectedWords)
       });
 
-      CT.completeModule('memory');
-
       /* Automated handshake — transition card after 1.8 s */
-      setTimeout(function () {
-        CT.showTransitionCard(CT.getNextModuleUrl(), CT.getNextModuleName());
-      }, 1800);
+      CT.syncModule('memory', function () {
+        setTimeout(function () {
+          CT.showTransitionCard();
+        }, 1800);
+      });
     }
   }
 
@@ -500,10 +507,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* Module already completed — go straight to complete */
     if (progress.modules && progress.modules.memory) {
-      var session = null;
-      try {
-        session = JSON.parse(sessionStorage.getItem('cognitrack_session_memory') || 'null');
-      } catch (e) {}
+      var session = CT.readSession('memory');
 
       if (session) {
         /* Restore summary data from saved session */
@@ -515,7 +519,7 @@ document.addEventListener('DOMContentLoaded', function () {
         recallText   = raw.recallText   || '';
         /* Rebuild selectedWords map */
         (raw.selectedWords || []).forEach(function (w) { selectedWords[w] = true; });
-        buildSummary();
+        buildSummary(true);
         goToPhase('complete');
         return true;
       }

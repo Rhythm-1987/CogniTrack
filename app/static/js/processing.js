@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function () {
      SUMMARY — clinical metrics + standardised session write
   ══════════════════════════════════════════════════════════ */
 
-  function buildSummary() {
+  function buildSummary(isRecovery) {
     var correct   = results.filter(function (r) { return r.correct; }).length;
     var incorrect = TOTAL_QUESTIONS - correct;
     var accuracy  = Math.round((correct / TOTAL_QUESTIONS) * 100);
@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var totalSecs = (totalMs / 1000).toFixed(1);
 
     var score     = accuracy;
-    var ratingObj = (typeof CT !== 'undefined') ? CT.getRating(score) : legacyRating(accuracy);
+    var ratingObj = CT.getRating(score);
 
     summaryGridEl.innerHTML =
       procTile('Accuracy',   accuracy + '%',         'highlight')                   +
@@ -354,6 +354,17 @@ document.addEventListener('DOMContentLoaded', function () {
     goToPhase('summary');
 
     if (typeof CT !== 'undefined') {
+      if (isRecovery) {
+        /* Module was already completed — this is a render-only revisit
+           (refresh, back button). Never re-write the session or re-show
+           the transition card; only resume a background save if the
+           previous attempt never reached the server. */
+        if (CT.isAuthenticated() && !CT.isModuleSynced('processing')) {
+          CT.syncModule('processing', function () {});
+        }
+        return;
+      }
+
       CT.writeSession('processing', startedAt, score, accuracy, avgRt, {
         keyMap:     keyMap,
         questions:  TOTAL_QUESTIONS,
@@ -362,22 +373,16 @@ document.addEventListener('DOMContentLoaded', function () {
         results:    results
       });
 
-      CT.completeModule('processing');
-
       /* Lock continue link to block accidental nav during transition */
       var continueEl = phases.summary ? phases.summary.querySelector('a.btn') : null;
       if (continueEl) { CT.lockButton(continueEl); }
 
-      setTimeout(function () {
-        CT.showTransitionCard(CT.getNextModuleUrl(), CT.getNextModuleName());
-      }, 1800);
+      CT.syncModule('processing', function () {
+        setTimeout(function () {
+          CT.showTransitionCard();
+        }, 1800);
+      });
     }
-  }
-
-  function legacyRating(accuracy) {
-    if (accuracy >= 90) return { label: 'Excellent',    sub: '↑ Above Average',       cls: 'excellent'    };
-    if (accuracy >= 70) return { label: 'Good',         sub: 'Within Normal Range',    cls: 'good'         };
-    return                     { label: 'Needs Review', sub: 'Consider Re-assessment', cls: 'needs-review' };
   }
 
   function procTile(label, value, modifier) {
@@ -403,14 +408,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!progress) { return false; }
 
     if (progress.modules && progress.modules.processing) {
-      var session = null;
-      try { session = JSON.parse(sessionStorage.getItem('cognitrack_session_processing') || 'null'); } catch (e) {}
+      var session = CT.readSession('processing');
       if (session && session.rawData) {
         startedAt       = session.startedAt;
         results         = session.rawData.results || [];
         currentQuestion = TOTAL_QUESTIONS;
         totalMs         = session.rawData.totalMs || 0;
-        buildSummary();
+        buildSummary(true);
         return true;
       }
     }

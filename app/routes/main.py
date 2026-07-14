@@ -1,21 +1,24 @@
 from flask import Blueprint, render_template
+from flask_login import current_user
+
+from ..services import assessment_service
 
 main_bp = Blueprint('main', __name__)
 
 
 @main_bp.route('/')
 def index():
-    return render_template('pages/index.html')
+    # Drives the hero CTA: 'none' (Start), 'in_progress' (Continue), or
+    # 'completed' (Start New). Guests are always 'none' — Start Assessment.
+    assessment_state = 'none'
+    if current_user.is_authenticated:
+        assessment_state = assessment_service.get_user_assessment_state(current_user)['state']
+    return render_template('pages/index.html', assessment_state=assessment_state)
 
 
-@main_bp.route('/user', methods=['GET', 'POST'])
+@main_bp.route('/user')
 def user():
     return render_template('pages/user.html')
-
-
-@main_bp.route('/results')
-def results():
-    return render_template('pages/results.html')
 
 
 @main_bp.route('/privacy')

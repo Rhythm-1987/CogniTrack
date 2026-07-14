@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}CogniTrack — Understand Your Cognitive Health{% endblock %}
+{% block title %}Understand Your Cognitive Health — CogniTrack{% endblock %}
 
 {% block meta_description %}Take a free 15-minute cognitive assessment covering memory, attention, decision making, thinking speed, and visual reasoning — get your personalised results instantly.{% endblock %}
 
@@ -37,11 +37,25 @@
         </p>
 
         <div class="hero__cta">
-          <a href="{{ url_for('main.user') }}"
-             class="btn btn--primary btn--lg btn--pill">
-            <i data-lucide="brain"></i>
-            Start Assessment
-          </a>
+          {% if current_user.is_authenticated and assessment_state == 'in_progress' %}
+            <a href="{{ url_for('assessment.hub') }}"
+               class="btn btn--primary btn--lg btn--pill">
+              <i data-lucide="play"></i>
+              Continue Assessment
+            </a>
+          {% elif current_user.is_authenticated and assessment_state == 'completed' %}
+            <a href="{{ url_for('main.user') }}"
+               class="btn btn--primary btn--lg btn--pill">
+              <i data-lucide="rotate-cw"></i>
+              Start New Assessment
+            </a>
+          {% else %}
+            <a href="{{ url_for('main.user') }}"
+               class="btn btn--primary btn--lg btn--pill">
+              <i data-lucide="brain"></i>
+              Start Assessment
+            </a>
+          {% endif %}
           <a href="#domains"
              class="btn btn--secondary btn--lg btn--pill">
             <i data-lucide="chevron-down"></i>
@@ -287,7 +301,7 @@
             <i data-lucide="user-check"></i>
           </div>
           <span class="step__num">01</span>
-          <h4 class="step__title">Enter Details</h4>
+          <h3 class="step__title">Enter Details</h3>
           <p class="step__desc">
             Provide basic demographic information so we can personalise your
             cognitive baseline benchmarks.
@@ -300,7 +314,7 @@
             <i data-lucide="clipboard-list"></i>
           </div>
           <span class="step__num">02</span>
-          <h4 class="step__title">Complete Assessments</h4>
+          <h3 class="step__title">Complete Assessments</h3>
           <p class="step__desc">
             Work through five scientifically-designed tests, each designed to
             take just two to three focused minutes.
@@ -313,7 +327,7 @@
             <i data-lucide="bar-chart-2"></i>
           </div>
           <span class="step__num">03</span>
-          <h4 class="step__title">Analyze Results</h4>
+          <h3 class="step__title">Analyze Results</h3>
           <p class="step__desc">
             Our engine scores your performance against age-matched norms
             and peer groups in real time.
@@ -326,7 +340,7 @@
             <i data-lucide="layout-dashboard"></i>
           </div>
           <span class="step__num">04</span>
-          <h4 class="step__title">View Dashboard</h4>
+          <h3 class="step__title">View Dashboard</h3>
           <p class="step__desc">
             Explore your cognitive profile with intuitive charts, domain scores,
             and personalised insights.
@@ -370,11 +384,25 @@
         </p>
 
         <div class="cta-card__actions">
-          <a href="{{ url_for('main.user') }}"
-             class="btn btn--lg btn--pill cta-btn--primary">
-            <i data-lucide="brain"></i>
-            Start Your Assessment
-          </a>
+          {% if current_user.is_authenticated and assessment_state == 'in_progress' %}
+            <a href="{{ url_for('assessment.hub') }}"
+               class="btn btn--lg btn--pill cta-btn--primary">
+              <i data-lucide="play"></i>
+              Continue Assessment
+            </a>
+          {% elif current_user.is_authenticated and assessment_state == 'completed' %}
+            <a href="{{ url_for('main.user') }}"
+               class="btn btn--lg btn--pill cta-btn--primary">
+              <i data-lucide="rotate-cw"></i>
+              Start New Assessment
+            </a>
+          {% else %}
+            <a href="{{ url_for('main.user') }}"
+               class="btn btn--lg btn--pill cta-btn--primary">
+              <i data-lucide="brain"></i>
+              Start Your Assessment
+            </a>
+          {% endif %}
           <a href="{{ url_for('dashboard.dashboard') }}"
              class="btn btn--lg btn--pill cta-btn--outline">
             <i data-lucide="layout-dashboard"></i>

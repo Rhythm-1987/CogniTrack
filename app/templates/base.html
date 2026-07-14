@@ -6,6 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="{% block meta_description %}CogniTrack delivers clinically-inspired cognitive assessments — memory, attention, executive function, processing speed, and spatial reasoning — with instant, personalised results.{% endblock %}" />
 
+  <!-- CSRF token — read by cognitrack-core.js and sent as the
+       X-CSRFToken header on every /api/* fetch() POST; plain HTML
+       forms (login/register) carry their own hidden csrf_token input
+       instead. -->
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
+
   <!-- Page Title -->
   <title>{% block title %}CogniTrack{% endblock %}</title>
 
@@ -33,7 +39,7 @@
   {% block head %}{% endblock %}
 </head>
 
-<body>
+<body data-auth="{{ 'true' if current_user.is_authenticated else 'false' }}">
 
   <a href="#main-content" class="skip-link">Skip to main content</a>
 

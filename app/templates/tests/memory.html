@@ -2,6 +2,8 @@
 
 {% block title %}Memory Assessment — CogniTrack{% endblock %}
 
+{% block meta_description %}CogniTrack's Word Recall Test — a two-trial memory assessment measuring encoding, storage, and free recall.{% endblock %}
+
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/memory.css') }}" />
 {% endblock %}
@@ -23,7 +25,7 @@
       </span>
 
       <div class="progress progress--sm memory-progress mt-3">
-        <div class="progress__bar" id="phase-bar" style="width: 14.28%"></div>
+        <div class="progress__bar" id="phase-bar" style="--progress: 14.28%"></div>
       </div>
 
       <div class="memory-progress-labels">

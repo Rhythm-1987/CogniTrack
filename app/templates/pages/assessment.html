@@ -2,6 +2,8 @@
 
 {% block title %}Assessment Overview — CogniTrack{% endblock %}
 
+{% block meta_description %}What to expect from your CogniTrack assessment — five short modules covering memory, attention, decision making, thinking speed, and visual reasoning.{% endblock %}
+
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/assessment.css') }}" />
 {% endblock %}
@@ -113,7 +115,7 @@
         <span>Estimated Time:&nbsp;<strong>15 Minutes</strong></span>
       </div>
 
-      <a href="/memory" id="btn-begin-assessment" class="btn btn--primary btn--lg btn--pill">
+      <a href="{{ url_for('assessment.memory') }}" id="btn-begin-assessment" class="btn btn--primary btn--lg btn--pill">
         <i data-lucide="play"></i>
         Begin Assessment
       </a>

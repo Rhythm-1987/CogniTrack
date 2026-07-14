@@ -73,10 +73,13 @@
       </div>
 
       <div class="mt-6">
-        <a href="{{ url_for('auth.logout') }}" class="btn btn--secondary">
-          <i data-lucide="log-out"></i>
-          Log Out
-        </a>
+        <form method="post" action="{{ url_for('auth.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button type="submit" class="btn btn--secondary">
+            <i data-lucide="log-out"></i>
+            Log Out
+          </button>
+        </form>
       </div>
 
     </div>

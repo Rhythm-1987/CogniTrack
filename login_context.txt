@@ -1,0 +1,10 @@
+     Behaviour → static/js/main.js   § 02. initNavbar()
+                                     § initProfileMenu()
+     Active state → nav_section, injected by a context processor
+     in app/__init__.py from request.path (one source of truth
+     instead of each link re-deriving it).
+
+     Auth-aware links (single source of truth = current_user):
+       Logged out → Home · Assessment · Dashboard · Login · Register
+       Logged in  → Home · Assessment · Dashboard · Profile avatar
+     No "Start A

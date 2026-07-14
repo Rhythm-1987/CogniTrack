@@ -39,23 +39,47 @@
         <span class="domain-pill domain-pill--cyan">Visuospatial</span>
       </div>
 
-      <div class="hub-actions">
-        <a href="{{ url_for('main.user') }}" class="btn btn--primary btn--lg btn--pill">
-          <i data-lucide="play"></i>
-          Start New Assessment
-        </a>
-        <a href="#"
-           id="js-resume-btn"
-           class="btn btn--secondary btn--lg btn--pill"
-           aria-disabled="true"
-           tabindex="-1"
-           aria-describedby="js-resume-hint">
-          <i data-lucide="rotate-cw"></i>
-          Resume Assessment
-        </a>
-        <p class="hub-resume-hint" id="js-resume-hint">
-          No assessment to resume yet. Complete your first assessment to unlock resume functionality.
-        </p>
+      <!-- Three mutually-exclusive states, revealed by hub.js from the
+           authoritative source: the server-computed assessment_state for
+           signed-in users, or sessionStorage progress for guests. Exactly
+           one is ever shown. -->
+      <div class="hub-actions" id="js-hub-actions">
+
+        <!-- No assessment started -->
+        <div class="hub-state" id="hub-state-none" hidden>
+          <a href="{{ url_for('main.user') }}" class="btn btn--primary btn--lg btn--pill">
+            <i data-lucide="play"></i>
+            Start Assessment
+          </a>
+          <p class="hub-resume-hint">No assessment currently in progress.</p>
+        </div>
+
+        <!-- Assessment in progress -->
+        <div class="hub-state" id="hub-state-progress" hidden>
+          <a href="#" id="js-resume-btn" class="btn btn--primary btn--lg btn--pill">
+            <i data-lucide="rotate-cw"></i>
+            Resume Assessment
+          </a>
+          <a href="{{ url_for('main.user') }}" class="btn btn--ghost btn--lg btn--pill">
+            <i data-lucide="refresh-ccw"></i>
+            Start Over
+          </a>
+          <p class="hub-resume-hint">Pick up right where you left off.</p>
+        </div>
+
+        <!-- Assessment completed -->
+        <div class="hub-state" id="hub-state-completed" hidden>
+          <a href="{{ url_for('main.user') }}" class="btn btn--primary btn--lg btn--pill">
+            <i data-lucide="play"></i>
+            Start New Assessment
+          </a>
+          <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn--secondary btn--lg btn--pill">
+            <i data-lucide="layout-dashboard"></i>
+            View Dashboard
+          </a>
+          <p class="hub-resume-hint">Your last assessment is complete.</p>
+        </div>
+
       </div>
 
     </div>
@@ -66,5 +90,12 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+  window.CT_RESUME = {{ resume_data | tojson }};
+  /* Server-authoritative state for signed-in users ('none' |
+     'in_progress' | 'completed'); null for guests, where hub.js falls
+     back to sessionStorage progress. */
+  window.CT_ASSESSMENT_STATE = {{ assessment_state | tojson }};
+</script>
 <script src="{{ url_for('static', filename='js/hub.js') }}"></script>
 {% endblock %}

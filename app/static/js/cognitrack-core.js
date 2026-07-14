@@ -173,6 +173,13 @@
         processing: false,
         spatial:    false
       },
+      /* Local completion (modules) is tracked separately from confirmed
+         server persistence (serverSynced/assessmentSynced) — see
+         CT.syncModule / CT.ensureAssessmentId below. This is what lets a
+         revisit of an already-completed module tell "answered" apart
+         from "safely saved" without re-hitting the network needlessly. */
+      serverSynced:        {},
+      assessmentSynced:    false,
       completedCount:      0,
       assessmentStarted:   new Date().toISOString(),
       assessmentCompleted: null
@@ -218,44 +225,403 @@
     CT.saveProgress(p);
   };
 
-  /* No progress yet means the assessment hasn't started (assessmentStarted
-     is only set when Begin Assessment is clicked — see assessment.js), so
-     the "next" module is simply the first one, not the dashboard. */
-  CT.getNextModuleUrl = function () {
+  /* ══════════════════════════════════════════════════════════
+     DATABASE SYNC
+     The database is the source of truth for a signed-in user;
+     sessionStorage remains a fast local cache. Guests (not
+     authenticated) never hit these endpoints — body.data-auth
+     on <body> (set server-side) gates every call below.
+  ══════════════════════════════════════════════════════════ */
+
+  CT.isAuthenticated = function () {
+    return document.body && document.body.getAttribute('data-auth') === 'true';
+  };
+
+  /* Every rejection carries the HTTP status (and parsed JSON body, if
+     any) on the Error object, so callers can tell a transient failure
+     (retry it) apart from a deliberate, idempotent 409 ("this was
+     already saved/completed" — see CT.syncModule) apart from a genuine
+     validation error. */
+  var REQUEST_TIMEOUT_MS = 15000;
+
+  /* Without this, a hung connection (dead wifi, stalled proxy) never
+     resolves or rejects — the caller's retry banner never appears and
+     the UI is stuck waiting on a promise that will never settle. The
+     abort turns that into an ordinary rejection, which flows into the
+     same attemptWithRetry() backoff/banner path as any other failure. */
+  function apiRequest(url, options) {
+    var timeoutId = null;
+    if (typeof AbortController !== 'undefined') {
+      var controller = new AbortController();
+      options.signal = controller.signal;
+      timeoutId = setTimeout(function () { controller.abort(); }, REQUEST_TIMEOUT_MS);
+    }
+
+    return fetch(url, options).then(function (res) {
+      if (timeoutId) { clearTimeout(timeoutId); }
+      return res.json().catch(function () { return null; }).then(function (data) {
+        if (!res.ok) {
+          var err = new Error((data && data.error) || ('Request failed (' + res.status + ')'));
+          err.status = res.status;
+          err.body   = data;
+          throw err;
+        }
+        return data;
+      });
+    }, function (err) {
+      if (timeoutId) { clearTimeout(timeoutId); }
+      throw err;
+    });
+  }
+
+  function csrfToken() {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+  }
+
+  function apiPost(url, body) {
+    return apiRequest(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken()
+      },
+      body: JSON.stringify(body || {})
+    });
+  }
+
+  /* Exposed (unlike apiPost) because dashboard.js is the one caller
+     outside this file that needs a plain authenticated GET — reusing
+     this keeps it on the same timeout/error-shape contract as every
+     other request instead of dashboard.js reimplementing fetch. */
+  CT.apiGet = function (url) {
+    return apiRequest(url, { credentials: 'same-origin' });
+  };
+
+  /* Persistent, undismissable-until-resolved banner — reuses the exact
+     .flash-stack/.flash/.flash--danger markup the server already renders
+     for flash messages (style.css § 31), so a fetch failure looks native
+     to the app instead of introducing a new visual language. message is
+     optional — callers with a more specific failure (e.g. "couldn't
+     start your assessment" vs "couldn't save your results") can override
+     the default copy. */
+  function showSyncError(retry, message) {
+    var stack = document.getElementById('ct-sync-flash-stack');
+    if (!stack) {
+      stack = document.createElement('div');
+      stack.className = 'flash-stack';
+      stack.id = 'ct-sync-flash-stack';
+      document.body.appendChild(stack);
+    }
+    stack.innerHTML = '';
+
+    var flash = document.createElement('div');
+    flash.className = 'flash flash--danger';
+    flash.setAttribute('role', 'alert');
+    flash.innerHTML =
+      '<i data-lucide="alert-triangle"></i>' +
+      '<span>' + (message || 'We couldn\'t save your results. Check your connection and try again.') + '</span>' +
+      '<button type="button" class="btn btn--primary btn--sm">Retry</button>';
+
+    flash.querySelector('button').addEventListener('click', function () {
+      flash.remove();
+      retry();
+    });
+
+    stack.appendChild(flash);
+    CT.renderIcons();
+  }
+
+  function clearSyncError() {
+    var stack = document.getElementById('ct-sync-flash-stack');
+    if (stack) { stack.innerHTML = ''; }
+  }
+
+  /* Automatic backoff schedule (ms) used by attemptWithRetry — caps at
+     30 s so a long outage still retries at a steady, unobtrusive pace
+     instead of hammering the server or giving up. */
+  var AUTO_RETRY_DELAYS = [2000, 4000, 8000, 15000, 30000];
+
+  /* Retries taskFn (a zero-arg function returning a Promise) until it
+     resolves. Never rejects: a transient failure only ever produces a
+     longer wait behind the shared retry banner, so a completed answer
+     can never be silently dropped or mistaken for "saved" when it
+     wasn't. The banner's own Retry button short-circuits the current
+     backoff wait for an immediate retry. */
+  function attemptWithRetry(taskFn, message) {
+    return new Promise(function (resolve) {
+      var attemptIndex = 0;
+      var timerId       = null;
+
+      function tryNow() {
+        taskFn().then(function (result) {
+          if (timerId) { clearTimeout(timerId); timerId = null; }
+          clearSyncError();
+          resolve(result);
+        }).catch(function () {
+          var delay = AUTO_RETRY_DELAYS[Math.min(attemptIndex, AUTO_RETRY_DELAYS.length - 1)];
+          attemptIndex++;
+          showSyncError(function () {
+            if (timerId) { clearTimeout(timerId); timerId = null; }
+            tryNow();
+          }, message);
+          timerId = setTimeout(tryNow, delay);
+        });
+      }
+
+      tryNow();
+    });
+  }
+
+  /* ── Server-confirmed persistence tracking ──────────────────
+     Deliberately separate from progress.modules (which only means "the
+     user finished answering"). A module can be locally complete while
+     its save is still in flight/retrying — these flags only ever flip
+     once the database has actually acknowledged the write, and are what
+     CT.syncModule uses to skip redundant network calls on a revisit. */
+
+  CT.isModuleSynced = function (module) {
     var p = CT.loadProgress();
-    if (!p) { return MODULE_URLS[MODULE_ORDER[0]]; }
+    return !!(p && p.serverSynced && p.serverSynced[module]);
+  };
+
+  function markModuleSynced(module) {
+    var p = CT.loadProgress() || CT.initProgress();
+    p.serverSynced = p.serverSynced || {};
+    p.serverSynced[module] = true;
+    CT.saveProgress(p);
+  }
+
+  CT.isAssessmentSynced = function () {
+    var p = CT.loadProgress();
+    return !!(p && p.assessmentSynced);
+  };
+
+  function markAssessmentSynced() {
+    var p = CT.loadProgress() || CT.initProgress();
+    p.assessmentSynced = true;
+    CT.saveProgress(p);
+  }
+
+  function startSessionTask() {
+    var user = {};
+    try {
+      var raw = sessionStorage.getItem('cognitrack_user');
+      if (raw) { user = JSON.parse(raw); }
+    } catch (e) {}
+
+    return apiPost('/api/assessment/start', {
+      name: user.name,
+      profile: {
+        age: user.age, gender: user.gender, education: user.education,
+        sleepQuality: user.sleepQuality, dominantHand: user.dominantHand
+      }
+    });
+  }
+
+  /* Resolves once the current progress record has a server-confirmed
+     assessment_id — retrying indefinitely (behind the shared sync
+     banner) rather than ever letting a caller proceed without one. A
+     signed-in user's assessment is only ever "started" once the
+     database agrees; this is also the self-heal path CT.syncModule
+     falls back to if a module page is somehow reached without one. */
+  CT.ensureAssessmentId = function () {
+    var p = CT.loadProgress();
+    if (p && p.assessmentId) { return Promise.resolve(p.assessmentId); }
+
+    return attemptWithRetry(
+      startSessionTask,
+      "We couldn't start your assessment. Check your connection and try again."
+    ).then(function (result) {
+      var pp = CT.loadProgress() || CT.initProgress();
+      pp.assessmentId = result.assessment_id;
+      CT.saveProgress(pp);
+      return pp.assessmentId;
+    });
+  };
+
+  /* The single entry point for "Begin Assessment". Creates the local
+     progress record (a no-op if one already exists) and, for a
+     signed-in user, blocks until the server confirms an assessment_id —
+     a caller must never navigate to Module 1 before this resolves.
+     Guests resolve immediately; there is no server session to create. */
+  CT.beginAssessment = function () {
+    CT.initProgress();
+    if (!CT.isAuthenticated()) { return Promise.resolve(null); }
+    return CT.ensureAssessmentId();
+  };
+
+  /* Replaces a bare CT.completeModule(module) call. Marks the module
+     complete locally (unchanged behaviour — this is the "answered"
+     flag, not the "saved" flag), then persists the result that
+     CT.writeSession() just wrote to sessionStorage. On the final module
+     it also finalises the session server-side. onDone (the existing
+     showTransitionCard/showFinalePortal call) only fires once the save
+     has actually been confirmed by the server, so a network failure can
+     never silently drop a completed module's results, and a module that
+     was already confirmed synced (a revisit, a double-click, two tabs)
+     is never re-submitted. Guests skip the network entirely and behave
+     exactly as before. */
+  CT.syncModule = function (module, onDone) {
+    CT.completeModule(module);
+
+    if (!CT.isAuthenticated()) { onDone(); return; }
+
+    var session = CT.readSession(module);
+
+    if (!session) {
+      /* CT.writeSession() always runs immediately before CT.syncModule()
+         in every module — this should be unreachable, but there is
+         nothing to retry a save against, so proceed locally rather than
+         retrying forever against a payload that doesn't exist. */
+      console.warn('CogniTrack: no session data to sync for', module);
+      onDone();
+      return;
+    }
+
+    function saveTask() {
+      if (CT.isModuleSynced(module)) { return Promise.resolve(); }
+      return CT.ensureAssessmentId().then(function (assessmentId) {
+        return apiPost('/api/assessment/save', {
+          assessment_id: assessmentId,
+          domain:        module,
+          score:         session.score,
+          accuracy:      session.accuracy,
+          average_time:  session.avgTime,
+          rating:        session.rating,
+          raw_data:      session.rawData,
+          duration:      session.duration
+        });
+      }).then(function () {
+        markModuleSynced(module);
+      }).catch(function (err) {
+        /* 409 = the server already has this result (e.g. the assessment
+           was already finalised by an earlier attempt) — that is success
+           from this client's point of view, not a failure to retry. */
+        if (err && err.status === 409) { markModuleSynced(module); return; }
+        throw err;
+      });
+    }
+
+    function completeTask() {
+      var p = CT.loadProgress();
+      var isLastModule = !!(p && p.completedCount === MODULE_ORDER.length);
+      if (!isLastModule || CT.isAssessmentSynced()) { return Promise.resolve(); }
+
+      return CT.ensureAssessmentId().then(function (assessmentId) {
+        return apiPost('/api/assessment/complete', { assessment_id: assessmentId });
+      }).then(function () {
+        markAssessmentSynced();
+      }).catch(function (err) {
+        if (err && err.status === 409) { markAssessmentSynced(); return; }
+        throw err;
+      });
+    }
+
+    attemptWithRetry(function () {
+      return saveTask().then(completeTask);
+    }).then(onDone);
+  };
+
+  /* ── Hydration from server-side truth ───────────────────────
+     Used on the Assessment Hub (resume) and the Dashboard (results),
+     so the DB — not sessionStorage — decides what those pages show.
+     Both write into the exact same sessionStorage keys CT already
+     uses, so no other rendering code needs to change. */
+
+  CT.hydrateResumeProgress = function (resume) {
+    if (!resume) { return; }
+
+    var modules      = {
+      memory: false, attention: false, executive: false, processing: false, spatial: false
+    };
+    /* Every module the server reports as completed is, by definition,
+       already durably saved — mark it synced so a later revisit never
+       re-POSTs it (see CT.syncModule). */
+    var serverSynced = {};
+    (resume.completedModules || []).forEach(function (m) { modules[m] = true; serverSynced[m] = true; });
+    var completedCount = MODULE_ORDER.filter(function (m) { return modules[m]; }).length;
+
+    CT.saveProgress({
+      currentModule:       resume.nextModule || MODULE_ORDER[0],
+      currentStage:        0,
+      moduleState:         {},
+      modules:             modules,
+      serverSynced:        serverSynced,
+      assessmentSynced:    false,
+      completedCount:      completedCount,
+      assessmentStarted:   new Date().toISOString(),
+      assessmentCompleted: null,
+      assessmentId:        resume.assessmentId
+    });
+
+    if (resume.user) {
+      try { sessionStorage.setItem('cognitrack_user', JSON.stringify(resume.user)); } catch (e) {}
+    }
+  };
+
+  CT.hydrateDashboardData = function (dashboardData) {
+    if (!dashboardData || !dashboardData.modules) { return; }
+
+    try {
+      if (dashboardData.user) {
+        sessionStorage.setItem('cognitrack_user', JSON.stringify(dashboardData.user));
+      }
+      Object.keys(dashboardData.modules).forEach(function (domain) {
+        sessionStorage.setItem('cognitrack_session_' + domain, JSON.stringify(dashboardData.modules[domain]));
+      });
+    } catch (e) { return; }
+
+    var modules = {
+      memory: false, attention: false, executive: false, processing: false, spatial: false
+    };
+    /* A completed dashboard payload means every module — and the
+       assessment itself — is already durably saved server-side. */
+    var serverSynced = {};
+    Object.keys(dashboardData.modules).forEach(function (d) { modules[d] = true; serverSynced[d] = true; });
+    var completedCount = MODULE_ORDER.filter(function (m) { return modules[m]; }).length;
+    var completedAt     = dashboardData.completedAt || new Date().toISOString();
+
+    CT.saveProgress({
+      currentModule:       'spatial',
+      currentStage:        0,
+      moduleState:         {},
+      modules:             modules,
+      serverSynced:        serverSynced,
+      assessmentSynced:    true,
+      completedCount:      completedCount,
+      assessmentStarted:   completedAt,
+      assessmentCompleted: completedAt,
+      assessmentId:        dashboardData.assessmentId
+    });
+  };
+
+  /* Single source of truth for "what's the next module" — key, URL, and
+     display name in one loadProgress() + one loop, instead of the three
+     independent passes CT.getNextModuleUrl/Name/Key used to each do for
+     what is always the same answer within a single transition. No
+     progress yet means the assessment hasn't started (assessmentStarted
+     is only set when Begin Assessment is clicked — see assessment.js),
+     so the "next" module is simply the first one, not the dashboard. */
+  function nextModuleInfo() {
+    var p = CT.loadProgress();
+    if (!p) {
+      var first = MODULE_ORDER[0];
+      return { key: first, url: MODULE_URLS[first], name: MODULE_NAMES[first] };
+    }
 
     for (var i = 0; i < MODULE_ORDER.length; i++) {
       var m = MODULE_ORDER[i];
-      if (!p.modules[m]) { return MODULE_URLS[m]; }
+      if (!p.modules[m]) { return { key: m, url: MODULE_URLS[m], name: MODULE_NAMES[m] }; }
     }
 
-    return MODULE_URLS.dashboard;
-  };
+    return { key: 'dashboard', url: MODULE_URLS.dashboard, name: 'Dashboard' };
+  }
 
-  CT.getNextModuleName = function () {
-    var p = CT.loadProgress();
-    if (!p) { return MODULE_NAMES[MODULE_ORDER[0]]; }
-
-    for (var i = 0; i < MODULE_ORDER.length; i++) {
-      var m = MODULE_ORDER[i];
-      if (!p.modules[m]) { return MODULE_NAMES[m]; }
-    }
-
-    return 'Dashboard';
-  };
-
-  CT.getNextModuleKey = function () {
-    var p = CT.loadProgress();
-    if (!p) { return 'memory'; }
-
-    for (var i = 0; i < MODULE_ORDER.length; i++) {
-      var m = MODULE_ORDER[i];
-      if (!p.modules[m]) { return m; }
-    }
-
-    return 'dashboard';
-  };
+  CT.getNextModuleUrl  = function () { return nextModuleInfo().url; };
+  CT.getNextModuleName = function () { return nextModuleInfo().name; };
+  CT.getNextModuleKey  = function () { return nextModuleInfo().key; };
 
   /* ══════════════════════════════════════════════════════════
      UNIFIED RATING SCALE
@@ -316,6 +682,17 @@
     return session;
   };
 
+  /* Reads and parses cognitrack_session_<module> — the same recovery
+     read every module page (memory/attention/executive/processing/
+     visual) and consolidateResults() below perform, centralised so the
+     try/parse/null-on-failure logic isn't repeated at each call site. */
+  CT.readSession = function (module) {
+    try {
+      var raw = sessionStorage.getItem('cognitrack_session_' + module);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  };
+
   /* ══════════════════════════════════════════════════════════
      RESULTS CONSOLIDATION  (cognitrack_results)
      Triggered when the spatial module completes.
@@ -326,14 +703,11 @@
     var scores   = [];
 
     MODULE_ORDER.forEach(function (m) {
-      try {
-        var raw = sessionStorage.getItem('cognitrack_session_' + m);
-        if (raw) {
-          var s = JSON.parse(raw);
-          sessions[m] = s;
-          scores.push(typeof s.score === 'number' ? s.score : 0);
-        }
-      } catch (e) {}
+      var s = CT.readSession(m);
+      if (s) {
+        sessions[m] = s;
+        scores.push(typeof s.score === 'number' ? s.score : 0);
+      }
     });
 
     var overallScore = scores.length
@@ -578,8 +952,9 @@
        2 700 ms navigation fires
   ══════════════════════════════════════════════════════════ */
 
-  CT.showTransitionCard = function (nextUrl, nextModuleName) {
-    var moduleKey = CT.getNextModuleKey();
+  CT.showTransitionCard = function () {
+    var info      = nextModuleInfo();
+    var moduleKey = info.key;
     var meta      = DOMAIN_META[moduleKey] || DOMAIN_META.dashboard;
 
     var overlay = document.createElement('div');
@@ -677,7 +1052,7 @@
     /* Navigate at 2 700 ms */
     setTimeout(function () {
       clearInterval(msgInterval);
-      window.location.href = nextUrl;
+      window.location.href = info.url;
     }, 2700);
   };
 

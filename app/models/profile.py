@@ -16,3 +16,7 @@ class Profile(db.Model):
     dominant_hand = db.Column(db.String(20), nullable=True)
 
     user = db.relationship('User', back_populates='profile')
+
+    __table_args__ = (
+        db.CheckConstraint('age IS NULL OR (age >= 1 AND age <= 120)', name='ck_profiles_age_range'),
+    )

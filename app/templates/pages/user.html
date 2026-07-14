@@ -40,6 +40,7 @@
 
       <!-- ── Form ────────────────────────────────────────────── -->
       <form class="onboarding-form" action="{{ url_for('assessment.overview') }}" method="post" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
         <div class="form-grid">
 

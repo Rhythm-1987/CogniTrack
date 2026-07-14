@@ -2,6 +2,8 @@
 
 {% block title %}Processing Speed — CogniTrack{% endblock %}
 
+{% block meta_description %}CogniTrack's Symbol Match Test — measures information processing speed and decision velocity.{% endblock %}
+
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/processing.css') }}" />
 {% endblock %}
@@ -23,7 +25,7 @@
       </span>
 
       <div class="progress progress--sm proc-progress mt-3">
-        <div class="progress__bar" id="proc-phase-bar" style="width: 33.33%"></div>
+        <div class="progress__bar" id="proc-phase-bar" style="--progress: 33.33%"></div>
       </div>
 
       <div class="proc-progress-labels">
@@ -123,7 +125,7 @@
           Question&ensp;<span id="q-current">1</span>&thinsp;of&thinsp;20
         </span>
         <div class="progress progress--sm proc-q-progress">
-          <div class="progress__bar proc-q-bar" id="proc-q-bar" style="width: 0%"></div>
+          <div class="progress__bar proc-q-bar" id="proc-q-bar"></div>
         </div>
       </div>
 
@@ -175,7 +177,7 @@
         <div class="proc-perf-status" id="proc-perf-status">
         </div>
 
-        <a href="/visual" class="btn btn--lg btn--pill proc-continue-btn">
+        <a href="{{ url_for('assessment.visual') }}" class="btn btn--lg btn--pill proc-continue-btn">
           Continue to Visuospatial
           <i data-lucide="arrow-right"></i>
         </a>

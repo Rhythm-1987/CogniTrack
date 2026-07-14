@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Something Went Wrong — CogniTrack{% endblock %}
+
+{% block meta_description %}Something went wrong on our end. Please try again in a moment.{% endblock %}
+
+{% block content %}
+
+<section class="error-section" aria-label="Server Error">
+  <div class="container">
+    <div class="card card--glass error-card anim-fade-up">
+
+      <div class="error-card__icon" aria-hidden="true">
+        <i data-lucide="server-crash"></i>
+      </div>
+
+      <span class="badge badge--primary">500</span>
+
+      <h1 class="error-card__title">Something Went Wrong</h1>
+      <p class="error-card__sub">
+        An unexpected error occurred on our end. Please try again in a moment.
+      </p>
+
+      <div class="error-card__actions">
+        <a href="{{ url_for('main.index') }}" class="btn btn--primary btn--lg btn--pill">
+          <i data-lucide="home"></i>
+          Back to Home
+        </a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+{% endblock %}

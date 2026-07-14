@@ -55,13 +55,27 @@
 }
 
 .hub-actions {
+  width: 100%;
+}
+
+/* Each state is its own flex column; hub.js reveals exactly one by
+   toggling the `hidden` attribute. `.hub-state`'s plain class selector
+   ties the UA stylesheet's `[hidden] { display: none }` on specificity
+   and — coming later in the cascade — was winning, so all three
+   states rendered stacked regardless of which one JS picked. The
+   `[hidden]` variant below outranks the bare class and restores it. */
+.hub-state {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
   width: 100%;
 }
 
-.hub-actions > .btn { width: 100%; }
+.hub-state[hidden] {
+  display: none;
+}
+
+.hub-state > .btn { width: 100%; }
 
 .hub-resume-hint {
   font-size: var(--text-xs);

@@ -25,8 +25,7 @@
     <div class="card legal-card scroll-reveal">
       <div class="legal-prose">
         <p>
-          CogniTrack is a hackathon prototype, so a few things work differently than a
-          finished product would. Here are the questions people ask most.
+          Here are the questions people ask most about how CogniTrack works.
         </p>
         <h2>Frequently Asked Questions</h2>
       </div>
@@ -36,16 +35,20 @@
         <div class="faq-item">
           <p class="faq-item__q">Do I need to create an account?</p>
           <p class="faq-item__a">
-            No. Just enter a few basic details on the User Information step to personalize
-            your session — no sign-up, password, or email required.
+            No — you can take the full assessment as a guest by entering a few basic details
+            on the User Information step. Creating a free account is optional, but it saves
+            your results and history so you can come back to your dashboard from any device
+            instead of losing progress when you close the tab.
           </p>
         </div>
 
         <div class="faq-item">
           <p class="faq-item__q">Where is my data stored?</p>
           <p class="faq-item__a">
-            Locally, in your browser's session storage — never on a server. See our
-            <a href="{{ url_for('main.privacy') }}">Privacy Policy</a> for the full picture.
+            As a guest, locally in your browser's session storage — never on a server. If
+            you're signed in, your profile and results are saved to your account in our
+            database. See our <a href="{{ url_for('main.privacy') }}">Privacy Policy</a> for
+            the full picture.
           </p>
         </div>
 
@@ -60,11 +63,12 @@
         </div>
 
         <div class="faq-item">
-          <p class="faq-item__q">Why is the "Resume Assessment" button disabled?</p>
+          <p class="faq-item__q">What does the Assessment Hub show if I haven't started yet?</p>
           <p class="faq-item__a">
-            It stays visible but disabled until you've actually begun your first module.
-            Filling out User Information or reading the Assessment Overview doesn't count as
-            starting — once you click Begin Assessment, it unlocks automatically.
+            A single Start Assessment button — nothing else. Once you begin a module, the hub
+            switches to a Resume Assessment button instead, and after you finish all five it
+            switches again to Start New Assessment and View Dashboard. You'll only ever see
+            the one action that actually applies to where you are.
           </p>
         </div>
 
@@ -80,8 +84,11 @@
         <div class="faq-item">
           <p class="faq-item__q">I closed my tab and lost my results — can I get them back?</p>
           <p class="faq-item__a">
-            Not currently. Session data is intentionally temporary until account support and
-            persistent storage ship in a future release.
+            If you were signed in, no — your results are saved to your account. Just log back
+            in and open your <a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a>. If
+            you took the assessment as a guest, session data is intentionally temporary and
+            can't be recovered once the tab closes — create an account before your next
+            attempt to avoid losing it again.
           </p>
         </div>
 
@@ -117,8 +124,9 @@
           <p class="faq-item__q">Can I retake an assessment or take it more than once?</p>
           <p class="faq-item__a">
             Yes. "Retake Assessment" on your dashboard clears your current session data and
-            sends you back to Memory Recall for a fresh run. Each attempt overwrites the
-            previous one — there's no history log across multiple attempts yet.
+            sends you back to Memory Recall for a fresh run. If you're signed in, each
+            attempt is saved as its own entry in your Assessment History, so you can compare
+            results over time — as a guest, only your most recent attempt is kept.
           </p>
         </div>
 
@@ -126,8 +134,8 @@
           <p class="faq-item__q">Can I download or print my results?</p>
           <p class="faq-item__a">
             Not yet. "Download Report" is visible on the dashboard as a preview of what's
-            coming, but it's disabled in this prototype. You can still screenshot or print
-            the dashboard page directly from your browser in the meantime.
+            coming, but it isn't enabled yet. You can still screenshot or print the dashboard
+            page directly from your browser in the meantime.
           </p>
         </div>
 
