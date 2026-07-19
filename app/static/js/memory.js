@@ -492,10 +492,12 @@ document.addEventListener('DOMContentLoaded', function () {
   function saveIntermediateState(phaseIndex) {
     if (typeof CT === 'undefined') { return; }
     CT.updateStage('memory', phaseIndex, {
-      trial1Words:  trial1Words,
-      trial2Words:  trial2Words,
-      distractors:  distractors,
-      startedAt:    startedAt
+      trial1Words:     trial1Words,
+      trial2Words:     trial2Words,
+      distractors:     distractors,
+      questions:       questions,
+      currentQuestion: currentQuestion,
+      startedAt:       startedAt
     });
   }
 
@@ -532,6 +534,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (saved.trial1Words) { trial1Words = saved.trial1Words; }
         if (saved.trial2Words) { trial2Words = saved.trial2Words; }
         if (saved.distractors) { distractors = saved.distractors; }
+        /* Older saved sessions (pre-fix) never stored the distraction
+           questions — fall back to the freshly generated ones rather
+           than restoring an empty array. */
+        if (saved.questions && saved.questions.length) { questions = saved.questions; }
         if (saved.startedAt)   { startedAt   = saved.startedAt; }
         targetWords = trial1Words.concat(trial2Words);
         populateTrial1Grid();
@@ -540,6 +546,9 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       var phaseName = PHASE_ORDER[progress.currentStage] || 'intro';
+      if (phaseName === 'distraction' && questions.length) {
+        loadQuestion(Math.min((saved && saved.currentQuestion) || 0, questions.length - 1));
+      }
       goToPhase(phaseName);
       return true;
     }
@@ -615,9 +624,16 @@ document.addEventListener('DOMContentLoaded', function () {
   ringFill2.style.strokeDasharray  = CIRCUMFERENCE;
   ringFill2.style.strokeDashoffset = 0;
 
-  initSession();
+  if (typeof CT !== 'undefined' && CT.warnBeforeUnload) { CT.warnBeforeUnload(); }
 
+  /* attemptRecovery() must run before initSession(): initSession() ends
+     by writing currentStage=0 via saveIntermediateState(0), which would
+     otherwise clobber the saved stage before recovery ever reads it,
+     making a mid-assessment refresh silently discard all progress and
+     restart from the intro screen. Only run initSession() (fresh word
+     lists) when there is nothing to recover. */
   if (!attemptRecovery()) {
+    initSession();
     goToPhase('intro');
   }
 

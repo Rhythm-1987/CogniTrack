@@ -160,7 +160,9 @@ document.addEventListener('DOMContentLoaded', function () {
       CT.updateStage('processing', PHASE_ORDER.indexOf(name), {
         currentQuestion: currentQuestion,
         results:         results,
-        startedAt:       startedAt
+        startedAt:       startedAt,
+        questions:       questions,
+        keyMap:          keyMap
       });
     }
 
@@ -262,7 +264,9 @@ document.addEventListener('DOMContentLoaded', function () {
       CT.updateStage('processing', 1, {
         currentQuestion: currentQuestion,
         results:         results,
-        startedAt:       startedAt
+        startedAt:       startedAt,
+        questions:       questions,
+        keyMap:          keyMap
       });
     }
 
@@ -322,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var incorrect = TOTAL_QUESTIONS - correct;
     var accuracy  = Math.round((correct / TOTAL_QUESTIONS) * 100);
     var totalRt   = results.reduce(function (s, r) { return s + r.rt; }, 0);
-    var avgRt     = Math.round(totalRt / results.length);
+    var avgRt     = results.length ? Math.round(totalRt / results.length) : 0;
     var totalSecs = (totalMs / 1000).toFixed(1);
 
     var score     = accuracy;
@@ -425,6 +429,18 @@ document.addEventListener('DOMContentLoaded', function () {
         results         = saved.results         || [];
         currentQuestion = saved.currentQuestion || 0;
         startedAt       = saved.startedAt;
+        /* Restore the exact key mapping + question set the user was
+           shown before the refresh — otherwise the on-screen key
+           legend silently stops matching the correct answer for the
+           in-flight question (older saved sessions without this data
+           fall back to the freshly generated set already built by
+           initSession()). */
+        if (saved.questions && saved.questions.length === TOTAL_QUESTIONS && saved.keyMap) {
+          questions = saved.questions;
+          keyMap    = saved.keyMap;
+          buildKeyBar(keyPreviewEl);
+          buildKeyBar(keyTestEl);
+        }
       }
       goToPhase('test');
       setTimeout(function () { showQuestion(currentQuestion); }, 500);
@@ -452,6 +468,8 @@ document.addEventListener('DOMContentLoaded', function () {
   ══════════════════════════════════════════════════════════ */
 
   initSession();
+
+  if (typeof CT !== 'undefined' && CT.warnBeforeUnload) { CT.warnBeforeUnload(); }
 
   if (!attemptRecovery()) {
     goToPhase('intro');

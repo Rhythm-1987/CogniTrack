@@ -359,7 +359,20 @@
           if (timerId) { clearTimeout(timerId); timerId = null; }
           clearSyncError();
           resolve(result);
-        }).catch(function () {
+        }).catch(function (err) {
+          /* A 401 means the server-side session has expired or been
+             invalidated — retrying can never succeed without logging
+             back in, so retrying it forever like a transient network
+             error just strands the user on a permanent "couldn't save"
+             banner with no way to proceed. Send them to log back in
+             instead; ?next= brings them right back here afterward. */
+          if (err && err.status === 401) {
+            if (timerId) { clearTimeout(timerId); timerId = null; }
+            var next = encodeURIComponent(window.location.pathname + window.location.search);
+            window.location.href = '/login?next=' + next;
+            return;
+          }
+
           var delay = AUTO_RETRY_DELAYS[Math.min(attemptIndex, AUTO_RETRY_DELAYS.length - 1)];
           attemptIndex++;
           showSyncError(function () {
@@ -516,6 +529,60 @@
     attemptWithRetry(function () {
       return saveTask().then(completeTask);
     }).then(onDone);
+  };
+
+  /* Backfills modules that were completed locally (as a guest, before
+     signing in) but never reached the server — e.g. the user finishes
+     a module or two anonymously, then logs in mid-assessment via the
+     navbar. CT.syncModule only pushes the module it's called for, so
+     without this, earlier guest-completed modules stay in
+     sessionStorage forever and are silently dropped the moment server
+     data is later treated as truth (CT.hydrateDashboardData). Safe to
+     call any time: already-synced modules are skipped, and a redundant
+     call is a no-op via CT.syncModule's own idempotency. */
+  CT.syncUnsyncedModules = function () {
+    if (!CT.isAuthenticated()) { return; }
+    var p = CT.loadProgress();
+    if (!p || !p.modules) { return; }
+
+    MODULE_ORDER.forEach(function (m) {
+      if (p.modules[m] && !CT.isModuleSynced(m)) {
+        CT.syncModule(m, function () {});
+      }
+    });
+  };
+
+  document.addEventListener('DOMContentLoaded', function () {
+    CT.syncUnsyncedModules();
+  });
+
+  /* ── Unsaved-work warning ────────────────────────────────────
+     Opt-in per page (called from each of the 5 assessment module
+     scripts) so pages with no in-progress trial data — hub, dashboard,
+     marketing pages — are never affected. CT.clearUnloadWarning() is
+     called just before the app's own intentional navigations
+     (showTransitionCard / showFinalePortal) so the confirm dialog only
+     ever appears for a real accidental close/navigate-away, never for
+     the automatic hand-off between modules. */
+  var unloadWarningHandler = null;
+
+  CT.warnBeforeUnload = function () {
+    if (unloadWarningHandler) { return; }
+    unloadWarningHandler = function (e) {
+      var p = CT.loadProgress();
+      if (p && p.assessmentStarted && !p.assessmentCompleted) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', unloadWarningHandler);
+  };
+
+  CT.clearUnloadWarning = function () {
+    if (unloadWarningHandler) {
+      window.removeEventListener('beforeunload', unloadWarningHandler);
+      unloadWarningHandler = null;
+    }
   };
 
   /* ── Hydration from server-side truth ───────────────────────
@@ -1046,6 +1113,7 @@
     /* Navigate at 2 700 ms */
     setTimeout(function () {
       clearInterval(msgInterval);
+      if (CT.clearUnloadWarning) { CT.clearUnloadWarning(); }
       window.location.href = info.url;
     }, 2700);
   };
@@ -1154,6 +1222,7 @@
 
     /* Navigate to dashboard */
     setTimeout(function () {
+      if (CT.clearUnloadWarning) { CT.clearUnloadWarning(); }
       window.location.href = '/dashboard';
     }, 4200);
   };

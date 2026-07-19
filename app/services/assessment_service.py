@@ -132,12 +132,7 @@ def start_session(user, checkin_data=None):
     gender, education, dominant hand, native language) are set at
     registration or via Edit Profile only — never here; this only ever
     writes Today's Assessment Check-In's temporary, per-session fields."""
-    existing = (
-        AssessmentSession.query
-        .filter_by(user_id=user.id, status='in_progress')
-        .order_by(AssessmentSession.started_at.desc())
-        .first()
-    )
+    existing = _find_resumable_session(user)
 
     checkin_data = checkin_data or {}
     if not isinstance(checkin_data, dict):
@@ -212,11 +207,12 @@ def save_result(user, assessment_id, domain, score, accuracy, average_time, rati
     return {'domain': domain, 'result_id': result.id}
 
 
-def complete_session(user, assessment_id):
-    session = _get_owned_session(user, assessment_id)
-    if session.status == 'completed':
-        raise AssessmentError('This assessment has already been completed.', 409)
-
+def _finalize_session(session):
+    """Marks an AssessmentSession completed from its already-saved
+    results. Shared by complete_session (client-confirmed finish) and
+    _find_resumable_session's self-heal path (all 5 domains saved but
+    the client's final POST never arrived — closed tab, dropped
+    connection, etc.)."""
     scores = [r.score for r in session.results if r.score is not None]
     overall_score = round(sum(scores) / len(scores)) if scores else 0
 
@@ -229,21 +225,36 @@ def complete_session(user, assessment_id):
     session.overall_score = overall_score
     session.duration = int((completed_at - started_at).total_seconds())
     session.status = 'completed'
+    return session
 
+
+def complete_session(user, assessment_id):
+    session = _get_owned_session(user, assessment_id)
+    if session.status == 'completed':
+        raise AssessmentError('This assessment has already been completed.', 409)
+
+    _finalize_session(session)
     db.session.commit()
 
     return {
         'assessment_id': session.id,
-        'overall_score': overall_score,
+        'overall_score': session.overall_score,
         'duration': session.duration,
         'status': session.status,
-        'completed_at': completed_at.isoformat(),
+        'completed_at': session.completed_at.isoformat(),
     }
 
 
-def get_incomplete_session(user):
-    """Used by the Assessment Hub to decide Resume vs Start New — the
-    database, not sessionStorage, is authoritative for this decision."""
+def _find_resumable_session(user):
+    """Returns the user's genuinely resumable in-progress session, or
+    None. Self-heals the case where every MODULE_ORDER domain already
+    has a saved result but the final /api/assessment/complete call
+    never landed (closed tab, dropped connection): such a session used
+    to be invisible to both the Resume and Completed states, which let
+    start_session silently resume it later with a stale started_at and
+    a corrupted duration. Finalizing it here instead means it shows up
+    correctly as completed, and start_session creates a fresh session
+    for whatever the user does next."""
     session = (
         AssessmentSession.query
         .filter_by(user_id=user.id, status='in_progress')
@@ -254,10 +265,23 @@ def get_incomplete_session(user):
         return None
 
     completed_domains = {r.domain for r in session.results}
-    next_module = next((m for m in MODULE_ORDER if m not in completed_domains), None)
-    if next_module is None:
-        return None  # all 5 saved but not yet finalized — treat as not resumable via hub
+    if all(m in completed_domains for m in MODULE_ORDER):
+        _finalize_session(session)
+        db.session.commit()
+        return None
 
+    return session
+
+
+def get_incomplete_session(user):
+    """Used by the Assessment Hub to decide Resume vs Start New — the
+    database, not sessionStorage, is authoritative for this decision."""
+    session = _find_resumable_session(user)
+    if session is None:
+        return None
+
+    completed_domains = {r.domain for r in session.results}
+    next_module = next(m for m in MODULE_ORDER if m not in completed_domains)
     profile = user.profile
 
     return {

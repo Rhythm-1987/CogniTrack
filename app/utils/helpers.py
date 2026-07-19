@@ -2,7 +2,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 
 def hash_password(password):
-    """Hash a plaintext password with Werkzeug's PBKDF2 implementation."""
+    """Hash a plaintext password using Werkzeug's default algorithm
+    (scrypt as of the currently pinned Werkzeug version)."""
     return generate_password_hash(password)
 
 

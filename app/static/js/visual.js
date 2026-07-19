@@ -263,7 +263,8 @@ document.addEventListener('DOMContentLoaded', function () {
       CT.updateStage('spatial', PHASE_ORDER.indexOf(name), {
         currentQuestion: currentQuestion,
         results:         results,
-        startedAt:       startedAt
+        startedAt:       startedAt,
+        questions:       questions
       });
     }
 
@@ -326,7 +327,8 @@ document.addEventListener('DOMContentLoaded', function () {
       CT.updateStage('spatial', 1, {
         currentQuestion: currentQuestion,
         results:         results,
-        startedAt:       startedAt
+        startedAt:       startedAt,
+        questions:       questions
       });
     }
 
@@ -374,7 +376,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var incorrect = TOTAL_QUESTIONS - correct;
     var accuracy  = Math.round((correct / TOTAL_QUESTIONS) * 100);
     var totalRt   = results.reduce(function (s, r) { return s + r.rt; }, 0);
-    var avgRt     = Math.round(totalRt / results.length);
+    var avgRt     = results.length ? Math.round(totalRt / results.length) : 0;
 
     /* Phase-accuracy breakdown */
     var p1 = results.slice(0, 3);
@@ -488,7 +490,12 @@ document.addEventListener('DOMContentLoaded', function () {
         currentQuestion = saved.currentQuestion || 0;
         startedAt       = saved.startedAt;
       }
-      questions = generateAllQuestions();
+      /* Restore the exact shapes/rotations the user was shown before
+         the refresh (older saved sessions without this data fall back
+         to a fresh set, same as before this fix). */
+      questions = (saved && saved.questions && saved.questions.length === TOTAL_QUESTIONS)
+        ? saved.questions
+        : generateAllQuestions();
       goToPhase('test');
       setTimeout(function () { showQuestion(currentQuestion); }, 500);
       return true;
@@ -514,6 +521,8 @@ document.addEventListener('DOMContentLoaded', function () {
   ══════════════════════════════════════════════════════════ */
 
   buildIntroExamples();
+
+  if (typeof CT !== 'undefined' && CT.warnBeforeUnload) { CT.warnBeforeUnload(); }
 
   if (!attemptRecovery()) {
     goToPhase('intro');

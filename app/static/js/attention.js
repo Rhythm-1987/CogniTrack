@@ -381,6 +381,8 @@ document.addEventListener('DOMContentLoaded', function () {
      BOOT
   ══════════════════════════════════════════════════════════ */
 
+  if (typeof CT !== 'undefined' && CT.warnBeforeUnload) { CT.warnBeforeUnload(); }
+
   if (!attemptRecovery()) {
     goToPhase('intro');
   }

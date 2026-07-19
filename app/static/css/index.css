@@ -72,6 +72,18 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  color: var(--color-primary); /* fallback if background-clip: text is unsupported */
+}
+
+/* Windows High Contrast Mode (and any other forced-colors context)
+   ignores background-clip: text but keeps -webkit-text-fill-color:
+   transparent, which would otherwise make the headline invisible. */
+@media (forced-colors: active) {
+  .hero__title mark {
+    background-image: none;
+    -webkit-text-fill-color: currentColor;
+    color: LinkText;
+  }
 }
 
 .hero__lead {

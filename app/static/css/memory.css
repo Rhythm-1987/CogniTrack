@@ -5,6 +5,17 @@
    ============================================================ */
 
 
+/* ══════════════════════════════════════════════════════════
+   BADGE VARIANT — secondary (Trial 2 of 2, distinguishes from
+   Trial 1's badge--primary blue)
+══════════════════════════════════════════════════════════ */
+
+.badge--secondary {
+  background-color: var(--color-surface-alt);
+  color: var(--color-text-secondary);
+}
+
+
 /* ── Section Layout ─────────────────────────────────────── */
 
 .memory-section {

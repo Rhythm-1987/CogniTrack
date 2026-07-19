@@ -56,7 +56,11 @@
 
   --color-text-primary:   #0F172A;
   --color-text-secondary: #64748B;
-  --color-text-muted:     #94A3B8;
+  /* Was #94A3B8 (~2.5:1 on white — fails WCAG AA for the form hints,
+     legal disclaimers, and timing labels this token is used for
+     site-wide). Aligned to the same value as --color-text-secondary,
+     the lightest already-AA-compliant (~4.76:1) tone in this palette. */
+  --color-text-muted:     #64748B;
   --color-text-inverse:   #FFFFFF;
 
   --color-border:         #E2E8F0;
@@ -127,6 +131,12 @@
   --radius-pill: 9999px;
 
   /* --- Shadows --- */
+  --shadow-xs:
+    0 1px 2px rgba(15, 23, 42, 0.04);
+
+  --shadow-sm:
+    0 2px 6px rgba(15, 23, 42, 0.06);
+
   --shadow-soft:
     0 1px 3px rgba(15, 23, 42, 0.04),
     0 4px 12px rgba(15, 23, 42, 0.06);
@@ -689,6 +699,16 @@ section {
 .badge--neutral {
   background-color: var(--color-surface-alt);
   color: var(--color-text-secondary);
+}
+
+.badge--warning {
+  background-color: var(--color-warning-bg);
+  color: #B45309;
+}
+
+.badge--danger {
+  background-color: var(--color-danger-bg);
+  color: #B91C1C;
 }
 
 /* Small tag badge nested inside another element (e.g. a button label) */

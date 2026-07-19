@@ -105,8 +105,12 @@ No routes, templates, models, or JS were touched — behavior is unchanged.
         `python -c "import secrets; print(secrets.token_hex(32))"`), `DATABASE_URL` (from
         Supabase), leave `FLASK_DEBUG` unset.
   - [ ] Confirm Render picks up `.python-version` (3.13) in the build log.
-- [ ] Run `flask db upgrade` (via Render's shell, or a one-off job) against the Supabase
-      `DATABASE_URL` before first traffic, to create the schema.
+- [x] Migrations run automatically: `render.yaml`'s `preDeployCommand` runs
+      `flask --app run.py db upgrade` once per deploy, before the new version receives
+      traffic — no manual `flask db upgrade` step needed before first traffic. (Previously
+      this ran inside `startCommand`, which re-ran on every dyno boot/restart, not just on
+      deploy — moved to `preDeployCommand` so it can't race itself if ever scaled beyond a
+      single instance.)
 - [ ] Smoke-test after deploy: register a user, log in, run one assessment end-to-end, check
       the dashboard renders — confirms DB writes, session cookies, and static assets all work
       against the real production config.

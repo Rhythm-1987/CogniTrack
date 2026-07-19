@@ -108,8 +108,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /* Clear any prior real assessment run — Check-In precedes a fresh
-       attempt, so stale progress from an earlier run shouldn't linger. */
+       attempt, so stale progress from an earlier run shouldn't linger.
+       But warn first if that would discard a run the user hasn't
+       finished yet (e.g. navigating back to Check-In mid-assessment). */
     if (typeof CT !== 'undefined' && CT.clearAssessmentData) {
+      var priorProgress    = CT.loadProgress ? CT.loadProgress() : null;
+      var hasUnfinishedRun = !!(priorProgress && priorProgress.assessmentStarted && !priorProgress.assessmentCompleted);
+
+      if (hasUnfinishedRun && !window.confirm(
+        'You have an assessment in progress. Starting a new check-in will discard that progress. Continue?'
+      )) {
+        return;
+      }
+
       CT.clearAssessmentData();
     }
 

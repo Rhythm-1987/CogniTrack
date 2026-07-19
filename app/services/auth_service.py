@@ -30,6 +30,14 @@ _REGISTRATION_FAILED_MESSAGE = (
     "If you already have an account, try logging in instead."
 )
 
+# Computed once at import time and compared against on every login attempt
+# for an email that doesn't exist, so that path takes about as long as a
+# real account with a wrong password — verify_password's hash comparison is
+# deliberately slow, and skipping it entirely for unknown emails is a timing
+# side-channel an attacker can use to enumerate registered addresses even
+# though the returned error message is already identical either way.
+_DUMMY_PASSWORD_HASH = hash_password('cognitrack-timing-guard-dummy')
+
 
 def register_user(email, password, full_name=None, confirm_password=None, profile_fields=None):
     """Validate, enforce email uniqueness, hash the password, create
@@ -85,13 +93,26 @@ def login_user(email, password):
     email = (email or '').strip().lower()
 
     user = User.query.filter_by(email=email).first()
-    if not user or not verify_password(user.password_hash, password):
+    if user is not None:
+        password_ok = verify_password(user.password_hash, password)
+    else:
+        # See _DUMMY_PASSWORD_HASH above — keeps this branch's timing
+        # comparable to the "wrong password" branch.
+        verify_password(_DUMMY_PASSWORD_HASH, password)
+        password_ok = False
+
+    if not user or not password_ok:
         return {'success': False, 'message': 'Invalid email or password.'}
     if not user.is_active:
         return {'success': False, 'message': 'This account has been deactivated.'}
 
-    user.last_login = datetime.now(timezone.utc)
-    db.session.commit()
+    try:
+        user.last_login = datetime.now(timezone.utc)
+        db.session.commit()
+    except Exception:
+        # Updating last_login is best-effort — a transient DB error here
+        # shouldn't turn an otherwise-valid login into a 500.
+        db.session.rollback()
 
     _start_login_session(user)
     return {'success': True, 'message': 'Login successful.', 'user': user}
