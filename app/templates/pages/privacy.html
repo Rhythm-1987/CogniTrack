@@ -33,37 +33,51 @@
 
         <h2>What We Collect</h2>
         <p>
-          When you fill out the User Information step, CogniTrack asks for your name, age,
-          gender, education level, sleep quality, and (optionally) your dominant hand. As you
-          move through the five assessment modules — Memory Recall, Focus &amp; Attention,
-          Decision Making, Thinking Speed, and Visual Reasoning — the app also records your
-          responses, timing, and computed scores for each domain. If you register an account,
-          we also store your email address and a securely hashed password — we never store
-          your password in plain text and cannot look it up on your behalf.
+          On the Today's Assessment Check-In step, CogniTrack asks how you're feeling right
+          now — sleep quality, hours slept, stress level, caffeine intake, current mood,
+          distractions, and (optionally) medication and whether you're wearing glasses. If
+          you're a guest (not signed in), that same step also optionally asks for your name,
+          age, gender, education level, dominant hand, and native language — every one of
+          those fields is optional for a guest. If you register an account, we ask for the
+          same demographic fields once, at sign-up, along with your email address and a
+          securely hashed password — we never store your password in plain text and cannot
+          look it up on your behalf. As you move through the five assessment modules — Memory
+          Recall, Focus &amp; Attention, Decision Making, Thinking Speed, and Visual Reasoning
+          — the app also records your responses, timing, and computed scores for each domain,
+          plus basic technical context (browser, device type, screen size, timezone) used only
+          to make sense of that timing data.
         </p>
 
         <h2>Where Your Data Lives</h2>
         <div class="legal-callout">
           <i data-lucide="lock" aria-hidden="true"></i>
           <p>
-  As a <strong>guest</strong>, everything above stays in your browser's session
-            storage — it is never transmitted to a server or written to a database, and is
-            erased the moment you close the tab. As a <strong>signed-in user</strong>, your
-            profile details and assessment results are saved to a <strong>PostgreSQL
-            database, hosted on Supabase</strong>, against your account, so your dashboard
-            and history are available whenever you log back in from any device. The
-            application itself runs on <strong>Render</strong>, which serves every page over
-            an encrypted (HTTPS) connection.
+            Both guest and signed-in data are saved to the same <strong>PostgreSQL database,
+            hosted on Supabase</strong>. A <strong>guest</strong>'s check-in answers, optional
+            demographics, and assessment results are stored against a random, temporary
+            identifier — not your name or any account — held in a browser cookie that is
+            cleared the moment your browser fully closes; nothing links it back to you once
+            that cookie is gone. A <strong>signed-in user</strong>'s profile and results are
+            saved against your account instead, so your dashboard and history are available
+            whenever you log back in from any device. The application itself runs on
+            <strong>Render</strong>, which serves every page over an encrypted (HTTPS)
+            connection.
           </p>
         </div>
         <p>
-          Your account session is tracked with a secure, HTTP-only cookie used solely to keep
-          you signed in — it is not used for advertising or cross-site tracking.
+          Your account session (and, for a guest, the temporary identifier above) is tracked
+          with a secure, HTTP-only cookie used solely to keep you signed in or to recognise
+          your in-progress guest session — it is not used for advertising or cross-site
+          tracking.
         </p>
         <p>
-          We keep signed-in account data for as long as your account exists. If you request
-          deletion (see "Clearing Your Data" below), we permanently remove your profile and
-          assessment history from our database — this cannot be undone.
+          We keep signed-in account data for as long as your account exists. A guest's data is
+          tied to a session identifier that isn't retrievable once its cookie is gone (browser
+          fully closed, cookies cleared, or a different browser/device), so in practice it
+          becomes unreachable rather than being retrieved and re-linked to you later. If you
+          request deletion of signed-in account data (see "Clearing Your Data" below), we
+          permanently remove your profile and assessment history from our database — this
+          cannot be undone.
         </p>
 
         <h2>Demo Mode</h2>
@@ -85,7 +99,7 @@
 
         <h2>Clearing Your Data</h2>
         <ul>
-          <li>As a guest, closing the browser tab or window clears your session immediately.</li>
+          <li>As a guest, fully closing your browser clears the cookie that ties you to your check-in answers, demographics, and results — after that, nothing can link that data back to you.</li>
           <li>Starting a new assessment resets any prior in-progress attempt.</li>
           <li>Signed-in users can request deletion of their account and all associated data at any time by emailing us below — we don't yet have a self-serve "delete my account" button, but every request is honored promptly.</li>
         </ul>

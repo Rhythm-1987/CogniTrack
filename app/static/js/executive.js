@@ -174,11 +174,12 @@ document.addEventListener('DOMContentLoaded', function () {
     var isCorrect = (colorName === q.colorName);
 
     results.push({
-      correct:   isCorrect,
-      rt:        rt,
-      word:      q.word,
-      colorName: q.colorName,
-      answered:  colorName
+      correct:     isCorrect,
+      rt:          rt,
+      word:        q.word,
+      colorName:   q.colorName,
+      answered:    colorName,
+      congruent:   q.isCongruent
     });
 
     disableButtons();
@@ -273,6 +274,17 @@ document.addEventListener('DOMContentLoaded', function () {
     var score     = accuracy;   /* accuracy directly maps to 0-100 */
     var ratingObj = CT.getRating(score);
 
+    /* Congruent vs incongruent RT split — the Stroop interference effect
+       itself (how much slower incongruent trials are) rather than just
+       the phase-accuracy breakdown already tracked above. */
+    var congruentRTs   = results.filter(function (r) { return r.congruent; }).map(function (r) { return r.rt; });
+    var incongruentRTs = results.filter(function (r) { return !r.congruent; }).map(function (r) { return r.rt; });
+    var congruentMeanRT   = congruentRTs.length
+      ? Math.round(congruentRTs.reduce(function (a, b) { return a + b; }, 0) / congruentRTs.length) : 0;
+    var incongruentMeanRT = incongruentRTs.length
+      ? Math.round(incongruentRTs.reduce(function (a, b) { return a + b; }, 0) / incongruentRTs.length) : 0;
+    var errorRate = 100 - accuracy;
+
     summaryGridEl.innerHTML =
       execTile('Accuracy',    accuracy + '%',  'highlight')                  +
       execTile('Avg. Time',   avgRt + ' ms',   '')                           +
@@ -304,7 +316,7 @@ document.addEventListener('DOMContentLoaded', function () {
            (refresh, back button). Never re-write the session or re-show
            the transition card; only resume a background save if the
            previous attempt never reached the server. */
-        if (CT.isAuthenticated() && !CT.isModuleSynced('executive')) {
+        if (!CT.isModuleSynced('executive')) {
           CT.syncModule('executive', function () {});
         }
         return;
@@ -314,7 +326,12 @@ document.addEventListener('DOMContentLoaded', function () {
         questions:           TOTAL_QUESTIONS,
         results:             results,
         congruentAccuracy:   p1Acc,
-        incongruentAccuracy: p3Acc
+        incongruentAccuracy: p3Acc,
+        congruentMeanRT:     congruentMeanRT,
+        incongruentMeanRT:   incongruentMeanRT,
+        interferenceEffect:  incongruentMeanRT - congruentMeanRT,
+        accuracy:            accuracy,
+        errorRate:           errorRate
       });
 
       /* Lock continue link to block accidental nav during transition */

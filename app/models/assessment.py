@@ -44,6 +44,17 @@ class AssessmentSession(db.Model):
     overall_score = db.Column(db.Float, nullable=True)
     duration = db.Column(db.Integer, nullable=True)
 
+    # Research-readiness metadata (Sprint 8 prep) — additive/nullable so
+    # existing rows are unaffected. session_metadata holds browser/device/
+    # viewport/timezone/resume+refresh counts/idle time/tab visibility/
+    # completion mode/attempt number (see cognitrack-core.js
+    # collectSessionMetadata()); assessment_version/algorithm_version are
+    # plain columns rather than JSON keys because future CCI work needs
+    # to filter/join on them directly. See core/versions.py.
+    session_metadata = db.Column(db.JSON, nullable=True)
+    assessment_version = db.Column(db.String(20), nullable=True)
+    algorithm_version = db.Column(db.String(20), nullable=True)
+
     user = db.relationship('User', back_populates='assessment_sessions')
     results = db.relationship(
         'AssessmentResult', back_populates='assessment_session', cascade='all, delete-orphan'
@@ -92,6 +103,12 @@ class AssessmentResult(db.Model):
     average_time = db.Column(db.Float, nullable=True)
     rating = db.Column(db.String(20), nullable=True)
     raw_data = db.Column(db.JSON, nullable=True)
+
+    # Which version of this module's game logic produced this result —
+    # each of the 5 modules can be redesigned independently of the
+    # others (see core/versions.py GAME_VERSIONS). Additive/nullable.
+    game_version = db.Column(db.String(20), nullable=True)
+
     updated_at = db.Column(
         db.DateTime(timezone=True),
         nullable=False,

@@ -236,6 +236,19 @@ document.addEventListener('DOMContentLoaded', function () {
      SUMMARY — clinical metrics + standardised session write
   ══════════════════════════════════════════════════════════ */
 
+  function median(values) {
+    if (!values.length) { return 0; }
+    var sorted = values.slice().sort(function (a, b) { return a - b; });
+    var mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+  }
+
+  function stdDev(values, mean) {
+    if (!values.length) { return 0; }
+    var variance = values.reduce(function (sum, v) { return sum + Math.pow(v - mean, 2); }, 0) / values.length;
+    return Math.round(Math.sqrt(variance));
+  }
+
   function buildSummary(isRecovery) {
     var avg, fastest, slowest;
     if (reactionTimes.length === 0) {
@@ -287,17 +300,21 @@ document.addEventListener('DOMContentLoaded', function () {
            (refresh, back button). Never re-write the session or re-show
            the transition card; only resume a background save if the
            previous attempt never reached the server. */
-        if (CT.isAuthenticated() && !CT.isModuleSynced('attention')) {
+        if (!CT.isModuleSynced('attention')) {
           CT.syncModule('attention', function () {});
         }
         return;
       }
 
       CT.writeSession('attention', startedAt, score, score, avg, {
-        reactionTimes: reactionTimes,
-        falseStarts:   falseStarts,
-        fastest:       fastest,
-        slowest:       slowest
+        reactionTimes:    reactionTimes,
+        falseStarts:      falseStarts,
+        fastest:          fastest,
+        slowest:          slowest,
+        meanRT:           avg,
+        medianRT:         median(reactionTimes),
+        rtStdDev:         stdDev(reactionTimes, avg),
+        correctResponses: reactionTimes.length
       });
 
       /* Lock continue link to block accidental nav during transition */

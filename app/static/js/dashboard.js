@@ -1354,15 +1354,27 @@
      CT.hydrateDashboardData() — every rendering function below is
      unaware anything changed. A fetch failure, or no completed
      assessment yet, simply falls through to the existing
-     sessionStorage-only resolution. Guests and the demo route never
-     touch the network here.
+     sessionStorage-only resolution.
+
+     Guests get the same database-first treatment now via
+     /api/guest/dashboard (no /api/history equivalent for guests —
+     see guest_assessment_service, which only tracks the single latest
+     guest run, matching the existing single-slot guest experience).
+     A guest with no guest_id cookie yet (never reached Check-In) gets
+     an empty object back and falls through exactly like a fetch
+     failure would. The demo route never touches the network here.
   ══════════════════════════════════════════════════════════ */
 
   function init() {
     var isDemoRoute = window.location.pathname.indexOf('/dashboard/demo') === 0;
     var isAuthed    = typeof CT !== 'undefined' && CT.isAuthenticated && CT.isAuthenticated();
 
-    if (!isDemoRoute && isAuthed) {
+    if (isDemoRoute) {
+      renderDashboard();
+      return;
+    }
+
+    if (isAuthed) {
       /* /api/dashboard hydrates the current (latest) assessment into
          sessionStorage as before; /api/history is the real source of
          every completed assessment — Data.setHistory() below is the
@@ -1385,7 +1397,12 @@
       return;
     }
 
-    renderDashboard();
+    CT.apiGet('/api/guest/dashboard').catch(function () { return null; }).then(function (dashboardData) {
+      if (dashboardData && dashboardData.modules && CT.hydrateDashboardData) {
+        CT.hydrateDashboardData(dashboardData);
+      }
+      renderDashboard();
+    });
   }
 
   function renderDashboard() {

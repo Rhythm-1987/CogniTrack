@@ -12,11 +12,12 @@
 
 <!-- ============================================================
      LOADING STATE
-     Visible by default so a signed-in user never sees a blank
-     page while /api/dashboard + /api/history resolve. JS hides
-     this the moment renderDashboard() picks empty/real/demo —
-     guests and the demo route resolve synchronously, so this
-     never has time to be seen on those paths.
+     Visible by default so nobody sees a blank page while their
+     dashboard data resolves — /api/dashboard + /api/history for a
+     signed-in user, /api/guest/dashboard for a guest. JS hides this
+     the moment renderDashboard() picks empty/real/demo. The demo
+     route resolves synchronously (no network call), so this never
+     has time to be seen there.
 ============================================================ -->
 <section class="dash-loading" id="js-dashboard-loading" aria-label="Loading your dashboard" aria-live="polite">
   <div class="container">

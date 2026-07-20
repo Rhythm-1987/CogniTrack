@@ -40,8 +40,10 @@
       </div>
 
       <!-- Three mutually-exclusive states, revealed by hub.js from the
-           authoritative source: the server-computed assessment_state for
-           signed-in users, or sessionStorage progress for guests. Exactly
+           authoritative source: the server-computed assessment_state, for
+           signed-in users and returning guests alike (see routes/
+           assessment.py hub()). sessionStorage progress is only the
+           fallback for a guest who hasn't reached Check-In yet. Exactly
            one is ever shown. -->
       <div class="hub-actions" id="js-hub-actions">
 
@@ -100,9 +102,11 @@
 {% block scripts %}
 <script>
   window.CT_RESUME = {{ resume_data | tojson }};
-  /* Server-authoritative state for signed-in users ('none' |
-     'in_progress' | 'completed'); null for guests, where hub.js falls
-     back to sessionStorage progress. */
+  /* Server-authoritative state ('none' | 'in_progress' | 'completed') —
+     for a signed-in user always, and for a guest once a guest_id cookie
+     exists (see routes/assessment.py hub()). Only a brand-new guest who
+     has never reached Check-In gets null, where hub.js falls back to
+     sessionStorage progress. */
   window.CT_ASSESSMENT_STATE = {{ assessment_state | tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/hub.js') }}"></script>

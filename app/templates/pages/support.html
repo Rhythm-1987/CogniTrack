@@ -36,7 +36,7 @@
           <p class="faq-item__q">Do I need to create an account?</p>
           <p class="faq-item__a">
             No — you can take the full assessment as a guest by entering a few basic details
-            on the User Information step. Creating a free account is optional, but it saves
+            on the Today's Assessment Check-In step. Creating a free account is optional, but it saves
             your results and history so you can come back to your dashboard from any device
             instead of losing progress when you close the tab.
           </p>
@@ -45,10 +45,11 @@
         <div class="faq-item">
           <p class="faq-item__q">Where is my data stored?</p>
           <p class="faq-item__a">
-            As a guest, locally in your browser's session storage — never on a server. If
-            you're signed in, your profile and results are saved to your account in our
-            database. See our <a href="{{ url_for('main.privacy') }}">Privacy Policy</a> for
-            the full picture.
+            In the same database either way. As a guest, it's saved against a temporary,
+            anonymous session identifier (not your name or an account) that's cleared when you
+            fully close your browser. If you're signed in, your profile and results are saved
+            against your account instead, so they're still there next time you log in. See our
+            <a href="{{ url_for('main.privacy') }}">Privacy Policy</a> for the full picture.
           </p>
         </div>
 
@@ -84,11 +85,13 @@
         <div class="faq-item">
           <p class="faq-item__q">I closed my tab and lost my results — can I get them back?</p>
           <p class="faq-item__a">
-            If you were signed in, no — your results are saved to your account. Just log back
-            in and open your <a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a>. If
-            you took the assessment as a guest, session data is intentionally temporary and
-            can't be recovered once the tab closes — create an account before your next
-            attempt to avoid losing it again.
+            If you were signed in, yes — log back in and open your
+            <a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a>. If you took the
+            assessment as a guest, just closing a tab is fine — your data is tied to your
+            browser session, not the tab, so reopening the site in the same browser still
+            shows it. Fully closing the browser (or clearing cookies) is what clears it for
+            good, since it's never tied to an account — create one before your next attempt to
+            keep results permanently and access them from any device.
           </p>
         </div>
 

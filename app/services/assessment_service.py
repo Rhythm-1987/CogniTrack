@@ -15,6 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
 from ..core.database import db
+from ..core.versions import ALGORITHM_VERSION, ASSESSMENT_VERSION, GAME_VERSIONS
 from ..models.assessment import AssessmentResult, AssessmentSession
 from ..models.profile import Profile
 
@@ -126,17 +127,42 @@ def _checkin_fields(checkin_data):
     }
 
 
-def start_session(user, checkin_data=None):
+def _validate_metadata(metadata):
+    if metadata is not None and not isinstance(metadata, dict):
+        raise AssessmentError('metadata must be an object.', 400)
+    return metadata or {}
+
+
+def _merge_session_metadata(session, extra):
+    """Shallow-merges `extra` into session.session_metadata without
+    clobbering keys already recorded (e.g. attempt_number set at
+    start_session survives a later merge at complete_session). Works on
+    any object with a session_metadata JSON column — both AssessmentSession
+    and GuestAssessmentSession share this shape, which is what lets
+    guest_assessment_service reuse this function instead of duplicating it."""
+    if not extra:
+        return
+    merged = dict(session.session_metadata or {})
+    merged.update(extra)
+    session.session_metadata = merged
+
+
+def start_session(user, checkin_data=None, metadata=None):
     """Idempotent: resumes an existing in-progress session for this user
     instead of creating a second one. Permanent profile fields (name, age,
     gender, education, dominant hand, native language) are set at
     registration or via Edit Profile only — never here; this only ever
-    writes Today's Assessment Check-In's temporary, per-session fields."""
+    writes Today's Assessment Check-In's temporary, per-session fields.
+
+    `metadata` is optional research context (browser/device/viewport/
+    timezone — see cognitrack-core.js collectSessionMetadata()); merged
+    in alongside a server-computed attempt_number, never required."""
     existing = _find_resumable_session(user)
 
     checkin_data = checkin_data or {}
     if not isinstance(checkin_data, dict):
         raise AssessmentError('checkin must be an object.', 400)
+    metadata = _validate_metadata(metadata)
 
     if user.profile is None:
         db.session.add(Profile(user_id=user.id))
@@ -147,10 +173,18 @@ def start_session(user, checkin_data=None):
         for field, value in cleaned.items():
             if value is not None:
                 setattr(existing, field, value)
+        _merge_session_metadata(existing, metadata)
         db.session.commit()
         return {'assessment_id': existing.id, 'status': existing.status, 'resumed': True}
 
-    session = AssessmentSession(user_id=user.id, **cleaned)
+    attempt_number = db.session.query(AssessmentSession.id).filter_by(user_id=user.id).count() + 1
+    session = AssessmentSession(
+        user_id=user.id,
+        assessment_version=ASSESSMENT_VERSION,
+        algorithm_version=ALGORITHM_VERSION,
+        session_metadata=dict(metadata, attempt_number=attempt_number),
+        **cleaned,
+    )
     db.session.add(session)
     db.session.commit()
 
@@ -202,17 +236,19 @@ def save_result(user, assessment_id, domain, score, accuracy, average_time, rati
     result.average_time = average_time
     result.rating = rating or _rating_label(score)
     result.raw_data = stored_raw
+    result.game_version = GAME_VERSIONS.get(domain)
 
     db.session.commit()
     return {'domain': domain, 'result_id': result.id}
 
 
-def _finalize_session(session):
+def _finalize_session(session, completion_mode='completed'):
     """Marks an AssessmentSession completed from its already-saved
     results. Shared by complete_session (client-confirmed finish) and
     _find_resumable_session's self-heal path (all 5 domains saved but
     the client's final POST never arrived — closed tab, dropped
-    connection, etc.)."""
+    connection, etc.), which passes completion_mode='self_healed' so
+    that distinction survives into session_metadata for research use."""
     scores = [r.score for r in session.results if r.score is not None]
     overall_score = round(sum(scores) / len(scores)) if scores else 0
 
@@ -225,15 +261,18 @@ def _finalize_session(session):
     session.overall_score = overall_score
     session.duration = int((completed_at - started_at).total_seconds())
     session.status = 'completed'
+    _merge_session_metadata(session, {'completion_mode': completion_mode})
     return session
 
 
-def complete_session(user, assessment_id):
+def complete_session(user, assessment_id, metadata=None):
     session = _get_owned_session(user, assessment_id)
     if session.status == 'completed':
         raise AssessmentError('This assessment has already been completed.', 409)
+    metadata = _validate_metadata(metadata)
 
     _finalize_session(session)
+    _merge_session_metadata(session, metadata)
     db.session.commit()
 
     return {
@@ -266,7 +305,7 @@ def _find_resumable_session(user):
 
     completed_domains = {r.domain for r in session.results}
     if all(m in completed_domains for m in MODULE_ORDER):
-        _finalize_session(session)
+        _finalize_session(session, completion_mode='self_healed')
         db.session.commit()
         return None
 
@@ -335,6 +374,15 @@ def get_dashboard_payload(user):
     if session is None:
         return None
 
+    return _shape_dashboard_payload(session, user.profile)
+
+
+def _shape_dashboard_payload(session, profile):
+    """Builds the GET /api/dashboard response shape from a completed
+    session + its owner's profile. Pulled out of get_dashboard_payload so
+    guest_assessment_service.get_dashboard_payload can reuse it unchanged —
+    GuestAssessmentSession/GuestAssessmentResult/GuestProfile share every
+    attribute name this touches with their authenticated counterparts."""
     modules = {}
     for result in session.results:
         raw = dict(result.raw_data or {})
@@ -353,7 +401,7 @@ def get_dashboard_payload(user):
 
     return {
         'assessmentId': session.id,
-        'user': _profile_payload(user.profile),
+        'user': _profile_payload(profile),
         'overallScore': session.overall_score,
         'completedAt': session.completed_at.isoformat() if session.completed_at else None,
         'modules': modules,

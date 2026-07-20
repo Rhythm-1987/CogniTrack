@@ -50,8 +50,10 @@
         <div class="form-grid">
 
           {% if not current_user.is_authenticated %}
-          <!-- Guests only: optional name for dashboard personalisation.
-               Never stored as permanent profile data. -->
+          <!-- Guests only: all optional, saved to a GuestProfile row tied
+               to a temporary session identifier (see core/guest.py) —
+               never a permanent account. Registered users give these once
+               at sign-up instead (see register.html). -->
           <div class="form-group form-grid__full">
             <label class="label" for="guest-name">
               Your Name
@@ -65,6 +67,80 @@
               placeholder="e.g. Alex Johnson"
               autocomplete="name"
               maxlength="120"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="label" for="guest-age">
+              Age
+              <span class="user-label-optional">(optional)</span>
+            </label>
+            <input
+              class="input"
+              type="number"
+              id="guest-age"
+              name="guest_age"
+              placeholder="e.g. 32"
+              min="1"
+              max="120"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="label" for="guest-gender">
+              Gender
+              <span class="user-label-optional">(optional)</span>
+            </label>
+            <select class="select" id="guest-gender" name="guest_gender">
+              <option value="" selected>Prefer not to say</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="non-binary">Non-binary</option>
+              <option value="prefer-not-to-say">Prefer not to say</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="label" for="guest-education">
+              Education Level
+              <span class="user-label-optional">(optional)</span>
+            </label>
+            <select class="select" id="guest-education" name="guest_education">
+              <option value="" selected>Prefer not to say</option>
+              <option value="high-school">High School</option>
+              <option value="some-college">Some College</option>
+              <option value="bachelors">Bachelor's Degree</option>
+              <option value="masters">Master's Degree</option>
+              <option value="doctoral">Doctoral Degree</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="label" for="guest-hand">
+              Dominant Hand
+              <span class="user-label-optional">(optional)</span>
+            </label>
+            <select class="select" id="guest-hand" name="guest_hand">
+              <option value="" selected>Prefer not to say</option>
+              <option value="right">Right</option>
+              <option value="left">Left</option>
+              <option value="ambidextrous">Ambidextrous</option>
+            </select>
+          </div>
+
+          <div class="form-group form-grid__full">
+            <label class="label" for="guest-native-language">
+              Native Language
+              <span class="user-label-optional">(optional)</span>
+            </label>
+            <input
+              class="input"
+              type="text"
+              id="guest-native-language"
+              name="guest_native_language"
+              placeholder="e.g. English"
+              maxlength="60"
+              autocomplete="language"
             />
           </div>
           {% endif %}

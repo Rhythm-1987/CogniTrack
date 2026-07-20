@@ -13,8 +13,11 @@
        Resume link's href is derived — making Resume work even in a brand-new
        browser or after sessionStorage was cleared.
 
-     • Guests (CT_ASSESSMENT_STATE is null): sessionStorage progress is
-       authoritative, since a guest's assessment lives only client-side.
+     • Guests: also server-authoritative once a guest_id cookie exists
+       (routes/assessment.py -> get_guest_assessment_state), same as
+       signed-in users. CT_ASSESSMENT_STATE is only null for a guest who
+       has never reached Check-In yet — sessionStorage progress is the
+       fallback for that one case.
 
    No progress logic is duplicated here — state resolution reuses
    CT.loadProgress() / CT.getNextModuleUrl().

@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var q         = questions[currentQuestion];
     var isCorrect = (symbol === q.correct);
 
-    results.push({ correct: isCorrect, rt: rt, num: q.num, answered: symbol });
+    results.push({ correct: isCorrect, rt: rt, num: q.num, answered: symbol, optionCount: q.optionCount });
 
     disableButtons();
 
@@ -332,6 +332,19 @@ document.addEventListener('DOMContentLoaded', function () {
     var score     = accuracy;
     var ratingObj = CT.getRating(score);
 
+    /* Per-difficulty-tier accuracy/RT — mirrors the phase-split metrics
+       already tracked for Executive/Visual, using the optionCount tier
+       each result now carries. */
+    var tiers = { 2: [], 3: [], 4: [] };
+    results.forEach(function (r) { if (tiers[r.optionCount]) { tiers[r.optionCount].push(r); } });
+    function tierStats(rs) {
+      if (!rs.length) { return { accuracy: 0, avgRt: 0 }; }
+      var ok = rs.filter(function (r) { return r.correct; }).length;
+      var sum = rs.reduce(function (s, r) { return s + r.rt; }, 0);
+      return { accuracy: Math.round((ok / rs.length) * 100), avgRt: Math.round(sum / rs.length) };
+    }
+    var efficiency = totalMs > 0 ? Math.round((correct / totalMs) * 100000) / 100 : 0; /* correct per 100s */
+
     summaryGridEl.innerHTML =
       procTile('Accuracy',   accuracy + '%',         'highlight')                   +
       procTile('Correct',    correct + ' / 20',      correct >= 18 ? 'good' : '')   +
@@ -363,18 +376,22 @@ document.addEventListener('DOMContentLoaded', function () {
            (refresh, back button). Never re-write the session or re-show
            the transition card; only resume a background save if the
            previous attempt never reached the server. */
-        if (CT.isAuthenticated() && !CT.isModuleSynced('processing')) {
+        if (!CT.isModuleSynced('processing')) {
           CT.syncModule('processing', function () {});
         }
         return;
       }
 
       CT.writeSession('processing', startedAt, score, accuracy, avgRt, {
-        keyMap:     keyMap,
-        questions:  TOTAL_QUESTIONS,
-        totalMs:    totalMs,
-        totalSecs:  parseFloat(totalSecs),
-        results:    results
+        keyMap:      keyMap,
+        questions:   TOTAL_QUESTIONS,
+        totalMs:     totalMs,
+        totalSecs:   parseFloat(totalSecs),
+        results:     results,
+        tier2:       tierStats(tiers[2]),
+        tier3:       tierStats(tiers[3]),
+        tier4:       tierStats(tiers[4]),
+        efficiency:  efficiency
       });
 
       /* Lock continue link to block accidental nav during transition */

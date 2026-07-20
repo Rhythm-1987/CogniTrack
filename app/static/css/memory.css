@@ -231,18 +231,13 @@
 
 /* ── Phase 2: Word Cards ────────────────────────────────── */
 
+/* auto-fill/minmax self-balances for however many words are shown
+   (11 for the current encoding set) instead of a fixed column count
+   that strands a lonely card on its own row for some totals. */
 .memory-words {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: var(--space-4);
-}
-
-/* Trial 2 has 6 words, not 5 — the shared 5-column grid above would
-   fill one full row and strand the 6th word alone on its own row
-   with four empty column tracks beside it. 3 columns gives two even
-   rows instead. */
-#trial2-words {
-  grid-template-columns: repeat(3, 1fr);
 }
 
 .word-card {
@@ -263,62 +258,61 @@
 }
 
 
-/* ── Phase 3: Distraction ───────────────────────────────── */
+/* ── Phase 3: Interference — Corsi-style tile sequence ──── */
 
-.distraction-counter {
-  font-size: var(--text-xs);
+.interference-status {
+  font-size: var(--text-sm);
   font-weight: var(--font-semibold);
-  color: var(--color-text-muted);
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
+  color: var(--color-text-secondary);
   margin-bottom: var(--space-6);
+  min-height: 1.5em;
 }
 
-.distraction-question {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
-  border-radius: var(--radius-xl);
-  padding: var(--space-8) var(--space-6);
-  margin-bottom: var(--space-8);
-  box-shadow: var(--shadow-primary);
+.interference-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  max-width: 280px;
+  margin: 0 auto var(--space-4);
 }
 
-.distraction-question span {
-  font-family: var(--font-display);
-  font-size: var(--text-4xl);
-  font-weight: var(--font-bold);
-  color: var(--color-text-inverse);
-  letter-spacing: var(--tracking-tight);
+.interference-tile {
+  aspect-ratio: 1;
+  background: var(--color-surface-alt);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: background var(--transition-fast),
+              border-color var(--transition-fast),
+              transform var(--transition-fast);
 }
 
-.distraction-input-wrap {
-  text-align: left;
-  margin-bottom: var(--space-6);
+.interference-tile:hover {
+  border-color: var(--color-primary);
 }
 
-.distraction-input {
-  font-size: var(--text-lg);
-  text-align: center;
-  font-weight: var(--font-semibold);
-  letter-spacing: var(--tracking-wide);
+.interference-tile:focus-visible {
+  outline: 3px solid var(--color-primary);
 }
 
-
-/* ── Phase 4: Recall ─────────────────────────────────────── */
-
-.recall-group {
-  text-align: left;
-  margin-bottom: var(--space-6);
+.interference-tile.is-lit {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  transform: scale(0.96);
 }
 
-.recall-textarea {
-  min-height: 130px;
-  font-size: var(--text-base);
-  line-height: var(--leading-relaxed);
-  resize: vertical;
+.interference-tile.is-correct {
+  background: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.interference-tile.is-incorrect {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
 }
 
 
-/* ── Phase 5: Recognition ───────────────────────────────── */
+/* ── Phase 4: Recognition ───────────────────────────────── */
 
 .recognition-grid {
   display: grid;
@@ -377,7 +371,7 @@
 }
 
 
-/* ── Phase 6: Completion ─────────────────────────────────── */
+/* ── Phase 5: Completion ─────────────────────────────────── */
 
 .memory-card--complete {
   background: linear-gradient(160deg, var(--color-surface) 60%, #EFF6FF 100%);
@@ -449,10 +443,6 @@
     padding: var(--space-5) var(--space-3);
   }
 
-  .distraction-question span {
-    font-size: var(--text-3xl);
-  }
-
 }
 
 
@@ -461,12 +451,6 @@
 @media (max-width: 479px) {
 
   .memory-words {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  /* Keep trial 2's 6 words balanced (3 rows of 2) instead of
-     inheriting the 3-column desktop/tablet override above. */
-  #trial2-words {
     grid-template-columns: repeat(2, 1fr);
   }
 

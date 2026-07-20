@@ -304,8 +304,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var rt        = Math.round(performance.now() - questionStart);
     var isCorrect = (candidateBtns[btnIndex].getAttribute('data-correct') === '1');
+    var q         = questions[currentQuestion];
 
-    results.push({ correct: isCorrect, rt: rt });
+    results.push({ correct: isCorrect, rt: rt, angle: q.corrAngle });
 
     for (var i = 0; i < 4; i++) { candidateBtns[i].disabled = true; }
 
@@ -385,6 +386,10 @@ document.addEventListener('DOMContentLoaded', function () {
     var pAcc = function (arr) {
       return arr.length ? Math.round(arr.filter(function (r) { return r.correct; }).length / arr.length * 100) : 0;
     };
+    var pRt = function (arr) {
+      if (!arr.length) { return 0; }
+      return Math.round(arr.reduce(function (s, r) { return s + r.rt; }, 0) / arr.length);
+    };
 
     var score     = accuracy;
     var ratingObj = CT.getRating(score);
@@ -421,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function () {
            results consolidation, or re-show the finale portal; only
            resume a background save if the previous attempt never
            reached the server. */
-        if (CT.isAuthenticated() && !CT.isModuleSynced('spatial')) {
+        if (!CT.isModuleSynced('spatial')) {
           CT.syncModule('spatial', function () {});
         }
         return;
@@ -432,7 +437,10 @@ document.addEventListener('DOMContentLoaded', function () {
         results:         results,
         q1_3Accuracy:    pAcc(p1),
         q4_7Accuracy:    pAcc(p2),
-        q8_10Accuracy:   pAcc(p3)
+        q8_10Accuracy:   pAcc(p3),
+        q1_3AvgRT:       pRt(p1),
+        q4_7AvgRT:       pRt(p2),
+        q8_10AvgRT:      pRt(p3)
       });
 
       /* Consolidate all 5 modules into cognitrack_results */

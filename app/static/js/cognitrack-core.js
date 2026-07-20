@@ -87,8 +87,8 @@
     memory: {
       name:     'Memory Recall',
       icon:     'database',
-      metric:   'Domain: Encoding, Storage & Recall',
-      duration: 'Est. 3–4 Minutes'
+      metric:   'Domain: Encoding, Interference & Recognition',
+      duration: 'Est. 1–2 Minutes'
     },
     attention: {
       name:     'Focus & Attention',
@@ -227,14 +227,37 @@
 
   /* ══════════════════════════════════════════════════════════
      DATABASE SYNC
-     The database is the source of truth for a signed-in user;
-     sessionStorage remains a fast local cache. Guests (not
-     authenticated) never hit these endpoints — body.data-auth
-     on <body> (set server-side) gates every call below.
+     The database is the source of truth for every run now, guest or
+     signed-in — sessionStorage remains a fast local cache either way.
+     Which table a request lands in (assessment_sessions/_results vs
+     guest_assessment_sessions/_results) is decided purely by apiPrefix()
+     below, itself driven by body.data-auth (set server-side).
   ══════════════════════════════════════════════════════════ */
 
   CT.isAuthenticated = function () {
     return document.body && document.body.getAttribute('data-auth') === 'true';
+  };
+
+  /* '/api/assessment' for a signed-in user, '/api/guest/assessment' for a
+     guest — same three sub-paths (/start, /save, /complete) either way. */
+  function apiPrefix() {
+    return CT.isAuthenticated() ? '/api/assessment' : '/api/guest/assessment';
+  }
+
+  /* Static, one-time research context sent alongside /start — see
+     models/assessment.py session_metadata. Best-effort: any of these
+     can legitimately be unavailable in a given browser, so every read
+     is guarded rather than letting a missing API throw. */
+  CT.collectSessionMetadata = function () {
+    var timezone = '';
+    try { timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+
+    return {
+      browser: navigator.userAgent || '',
+      device: /Mobi|Android/i.test(navigator.userAgent || '') ? 'mobile' : 'desktop',
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      timezone: timezone
+    };
   };
 
   /* Every rejection carries the HTTP status (and parsed JSON body, if
@@ -387,6 +410,54 @@
     });
   }
 
+  /* ── Run-level research metadata: refresh/resume counts, idle time ──
+     Accumulated centrally here (not per-module) so none of the 5
+     module scripts need to know about it — a page reload mid-module is
+     detectable from the Navigation Timing API alone, and tab hiding is
+     a single document-level event regardless of which module is open.
+     Read once by collectRunMetadata() and sent with the final
+     /complete call (see completeTask above). */
+
+  (function trackRunMetadata() {
+    function activeProgress() {
+      var p = CT.loadProgress();
+      if (!p || !p.assessmentStarted || p.assessmentCompleted) { return null; }
+      return p;
+    }
+
+    var p = activeProgress();
+    if (p) {
+      var nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || null;
+      if (nav && nav.type === 'reload') {
+        p.refreshCount = (p.refreshCount || 0) + 1;
+        CT.saveProgress(p);
+      }
+    }
+
+    var hiddenAt = null;
+    document.addEventListener('visibilitychange', function () {
+      var progress = activeProgress();
+      if (!progress) { return; }
+
+      if (document.visibilityState === 'hidden') {
+        hiddenAt = Date.now();
+      } else if (hiddenAt) {
+        progress.idleTimeMs = (progress.idleTimeMs || 0) + (Date.now() - hiddenAt);
+        hiddenAt = null;
+        CT.saveProgress(progress);
+      }
+    });
+  }());
+
+  function collectRunMetadata() {
+    var p = CT.loadProgress();
+    return {
+      refreshCount: (p && p.refreshCount) || 0,
+      resumeCount: (p && p.resumeCount) || 0,
+      idleTimeMs: (p && p.idleTimeMs) || 0
+    };
+  }
+
   /* ── Server-confirmed persistence tracking ──────────────────
      Deliberately separate from progress.modules (which only means "the
      user finished answering"). A module can be locally complete while
@@ -424,18 +495,50 @@
       if (raw) { checkin = JSON.parse(raw); }
     } catch (e) {}
 
-    return apiPost('/api/assessment/start', { checkin: checkin });
+    var body = { checkin: checkin, metadata: CT.collectSessionMetadata() };
+
+    if (!CT.isAuthenticated()) {
+      /* Guests only — optional demographics collected on the Check-In
+         page (see checkin.js), upserted onto this guest's GuestProfile. */
+      try {
+        var rawProfile = sessionStorage.getItem('cognitrack_guest_profile');
+        if (rawProfile) { body.profile = JSON.parse(rawProfile); }
+      } catch (e) {}
+    }
+
+    return apiPost(apiPrefix() + '/start', body);
   }
 
   /* Resolves once the current progress record has a server-confirmed
      assessment_id — retrying indefinitely (behind the shared sync
-     banner) rather than ever letting a caller proceed without one. A
-     signed-in user's assessment is only ever "started" once the
+     banner) rather than ever letting a caller proceed without one.
+     Guest or signed-in, an assessment is only ever "started" once the
      database agrees; this is also the self-heal path CT.syncModule
-     falls back to if a module page is somehow reached without one. */
+     falls back to if a module page is somehow reached without one.
+
+     assessmentIdIsGuest guards against reusing a stale id across an
+     auth-status change mid-assessment (a guest logging in via the
+     navbar): guest_assessment_sessions and assessment_sessions are
+     different tables with independent id sequences, so an id issued
+     under one can never be reused under the other. When a mismatch is
+     detected, every serverSynced flag is dropped too — those refer to
+     saves made against the old (guest) session, not the fresh one about
+     to be created — so every locally-completed module gets freshly
+     re-submitted against the new, correctly-owned session. */
   CT.ensureAssessmentId = function () {
     var p = CT.loadProgress();
-    if (p && p.assessmentId) { return Promise.resolve(p.assessmentId); }
+    var isGuestNow = !CT.isAuthenticated();
+
+    if (p && p.assessmentId != null && p.assessmentIdIsGuest === isGuestNow) {
+      return Promise.resolve(p.assessmentId);
+    }
+
+    if (p && p.assessmentId != null) {
+      p.assessmentId = null;
+      p.serverSynced = {};
+      p.assessmentSynced = false;
+      CT.saveProgress(p);
+    }
 
     return attemptWithRetry(
       startSessionTask,
@@ -443,19 +546,18 @@
     ).then(function (result) {
       var pp = CT.loadProgress() || CT.initProgress();
       pp.assessmentId = result.assessment_id;
+      pp.assessmentIdIsGuest = isGuestNow;
       CT.saveProgress(pp);
       return pp.assessmentId;
     });
   };
 
   /* The single entry point for "Begin Assessment". Creates the local
-     progress record (a no-op if one already exists) and, for a
-     signed-in user, blocks until the server confirms an assessment_id —
-     a caller must never navigate to Module 1 before this resolves.
-     Guests resolve immediately; there is no server session to create. */
+     progress record (a no-op if one already exists) and blocks until
+     the server confirms an assessment_id — guest or signed-in, a
+     caller must never navigate to Module 1 before this resolves. */
   CT.beginAssessment = function () {
     CT.initProgress();
-    if (!CT.isAuthenticated()) { return Promise.resolve(null); }
     return CT.ensureAssessmentId();
   };
 
@@ -468,12 +570,11 @@
      has actually been confirmed by the server, so a network failure can
      never silently drop a completed module's results, and a module that
      was already confirmed synced (a revisit, a double-click, two tabs)
-     is never re-submitted. Guests skip the network entirely and behave
-     exactly as before. */
+     is never re-submitted. Guest or signed-in, every module now syncs
+     the same way — apiPrefix()/ensureAssessmentId() decide which table
+     it lands in. */
   CT.syncModule = function (module, onDone) {
     CT.completeModule(module);
-
-    if (!CT.isAuthenticated()) { onDone(); return; }
 
     var session = CT.readSession(module);
 
@@ -490,7 +591,7 @@
     function saveTask() {
       if (CT.isModuleSynced(module)) { return Promise.resolve(); }
       return CT.ensureAssessmentId().then(function (assessmentId) {
-        return apiPost('/api/assessment/save', {
+        return apiPost(apiPrefix() + '/save', {
           assessment_id: assessmentId,
           domain:        module,
           score:         session.score,
@@ -517,7 +618,10 @@
       if (!isLastModule || CT.isAssessmentSynced()) { return Promise.resolve(); }
 
       return CT.ensureAssessmentId().then(function (assessmentId) {
-        return apiPost('/api/assessment/complete', { assessment_id: assessmentId });
+        return apiPost(apiPrefix() + '/complete', {
+          assessment_id: assessmentId,
+          metadata: collectRunMetadata()
+        });
       }).then(function () {
         markAssessmentSynced();
       }).catch(function (err) {
@@ -531,17 +635,17 @@
     }).then(onDone);
   };
 
-  /* Backfills modules that were completed locally (as a guest, before
-     signing in) but never reached the server — e.g. the user finishes
-     a module or two anonymously, then logs in mid-assessment via the
-     navbar. CT.syncModule only pushes the module it's called for, so
-     without this, earlier guest-completed modules stay in
-     sessionStorage forever and are silently dropped the moment server
-     data is later treated as truth (CT.hydrateDashboardData). Safe to
-     call any time: already-synced modules are skipped, and a redundant
-     call is a no-op via CT.syncModule's own idempotency. */
+  /* Backfills any locally-completed module that hasn't reached the
+     server yet — a save that failed to sync earlier, or (guest logging
+     in mid-assessment via the navbar) modules synced under the old
+     guest session. CT.syncModule only pushes the module it's called
+     for, so without this a module could stay in sessionStorage forever
+     without a matching DB row. Safe to call any time: already-synced
+     modules are skipped, and a redundant call is a no-op via
+     CT.syncModule's own idempotency; the auth-mismatch check inside
+     CT.ensureAssessmentId is what makes a guest->auth transition
+     re-sync everything instead of being skipped as "already synced". */
   CT.syncUnsyncedModules = function () {
-    if (!CT.isAuthenticated()) { return; }
     var p = CT.loadProgress();
     if (!p || !p.modules) { return; }
 
@@ -604,6 +708,11 @@
     (resume.completedModules || []).forEach(function (m) { modules[m] = true; serverSynced[m] = true; });
     var completedCount = MODULE_ORDER.filter(function (m) { return modules[m]; }).length;
 
+    /* This rebuilds progress from scratch, so resumeCount (a genuine
+       "the user came back to Resume this run" counter) has to be read
+       out of whatever progress existed before it's overwritten. */
+    var priorResumeCount = (CT.loadProgress() || {}).resumeCount || 0;
+
     CT.saveProgress({
       currentModule:       resume.nextModule || MODULE_ORDER[0],
       currentStage:        0,
@@ -614,7 +723,9 @@
       completedCount:      completedCount,
       assessmentStarted:   new Date().toISOString(),
       assessmentCompleted: null,
-      assessmentId:        resume.assessmentId
+      assessmentId:        resume.assessmentId,
+      assessmentIdIsGuest: !CT.isAuthenticated(),
+      resumeCount:         priorResumeCount + 1
     });
 
     if (resume.user) {
@@ -654,7 +765,8 @@
       completedCount:      completedCount,
       assessmentStarted:   completedAt,
       assessmentCompleted: completedAt,
-      assessmentId:        dashboardData.assessmentId
+      assessmentId:        dashboardData.assessmentId,
+      assessmentIdIsGuest: !CT.isAuthenticated()
     });
   };
 
@@ -841,19 +953,28 @@
   var DEMO_MODULES = {
 
     memory: {
-      score: 88, accuracy: 91, avgTime: 0, durationSec: 205,
+      score: 91, accuracy: 91, avgTime: 0, durationSec: 95,
       rawData: {
-        trial1Words:      ['Apple', 'River', 'Chair', 'Candle', 'Ocean'],
-        trial2Words:      ['Justice', 'Rhythm', 'Horizon', 'Velvet', 'Whisper', 'Gravity'],
-        distractors:      ['Mountain', 'Pencil', 'Journey', 'Crystal', 'Shadow', 'Melody'],
-        recallText:       'apple river candle justice velvet whisper gravity ocean',
-        recallCount:      8,
-        recognitionCount: 10,
-        totalTargets:     11,
-        recallPct:        73,
-        recognitionPct:   91,
-        mathAnswered:     3,
-        selectedWords:    ['apple', 'river', 'candle', 'ocean', 'justice', 'rhythm', 'velvet', 'whisper', 'gravity', 'horizon']
+        targetWords:        ['Apple', 'River', 'Chair', 'Candle', 'Ocean', 'Justice', 'Rhythm', 'Horizon', 'Velvet', 'Whisper', 'Gravity'],
+        distractors:        ['Mountain', 'Pencil', 'Journey', 'Crystal', 'Shadow', 'Melody'],
+        encodingDurationMs: 20000,
+        interference: {
+          rounds: [
+            { length: 3, sequence: [1, 4, 6], taps: [1, 4, 6], tapRTs: [520, 480, 410], correct: true },
+            { length: 4, sequence: [0, 3, 7, 2], taps: [0, 3, 7, 2], tapRTs: [560, 610, 470, 500], correct: true },
+            { length: 5, sequence: [5, 1, 8, 3, 6], taps: [5, 1, 8, 6, 3], tapRTs: [540, 590, 630, 480, 520], correct: false }
+          ],
+          correctRounds: 2,
+          longestCorrectLength: 4,
+          meanTapRT: 528
+        },
+        recognitionDurationMs: 18000,
+        hitCount:           10,
+        missCount:          1,
+        falsePositiveCount: 0,
+        totalTargets:       11,
+        recognitionPct:     91,
+        selectedWords:      ['apple', 'river', 'candle', 'ocean', 'justice', 'rhythm', 'velvet', 'whisper', 'gravity', 'horizon']
       }
     },
 

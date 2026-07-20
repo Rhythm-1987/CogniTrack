@@ -1,12 +1,30 @@
 /* ============================================================
    CogniTrack — Memory Assessment
-   memory.js   Sprint 4.0
+   memory.js   Sprint 8 (redesign)
 
-   Two-trial design:
-     Trial 1 — 5 easy concrete nouns (15 s study window)
-     Trial 2 — 6 abstract / medium nouns (15 s study window)
-   Distraction phase (3 arithmetic questions) between trials.
-   Free recall + recognition covering all 11 target words.
+   Encoding  ->  Interference  ->  Recognition
+
+   Encoding: all 11 words (5 easy + 6 medium) shown once, one 20 s
+   study window (replaces the old two-timed-trial split).
+
+   Interference: a short, non-verbal visuospatial tile-sequence task
+   modeled on the Corsi block-tapping paradigm — a well-established way
+   to occupy visuospatial working memory without touching language or
+   arithmetic (which the free-recall/math-distraction design it
+   replaces both did). 3 rounds of increasing sequence length (3, 4,
+   5 tiles); tiles flash in order, the user taps them back in the same
+   order. This is a description of the paradigm's lineage, not a
+   clinical claim.
+
+   Recognition: unchanged mechanic (click every word you saw from a
+   combined target+distractor grid), but now also tracks false
+   positives (selecting a distractor) — never captured before.
+
+   Score = recognition accuracy alone. The old 0.6 recognition / 0.4
+   typed-recall blend is gone along with typed recall itself; this
+   avoids inventing a new unvalidated weighting. Interference metrics
+   are stored in raw_data for a future scoring algorithm, not blended
+   into today's score.
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -50,75 +68,74 @@ document.addEventListener('DOMContentLoaded', function () {
   ];
 
   /* ── Config ─────────────────────────────────────────────── */
-  var TIMER_DURATION    = 15;
-  var CIRCUMFERENCE     = 2 * Math.PI * 24;   /* ≈ 150.80 */
-  var TRIAL1_COUNT      = 5;
-  var TRIAL2_COUNT      = 6;
-  var DISTRACTOR_COUNT  = 6;
-  var QUESTION_COUNT    = 3;
+  var EASY_COUNT        = 5;
+  var MEDIUM_COUNT       = 6;
+  var DISTRACTOR_COUNT   = 6;
+  var TIMER_DURATION     = 20;
+  var CIRCUMFERENCE      = 2 * Math.PI * 24;   /* ≈ 150.80 */
+  var GRID_SIZE          = 9;                  /* 3x3 interference grid */
+  var ROUND_LENGTHS      = [3, 4, 5];
+  var TILE_FLASH_MS      = 700;
+  var TILE_GAP_MS        = 300;
+  var TAP_FEEDBACK_MS    = 300;
+  var ROUND_PAUSE_MS     = 900;
 
   /* ── Session state ──────────────────────────────────────── */
-  var trial1Words     = [];
-  var trial2Words     = [];
-  var targetWords     = [];   /* trial1 + trial2 combined */
-  var distractors     = [];
-  var questions       = [];
-  var selectedWords   = {};
-  var recallText      = '';
-  var assessmentStart = null;
-  var startedAt       = null;
-  var timerInterval   = null;
-  var timeLeft        = TIMER_DURATION;
-  var currentQuestion = 0;
-  var activeTimer     = 1;    /* 1 = timer for trial1, 2 = timer for trial2 */
+  var easyWords        = [];
+  var mediumWords       = [];
+  var targetWords       = [];   /* easyWords + mediumWords combined */
+  var distractors       = [];
+  var selectedWords     = {};
+  var startedAt         = null;
+  var encodingStart     = 0;
+  var encodingDurationMs = 0;
+  var recognitionStart  = 0;
+  var timerInterval     = null;
+  var timeLeft          = TIMER_DURATION;
+
+  var tileEls           = [];
+  var interferenceRounds = [];
+  var currentRoundIndex  = 0;
+  var currentSequence    = [];
+  var currentTaps        = [];
+  var currentTapRTs      = [];
+  var tappingEnabled     = false;
+  var lastTapEventTime   = 0;
 
   /* ── DOM refs ───────────────────────────────────────────── */
   var phases = {
-    intro:       document.getElementById('phase-intro'),
-    trial1:      document.getElementById('phase-trial1'),
-    distraction: document.getElementById('phase-distraction'),
-    trial2:      document.getElementById('phase-trial2'),
-    recall:      document.getElementById('phase-recall'),
-    recognition: document.getElementById('phase-recognition'),
-    complete:    document.getElementById('phase-complete')
+    intro:        document.getElementById('phase-intro'),
+    encoding:     document.getElementById('phase-encoding'),
+    interference: document.getElementById('phase-interference'),
+    recognition:  document.getElementById('phase-recognition'),
+    complete:     document.getElementById('phase-complete')
   };
 
   var phaseBar         = document.getElementById('phase-bar');
   var phaseLabel       = document.getElementById('phase-label');
   var phaseNum         = document.getElementById('phase-num');
 
-  /* Trial 1 timer refs */
   var timerCount       = document.getElementById('timer-count');
   var ringFill         = document.getElementById('timer-ring-fill');
 
-  /* Trial 2 timer refs */
-  var timerCount2      = document.getElementById('timer-count-2');
-  var ringFill2        = document.getElementById('timer-ring-fill-2');
-
-  var trial1WordsGrid  = document.querySelector('#phase-trial1 .memory-words');
-  var trial2WordsGrid  = document.getElementById('trial2-words');
-  var qText            = document.getElementById('q-text');
-  var qCurrent         = document.getElementById('q-current');
-  var distractInput    = document.getElementById('distraction-input');
-  var distractError    = document.getElementById('distraction-error');
-  var recallInput      = document.getElementById('recall-input');
+  var encodingWordsGrid   = document.getElementById('encoding-words');
+  var interferenceGridEl  = document.getElementById('interference-grid');
+  var interferenceStatusEl = document.getElementById('interference-status');
+  var roundCurrentEl      = document.getElementById('interference-round-current');
+  var roundTotalEl        = document.getElementById('interference-round-total');
   var recognitionGrid  = document.getElementById('recognition-grid');
   var recognitionError = document.getElementById('recognition-error');
   var completeStats    = document.getElementById('complete-stats');
 
   /* ── Phase meta ─────────────────────────────────────────── */
-  var PHASE_ORDER = [
-    'intro', 'trial1', 'distraction', 'trial2', 'recall', 'recognition', 'complete'
-  ];
+  var PHASE_ORDER = ['intro', 'encoding', 'interference', 'recognition', 'complete'];
 
   var PHASE_LABELS = {
-    intro:       'Introduction',
-    trial1:      'Trial 1 — Study',
-    distraction: 'Distraction Task',
-    trial2:      'Trial 2 — Study',
-    recall:      'Free Recall',
-    recognition: 'Recognition',
-    complete:    'Complete'
+    intro:        'Introduction',
+    encoding:     'Encoding',
+    interference: 'Sequence Task',
+    recognition:  'Recognition',
+    complete:     'Complete'
   };
 
   /* ══════════════════════════════════════════════════════════
@@ -126,7 +143,12 @@ document.addEventListener('DOMContentLoaded', function () {
   ══════════════════════════════════════════════════════════ */
 
   function shuffleArray(arr) { return CT.shuffle(arr); }
-  function randInt(min, max) { return CT.randInt(min, max); }
+
+  function rangeArray(n) {
+    var a = [];
+    for (var i = 0; i < n; i++) { a.push(i); }
+    return a;
+  }
 
   /* ══════════════════════════════════════════════════════════
      SESSION INIT
@@ -136,11 +158,11 @@ document.addEventListener('DOMContentLoaded', function () {
     var shuffledEasy   = shuffleArray(EASY_WORDS);
     var shuffledMedium = shuffleArray(MEDIUM_WORDS);
 
-    trial1Words = shuffledEasy.slice(0, TRIAL1_COUNT);
-    trial2Words = shuffledMedium.slice(0, TRIAL2_COUNT);
-    targetWords = trial1Words.concat(trial2Words);     /* 11 total */
+    easyWords   = shuffledEasy.slice(0, EASY_COUNT);
+    mediumWords = shuffledMedium.slice(0, MEDIUM_COUNT);
+    targetWords = easyWords.concat(mediumWords);     /* 11 total */
 
-    /* Distractors: words not in either target set */
+    /* Distractors: words not in the target set */
     var usedLower  = targetWords.map(function (w) { return w.toLowerCase(); });
     var distPool   = shuffleArray(
       DISTRACTOR_POOL.filter(function (w) {
@@ -150,37 +172,51 @@ document.addEventListener('DOMContentLoaded', function () {
     distractors = distPool.slice(0, DISTRACTOR_COUNT);
 
     selectedWords = {};
-    recallText    = '';
-    questions     = generateQuestions(QUESTION_COUNT);
+    interferenceRounds = [];
 
-    populateTrial1Grid();
-    populateTrial2Grid();
+    populateEncodingGrid();
+    populateInterferenceGrid();
     populateRecognitionGrid();
 
     /* Save intermediate state for session recovery */
     saveIntermediateState(0);
   }
 
-  function populateTrial1Grid() {
-    trial1WordsGrid.innerHTML = '';
-    trial1Words.forEach(function (word, i) {
+  function populateEncodingGrid() {
+    encodingWordsGrid.innerHTML = '';
+
+    easyWords.forEach(function (word, i) {
       var div = document.createElement('div');
-      div.className   = 'word-card anim-fade-up anim-delay-' + (i + 1);
+      div.className   = 'word-card anim-fade-up anim-delay-' + ((i % 5) + 1);
       div.setAttribute('role', 'listitem');
       div.textContent = word;
-      trial1WordsGrid.appendChild(div);
+      encodingWordsGrid.appendChild(div);
+    });
+
+    mediumWords.forEach(function (word, i) {
+      var div = document.createElement('div');
+      div.className   = 'word-card word-card--medium anim-fade-up anim-delay-' + ((i % 5) + 1);
+      div.setAttribute('role', 'listitem');
+      div.textContent = word;
+      encodingWordsGrid.appendChild(div);
     });
   }
 
-  function populateTrial2Grid() {
-    trial2WordsGrid.innerHTML = '';
-    trial2Words.forEach(function (word, i) {
-      var div = document.createElement('div');
-      div.className   = 'word-card word-card--medium anim-fade-up anim-delay-' + (i + 1);
-      div.setAttribute('role', 'listitem');
-      div.textContent = word;
-      trial2WordsGrid.appendChild(div);
-    });
+  /* Built once — tile click handlers stay attached across rounds. */
+  function populateInterferenceGrid() {
+    interferenceGridEl.innerHTML = '';
+    tileEls = [];
+
+    for (var i = 0; i < GRID_SIZE; i++) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'interference-tile';
+      btn.setAttribute('data-index', i);
+      btn.setAttribute('aria-label', 'Tile ' + (i + 1));
+      btn.addEventListener('click', onTileClick);
+      interferenceGridEl.appendChild(btn);
+      tileEls.push(btn);
+    }
   }
 
   /* Fisher-Yates shuffled combined grid */
@@ -238,129 +274,150 @@ document.addEventListener('DOMContentLoaded', function () {
   ══════════════════════════════════════════════════════════ */
 
   document.getElementById('btn-begin').addEventListener('click', function () {
-    startedAt       = new Date().toISOString();
-    assessmentStart = Date.now();
-    goToPhase('trial1');
-    startTimer(1);
+    startedAt = new Date().toISOString();
+    goToPhase('encoding');
+    startTimer();
   });
 
   /* ══════════════════════════════════════════════════════════
-     COUNTDOWN TIMER  (shared by both trials)
-     trialNum: 1 | 2
+     ENCODING TIMER
   ══════════════════════════════════════════════════════════ */
 
-  function startTimer(trialNum) {
+  function startTimer() {
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-    activeTimer = trialNum;
-    timeLeft    = TIMER_DURATION;
+    timeLeft      = TIMER_DURATION;
+    encodingStart = Date.now();
 
-    var countEl = trialNum === 1 ? timerCount  : timerCount2;
-    var fillEl  = trialNum === 1 ? ringFill    : ringFill2;
-
-    fillEl.style.strokeDasharray  = CIRCUMFERENCE;
-    fillEl.style.strokeDashoffset = 0;
-    updateTimerDisplay(countEl, fillEl);
+    ringFill.style.strokeDasharray  = CIRCUMFERENCE;
+    ringFill.style.strokeDashoffset = 0;
+    updateTimerDisplay();
 
     timerInterval = setInterval(function () {
       timeLeft -= 1;
-      updateTimerDisplay(countEl, fillEl);
+      updateTimerDisplay();
 
       if (timeLeft <= 0) {
         clearInterval(timerInterval);
         timerInterval = null;
-
-        if (trialNum === 1) {
-          goToPhase('distraction');
-          loadQuestion(0);
-        } else {
-          goToPhase('recall');
-          recallInput.focus();
-        }
+        encodingDurationMs = Date.now() - encodingStart;
+        goToPhase('interference');
+        startInterference();
       }
     }, 1000);
   }
 
-  function updateTimerDisplay(countEl, fillEl) {
-    countEl.textContent = timeLeft;
+  function updateTimerDisplay() {
+    timerCount.textContent = timeLeft;
     var offset = CIRCUMFERENCE * (1 - timeLeft / TIMER_DURATION);
-    fillEl.style.strokeDashoffset = offset;
+    ringFill.style.strokeDashoffset = offset;
 
-    fillEl.classList.remove('is-warning', 'is-danger');
-    if (timeLeft <= 5)      fillEl.classList.add('is-danger');
-    else if (timeLeft <= 8) fillEl.classList.add('is-warning');
+    ringFill.classList.remove('is-warning', 'is-danger');
+    if (timeLeft <= 5)      ringFill.classList.add('is-danger');
+    else if (timeLeft <= 8) ringFill.classList.add('is-warning');
   }
 
   /* ══════════════════════════════════════════════════════════
-     PHASE 3: DISTRACTION
+     PHASE 3: INTERFERENCE — Corsi-style tile sequence
   ══════════════════════════════════════════════════════════ */
 
-  function generateQuestions(count) {
-    var ops = shuffleArray(['add', 'sub', 'mul', 'div']).slice(0, count);
-    return ops.map(generateQuestion);
+  function startInterference() {
+    interferenceRounds = [];
+    roundTotalEl.textContent = ROUND_LENGTHS.length;
+    runRound(0);
   }
 
-  function generateQuestion(op) {
-    var a, b, answer, text;
-    switch (op) {
-      case 'add':
-        a = randInt(11, 59); b = randInt(11, 59);
-        text = a + ' + ' + b; answer = a + b; break;
-      case 'sub':
-        a = randInt(30, 89); b = randInt(10, a - 10);
-        text = a + ' − ' + b; answer = a - b; break;
-      case 'mul':
-        a = randInt(3, 9); b = randInt(3, 9);
-        text = a + ' × ' + b; answer = a * b; break;
-      default:
-        b = randInt(2, 9); var q = randInt(3, 9); a = b * q;
-        text = a + ' ÷ ' + b; answer = q; break;
-    }
-    return { text: text, answer: answer };
+  function runRound(idx) {
+    currentRoundIndex = idx;
+    roundCurrentEl.textContent = idx + 1;
+
+    currentSequence = shuffleArray(rangeArray(GRID_SIZE)).slice(0, ROUND_LENGTHS[idx]);
+    currentTaps     = [];
+    currentTapRTs   = [];
+    tappingEnabled  = false;
+
+    interferenceStatusEl.textContent = 'Watch carefully…';
+    playSequence(currentSequence, 0);
   }
 
-  function loadQuestion(idx) {
-    currentQuestion      = idx;
-    qText.textContent    = questions[idx].text;
-    qCurrent.textContent = idx + 1;
-    distractInput.value  = '';
-    hideError(distractError);
-    distractInput.focus();
-  }
-
-  document.getElementById('btn-distraction-next').addEventListener('click', advanceQuestion);
-
-  distractInput.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      advanceQuestion();
-    }
-  });
-
-  function advanceQuestion() {
-    if (distractInput.value.trim() === '') {
-      showError(distractError, 'Please enter an answer before continuing.');
+  function playSequence(seq, step) {
+    if (step >= seq.length) {
+      interferenceStatusEl.textContent = 'Now tap them in order';
+      tappingEnabled   = true;
+      lastTapEventTime = performance.now();
       return;
     }
-    var next = currentQuestion + 1;
-    if (next < questions.length) {
-      loadQuestion(next);
-    } else {
-      goToPhase('trial2');
-      startTimer(2);
+
+    var tile = tileEls[seq[step]];
+    tile.classList.add('is-lit');
+    setTimeout(function () {
+      tile.classList.remove('is-lit');
+      setTimeout(function () { playSequence(seq, step + 1); }, TILE_GAP_MS);
+    }, TILE_FLASH_MS);
+  }
+
+  function onTileClick() {
+    if (!tappingEnabled) { return; }
+
+    var idx = parseInt(this.getAttribute('data-index'), 10);
+    var now = performance.now();
+    currentTaps.push(idx);
+    currentTapRTs.push(Math.round(now - lastTapEventTime));
+    lastTapEventTime = now;
+
+    var isRightSoFar = currentSequence[currentTaps.length - 1] === idx;
+    var el = this;
+    el.classList.add(isRightSoFar ? 'is-correct' : 'is-incorrect');
+    setTimeout(function () { el.classList.remove('is-correct', 'is-incorrect'); }, TAP_FEEDBACK_MS);
+
+    if (currentTaps.length === currentSequence.length) {
+      tappingEnabled = false;
+      finishRound();
     }
   }
 
-  /* ══════════════════════════════════════════════════════════
-     PHASE 5: FREE RECALL
-  ══════════════════════════════════════════════════════════ */
+  function finishRound() {
+    var correct = currentSequence.length === currentTaps.length &&
+      currentSequence.every(function (v, i) { return v === currentTaps[i]; });
 
-  document.getElementById('btn-recall-continue').addEventListener('click', function () {
-    recallText = recallInput.value.trim();
-    goToPhase('recognition');
-  });
+    interferenceRounds.push({
+      length:   currentSequence.length,
+      sequence: currentSequence.slice(),
+      taps:     currentTaps.slice(),
+      tapRTs:   currentTapRTs.slice(),
+      correct:  correct
+    });
+
+    interferenceStatusEl.textContent = correct ? 'Correct!' : 'Not quite — moving on';
+
+    setTimeout(function () {
+      if (currentRoundIndex + 1 < ROUND_LENGTHS.length) {
+        runRound(currentRoundIndex + 1);
+      } else {
+        recognitionStart = Date.now();
+        goToPhase('recognition');
+      }
+    }, ROUND_PAUSE_MS);
+  }
+
+  function computeInterferenceStats(rounds) {
+    var correctRounds = rounds.filter(function (r) { return r.correct; }).length;
+
+    var longestCorrectLength = 0;
+    rounds.forEach(function (r) {
+      if (r.correct && r.length > longestCorrectLength) { longestCorrectLength = r.length; }
+    });
+
+    var allTapRTs = [];
+    rounds.forEach(function (r) { (r.tapRTs || []).forEach(function (rt) { allTapRTs.push(rt); }); });
+    var meanTapRT = allTapRTs.length
+      ? Math.round(allTapRTs.reduce(function (a, b) { return a + b; }, 0) / allTapRTs.length)
+      : 0;
+
+    return { correctRounds: correctRounds, longestCorrectLength: longestCorrectLength, meanTapRT: meanTapRT };
+  }
 
   /* ══════════════════════════════════════════════════════════
-     PHASE 6: RECOGNITION
+     PHASE 4: RECOGNITION
   ══════════════════════════════════════════════════════════ */
 
   function onRecognitionWordClick() {
@@ -389,31 +446,31 @@ document.addEventListener('DOMContentLoaded', function () {
     goToPhase('complete');
   });
 
+  function computeRecognitionMetrics() {
+    var targetLower = targetWords.map(function (w) { return w.toLowerCase(); });
+    var selectedCount = Object.keys(selectedWords).length;
+
+    var hitCount = targetLower.filter(function (w) { return selectedWords[w] === true; }).length;
+    var missCount = targetWords.length - hitCount;
+    var falsePositiveCount = selectedCount - hitCount;
+    var recognitionPct = targetWords.length ? Math.round((hitCount / targetWords.length) * 100) : 0;
+
+    return {
+      hitCount: hitCount,
+      missCount: missCount,
+      falsePositiveCount: falsePositiveCount,
+      recognitionPct: recognitionPct
+    };
+  }
+
   /* ══════════════════════════════════════════════════════════
-     PHASE 7: CLINICAL SUMMARY + SESSION PERSISTENCE
+     PHASE 5: SUMMARY + SESSION PERSISTENCE
   ══════════════════════════════════════════════════════════ */
 
   function buildSummary(isRecovery) {
-    var targetLower = targetWords.map(function (w) { return w.toLowerCase(); });
-    var normalised  = recallText.toLowerCase().replace(/[^a-z\s]/g, '');
-
-    var recallCount = targetLower.filter(function (w) {
-      return new RegExp('\\b' + w + '\\b').test(normalised);
-    }).length;
-
-    var recognitionCount = targetLower.filter(function (w) {
-      return selectedWords[w] === true;
-    }).length;
-
-    var timeTaken = assessmentStart
-      ? Math.round((Date.now() - assessmentStart) / 1000)
-      : 0;
-
-    var totalTargets   = targetWords.length;                         /* 11 */
-    var recallPct      = Math.round((recallCount / totalTargets) * 100);
-    var recognitionPct = Math.round((recognitionCount / totalTargets) * 100);
-    var score          = Math.round(recognitionPct * 0.6 + recallPct * 0.4);
-
+    var metrics = computeRecognitionMetrics();
+    var interferenceStats = computeInterferenceStats(interferenceRounds);
+    var score = metrics.recognitionPct;
     var ratingObj = CT.getRating(score);
 
     /* ── Rich assessment summary card ──────────────────── */
@@ -424,11 +481,11 @@ document.addEventListener('DOMContentLoaded', function () {
         '<span class="ct-summary-score__label">Score</span>' +
       '</div>' +
       '<div class="ct-summary-grid">' +
-        summaryTile('Words Shown',     totalTargets)                          +
-        summaryTile('Recalled',        recallCount + ' / ' + totalTargets)   +
-        summaryTile('Recognised',      recognitionCount + ' / ' + totalTargets) +
-        summaryTile('Recall Accuracy', recallPct + '%')                      +
-        summaryTile('Time Taken',      timeTaken + 's')                      +
+        summaryTile('Words Shown',     targetWords.length)                          +
+        summaryTile('Recognised',      metrics.hitCount + ' / ' + targetWords.length) +
+        summaryTile('Missed',          metrics.missCount)                            +
+        summaryTile('False Positives', metrics.falsePositiveCount)                   +
+        summaryTile('Sequence Rounds', interferenceStats.correctRounds + ' / ' + ROUND_LENGTHS.length) +
       '</div>' +
       '<div class="ct-summary-rating ct-summary-rating--' + ratingObj.cls + '">' +
         '<span class="ct-summary-rating__label">' + ratingObj.label + '</span>' +
@@ -444,24 +501,29 @@ document.addEventListener('DOMContentLoaded', function () {
            (refresh, back button). Never re-write the session or re-show
            the transition card; only resume a background save if the
            previous attempt never reached the server. */
-        if (CT.isAuthenticated() && !CT.isModuleSynced('memory')) {
+        if (!CT.isModuleSynced('memory')) {
           CT.syncModule('memory', function () {});
         }
         return;
       }
 
-      CT.writeSession('memory', startedAt, score, recognitionPct, 0, {
-        trial1Words:        trial1Words,
-        trial2Words:        trial2Words,
-        distractors:        distractors,
-        recallText:         recallText,
-        recallCount:        recallCount,
-        recognitionCount:   recognitionCount,
-        totalTargets:       totalTargets,
-        recallPct:          recallPct,
-        recognitionPct:     recognitionPct,
-        mathAnswered:       currentQuestion + 1,
-        selectedWords:      Object.keys(selectedWords)
+      CT.writeSession('memory', startedAt, score, metrics.recognitionPct, 0, {
+        targetWords:         targetWords,
+        distractors:         distractors,
+        encodingDurationMs:  encodingDurationMs,
+        interference: {
+          rounds:               interferenceRounds,
+          correctRounds:        interferenceStats.correctRounds,
+          longestCorrectLength: interferenceStats.longestCorrectLength,
+          meanTapRT:            interferenceStats.meanTapRT
+        },
+        recognitionDurationMs: Date.now() - recognitionStart,
+        hitCount:            metrics.hitCount,
+        missCount:           metrics.missCount,
+        falsePositiveCount:  metrics.falsePositiveCount,
+        totalTargets:        targetWords.length,
+        recognitionPct:      metrics.recognitionPct,
+        selectedWords:       Object.keys(selectedWords)
       });
 
       /* Automated handshake — transition card after 1.8 s */
@@ -492,12 +554,9 @@ document.addEventListener('DOMContentLoaded', function () {
   function saveIntermediateState(phaseIndex) {
     if (typeof CT === 'undefined') { return; }
     CT.updateStage('memory', phaseIndex, {
-      trial1Words:     trial1Words,
-      trial2Words:     trial2Words,
-      distractors:     distractors,
-      questions:       questions,
-      currentQuestion: currentQuestion,
-      startedAt:       startedAt
+      targetWords: targetWords,
+      distractors: distractors,
+      startedAt:   startedAt
     });
   }
 
@@ -512,44 +571,50 @@ document.addEventListener('DOMContentLoaded', function () {
       var session = CT.readSession('memory');
 
       if (session) {
-        /* Restore summary data from saved session */
         startedAt = session.startedAt;
         var raw   = session.rawData || {};
-        trial1Words  = raw.trial1Words  || [];
-        trial2Words  = raw.trial2Words  || [];
-        targetWords  = trial1Words.concat(trial2Words);
-        recallText   = raw.recallText   || '';
-        /* Rebuild selectedWords map */
+        targetWords = raw.targetWords || [];
+        distractors = raw.distractors || [];
+        easyWords   = targetWords.slice(0, EASY_COUNT);
+        mediumWords = targetWords.slice(EASY_COUNT);
         (raw.selectedWords || []).forEach(function (w) { selectedWords[w] = true; });
+        interferenceRounds = (raw.interference && raw.interference.rounds) || [];
+
+        populateEncodingGrid();
+        populateInterferenceGrid();
+        populateRecognitionGrid();
         buildSummary(true);
         goToPhase('complete');
         return true;
       }
     }
 
-    /* Module in progress — restore to saved phase */
+    /* Module in progress — restore word set, restart current phase fresh
+       (mid-round interference state isn't meaningfully resumable, same
+       simplification the other 4 modules make for their own timed/
+       round-based phases). */
     if (progress.currentModule === 'memory' && progress.currentStage > 0) {
       var saved = CT.getModuleState('memory');
-      if (saved) {
-        if (saved.trial1Words) { trial1Words = saved.trial1Words; }
-        if (saved.trial2Words) { trial2Words = saved.trial2Words; }
-        if (saved.distractors) { distractors = saved.distractors; }
-        /* Older saved sessions (pre-fix) never stored the distraction
-           questions — fall back to the freshly generated ones rather
-           than restoring an empty array. */
-        if (saved.questions && saved.questions.length) { questions = saved.questions; }
-        if (saved.startedAt)   { startedAt   = saved.startedAt; }
-        targetWords = trial1Words.concat(trial2Words);
-        populateTrial1Grid();
-        populateTrial2Grid();
+      if (saved && saved.targetWords && saved.targetWords.length) {
+        targetWords = saved.targetWords;
+        distractors = saved.distractors || [];
+        easyWords   = targetWords.slice(0, EASY_COUNT);
+        mediumWords = targetWords.slice(EASY_COUNT);
+        startedAt   = saved.startedAt;
+        populateEncodingGrid();
+        populateInterferenceGrid();
         populateRecognitionGrid();
+      } else {
+        initSession();
       }
 
       var phaseName = PHASE_ORDER[progress.currentStage] || 'intro';
-      if (phaseName === 'distraction' && questions.length) {
-        loadQuestion(Math.min((saved && saved.currentQuestion) || 0, questions.length - 1));
-      }
       goToPhase(phaseName);
+
+      if (phaseName === 'encoding') { startTimer(); }
+      else if (phaseName === 'interference') { startInterference(); }
+      else if (phaseName === 'recognition') { recognitionStart = Date.now(); }
+
       return true;
     }
 
@@ -558,47 +623,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ══════════════════════════════════════════════════════════
      KEYBOARD NAVIGATION
-     Enter: advances phases and submits inputs
+     Enter: advances phases and submits inputs (Interference tiles are
+     real <button> elements, so Enter/Space already activates a focused
+     tile natively — that phase is deliberately excluded below so this
+     handler never swallows the keystroke before it gets there).
   ══════════════════════════════════════════════════════════ */
 
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter') { return; }
 
-    /* Only fire keyboard shortcuts when we are NOT inside a textarea */
-    var tag = document.activeElement ? document.activeElement.tagName : '';
-    if (tag === 'TEXTAREA') { return; }
+    var active = Object.keys(phases).find(function (p) {
+      return phases[p] && phases[p].classList.contains('is-active');
+    });
+    if (!active || active === 'interference') { return; }
 
     e.preventDefault();
 
-    /* Determine active phase */
-    var active = PHASE_ORDER.find
-      ? PHASE_ORDER.find(function (p) {
-          return phases[p] && phases[p].classList.contains('is-active');
-        })
-      : (function () {
-          for (var i = 0; i < PHASE_ORDER.length; i++) {
-            if (phases[PHASE_ORDER[i]] && phases[PHASE_ORDER[i]].classList.contains('is-active')) {
-              return PHASE_ORDER[i];
-            }
-          }
-          return null;
-        }());
-
-    if (!active) { return; }
-
     switch (active) {
-      case 'trial1':
-      case 'trial2':
-        e.preventDefault();
-        break;
       case 'intro':
         document.getElementById('btn-begin').click();
-        break;
-      case 'distraction':
-        document.getElementById('btn-distraction-next').click();
-        break;
-      case 'recall':
-        document.getElementById('btn-recall-continue').click();
         break;
       case 'recognition':
         document.getElementById('btn-recognition-submit').click();
@@ -621,8 +664,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   ringFill.style.strokeDasharray  = CIRCUMFERENCE;
   ringFill.style.strokeDashoffset = 0;
-  ringFill2.style.strokeDasharray  = CIRCUMFERENCE;
-  ringFill2.style.strokeDashoffset = 0;
 
   if (typeof CT !== 'undefined' && CT.warnBeforeUnload) { CT.warnBeforeUnload(); }
 

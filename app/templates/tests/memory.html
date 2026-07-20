@@ -2,7 +2,7 @@
 
 {% block title %}Memory Recall — CogniTrack{% endblock %}
 
-{% block meta_description %}CogniTrack's Word Recall Test — a two-trial memory assessment measuring encoding, storage, and free recall.{% endblock %}
+{% block meta_description %}CogniTrack's Memory Recall Test — encoding, a brief non-verbal interference task, and recognition.{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/memory.css') }}" />
@@ -25,12 +25,12 @@
       </span>
 
       <div class="progress progress--sm memory-progress mt-3">
-        <div class="progress__bar" id="phase-bar" style="--progress: 14.28%"></div>
+        <div class="progress__bar" id="phase-bar" style="--progress: 20%"></div>
       </div>
 
       <div class="memory-progress-labels">
         <span id="phase-label" class="text-sm text-muted">Introduction</span>
-        <span class="text-sm text-muted"><span id="phase-num">1</span>&thinsp;/&thinsp;7</span>
+        <span class="text-sm text-muted"><span id="phase-num">1</span>&thinsp;/&thinsp;5</span>
       </div>
 
     </div>
@@ -47,11 +47,11 @@
           <span class="badge badge--primary">Memory Recall</span>
         </div>
 
-        <h1 class="memory-card__title">Word Recall Test</h1>
+        <h1 class="memory-card__title">Memory Recall Test</h1>
 
         <p class="memory-card__lead">
-          You will see two sets of words across two separate trials.
-          Study each set carefully — you will be asked to recall all of them shortly.
+          You'll study a set of words, complete a short tile sequence task, then
+          pick out the words you saw from a larger list.
         </p>
 
         <ul class="memory-intro-tips">
@@ -77,13 +77,13 @@
       </div>
     </div>
 
-    <!-- ── Phase 2: Trial 1 — 5 easy words ─────────────────── -->
-    <div class="memory-phase" id="phase-trial1" aria-label="Trial 1 — Study Words" aria-hidden="true">
+    <!-- ── Phase 2: Encoding — all 11 words, one study window ── -->
+    <div class="memory-phase" id="phase-encoding" aria-label="Study Words" aria-hidden="true">
       <div class="card memory-card">
 
         <div class="memory-card__header">
           <div class="memory-trial-badge">
-            <span class="badge badge--primary">Trial 1 of 2</span>
+            <span class="badge badge--primary">Encoding</span>
           </div>
           <p class="memory-card__instruction">Study these words carefully</p>
           <div class="memory-timer" id="timer" aria-live="polite" aria-label="Time remaining">
@@ -91,118 +91,46 @@
               <circle class="timer-ring__track" cx="28" cy="28" r="24"/>
               <circle class="timer-ring__fill" id="timer-ring-fill" cx="28" cy="28" r="24"/>
             </svg>
-            <span class="timer-count" id="timer-count">15</span>
+            <span class="timer-count" id="timer-count">20</span>
           </div>
         </div>
 
-        <div class="memory-words" role="list" aria-label="Words to memorise — Trial 1">
-          <!-- 5 easy word cards injected by JS -->
+        <div class="memory-words" id="encoding-words" role="list" aria-label="Words to memorise">
+          <!-- 11 word cards injected by JS -->
         </div>
 
       </div>
     </div>
 
-    <!-- ── Phase 3: Distraction ────────────────────────────── -->
-    <div class="memory-phase" id="phase-distraction" aria-label="Arithmetic Questions" aria-hidden="true">
+    <!-- ── Phase 3: Interference — non-verbal tile sequence ──── -->
+    <div class="memory-phase" id="phase-interference" aria-label="Sequence Task" aria-hidden="true">
       <div class="card memory-card">
 
         <div class="memory-card__icon memory-card__icon--info">
-          <i data-lucide="calculator"></i>
+          <i data-lucide="grid-3x3"></i>
         </div>
 
-        <h2 class="memory-card__title">Quick Questions</h2>
+        <h2 class="memory-card__title">Sequence Task</h2>
         <p class="memory-card__lead">
-          Answer these arithmetic problems. This helps us measure memory under mild cognitive load.
+          Watch the tiles light up, then tap them back in the same order.
         </p>
 
-        <div class="distraction-counter">
-          Question&ensp;<span id="q-current">1</span>&thinsp;of&thinsp;3
+        <div class="memory-trial-badge">
+          <span class="badge badge--secondary">
+            Round <span id="interference-round-current">1</span> of <span id="interference-round-total">3</span>
+          </span>
         </div>
 
-        <div class="distraction-question" aria-live="polite">
-          <span id="q-text">12 + 18</span>
-        </div>
+        <p class="interference-status" id="interference-status" aria-live="polite">Watch carefully…</p>
 
-        <div class="form-group distraction-input-wrap">
-          <label class="label" for="distraction-input">Your answer</label>
-          <input
-            class="input distraction-input"
-            type="number"
-            id="distraction-input"
-            placeholder="Enter answer"
-            autocomplete="off"
-          />
-          <p class="form-error" id="distraction-error" aria-live="assertive" hidden></p>
-        </div>
-
-        <button class="btn btn--primary btn--lg btn--pill w-full" id="btn-distraction-next" type="button">
-          Next
-          <i data-lucide="arrow-right"></i>
-        </button>
-
-      </div>
-    </div>
-
-    <!-- ── Phase 4: Trial 2 — 6 abstract/medium words ────── -->
-    <div class="memory-phase" id="phase-trial2" aria-label="Trial 2 — Study Words" aria-hidden="true">
-      <div class="card memory-card">
-
-        <div class="memory-card__header">
-          <div class="memory-trial-badge">
-            <span class="badge badge--secondary">Trial 2 of 2</span>
-          </div>
-          <p class="memory-card__instruction">Study these new words carefully</p>
-          <div class="memory-timer" id="timer2" aria-live="polite" aria-label="Time remaining">
-            <svg class="timer-ring" viewBox="0 0 56 56" aria-hidden="true">
-              <circle class="timer-ring__track" cx="28" cy="28" r="24"/>
-              <circle class="timer-ring__fill" id="timer-ring-fill-2" cx="28" cy="28" r="24"/>
-            </svg>
-            <span class="timer-count" id="timer-count-2">15</span>
-          </div>
-        </div>
-
-        <div class="memory-words" id="trial2-words" role="list" aria-label="Words to memorise — Trial 2">
-          <!-- 6 medium word cards injected by JS -->
+        <div class="interference-grid" id="interference-grid" role="group" aria-label="Tile sequence">
+          <!-- 9 tiles injected by JS -->
         </div>
 
       </div>
     </div>
 
-    <!-- ── Phase 5: Recall ─────────────────────────────────── -->
-    <div class="memory-phase" id="phase-recall" aria-label="Free Recall" aria-hidden="true">
-      <div class="card memory-card">
-
-        <div class="memory-card__icon memory-card__icon--info">
-          <i data-lucide="pencil-line"></i>
-        </div>
-
-        <h2 class="memory-card__title">Free Recall</h2>
-
-        <p class="memory-card__lead">
-          Type every word you remember from <strong>both trials</strong>.
-        </p>
-
-        <div class="form-group recall-group">
-          <label class="label" for="recall-input">Your remembered words</label>
-          <textarea
-            class="textarea recall-textarea"
-            id="recall-input"
-            placeholder="Type every word you remember, separated by commas or spaces…"
-            rows="4"
-            autocomplete="off"
-          ></textarea>
-          <p class="form-hint">Don't worry about spelling — just type what you remember.</p>
-        </div>
-
-        <button class="btn btn--primary btn--lg btn--pill w-full" id="btn-recall-continue" type="button">
-          Continue
-          <i data-lucide="arrow-right"></i>
-        </button>
-
-      </div>
-    </div>
-
-    <!-- ── Phase 6: Recognition ────────────────────────────── -->
+    <!-- ── Phase 4: Recognition ────────────────────────────── -->
     <div class="memory-phase" id="phase-recognition" aria-label="Word Recognition" aria-hidden="true">
       <div class="card memory-card">
 
@@ -213,7 +141,7 @@
         <h2 class="memory-card__title">Recognition</h2>
 
         <p class="memory-card__lead">
-          Select the words that appeared in either trial.
+          Select the words you saw earlier.
         </p>
 
         <div class="recognition-grid" id="recognition-grid" role="group" aria-label="Word selection">
@@ -234,7 +162,7 @@
       </div>
     </div>
 
-    <!-- ── Phase 7: Completion ─────────────────────────────── -->
+    <!-- ── Phase 5: Completion ─────────────────────────────── -->
     <div class="memory-phase" id="phase-complete" aria-label="Assessment Complete" aria-hidden="true">
       <div class="card memory-card memory-card--complete">
 

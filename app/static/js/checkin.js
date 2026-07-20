@@ -1,18 +1,21 @@
 /* ============================================================
    CogniTrack — Today's Assessment Check-In
-   checkin.js   Sprint 7.4.5
+   checkin.js   Sprint 7.4.5 / Sprint 8 (guest profile fields)
 
-   Replaces the old User Information form (user.js). Collects only
-   temporary, per-session state (sleep, stress, caffeine, mood, etc.) —
-   permanent profile fields (name, age, gender, education, dominant
-   hand) are now collected once at Registration or via Edit Profile
-   and are never asked here. The one exception is an optional "Your
-   Name" field shown only to guests (no account => no Profile row to
-   read a name from), used purely for dashboard-greeting personalisation.
+   Collects only temporary, per-session state (sleep, stress, caffeine,
+   mood, etc.) — permanent profile fields (name, age, gender, education,
+   dominant hand, native language) are collected once at Registration or
+   via Edit Profile for signed-in users, and are never asked here for
+   them. Guests have no registration step, so this page is also where
+   THEY optionally give the same demographic fields — all optional (see
+   the guest-only block in user.html) — persisted to a GuestProfile row
+   keyed by an anonymous, temporary session id (core/guest.py), never a
+   permanent account.
 
-   Writes to sessionStorage under 'cognitrack_checkin' — read by
-   cognitrack-core.js's startSessionTask() and sent as the `checkin`
-   object to POST /api/assessment/start.
+   Writes to sessionStorage under 'cognitrack_checkin' (and, for guests,
+   'cognitrack_guest_profile') — read by cognitrack-core.js's
+   startSessionTask() and sent as the `checkin`/`profile` objects to
+   POST /api/assessment/start or /api/guest/assessment/start.
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -98,13 +101,33 @@ document.addEventListener('DOMContentLoaded', function () {
       sessionStorage.setItem('cognitrack_checkin', JSON.stringify(checkinData));
     } catch (e) { /* private browsing / storage full — proceed anyway */ }
 
-    /* Guests only: optional name, kept separate from checkinData since
-       it's dashboard-greeting personalisation, not check-in state. */
+    /* Guests only: optional name (also mirrored for dashboard-greeting
+       personalisation, same as before) plus optional age/gender/
+       education/dominant hand/native language — all sent as a separate
+       `profile` object, since these are GuestProfile fields, not
+       check-in state. */
     if (nameEl) {
       var nameVal = nameEl.value.trim();
       if (nameVal) {
         try { sessionStorage.setItem('cognitrack_user', JSON.stringify({ name: nameVal })); } catch (e) {}
       }
+
+      var ageEl        = document.getElementById('guest-age');
+      var genderEl     = document.getElementById('guest-gender');
+      var educationEl  = document.getElementById('guest-education');
+      var handEl       = document.getElementById('guest-hand');
+      var languageEl   = document.getElementById('guest-native-language');
+
+      var guestProfile = {
+        name:            nameVal || null,
+        age:             ageEl && ageEl.value ? parseInt(ageEl.value, 10) : null,
+        gender:          genderEl && genderEl.value ? genderEl.value : null,
+        education:       educationEl && educationEl.value ? educationEl.value : null,
+        dominant_hand:   handEl && handEl.value ? handEl.value : null,
+        native_language: languageEl && languageEl.value.trim() ? languageEl.value.trim() : null
+      };
+
+      try { sessionStorage.setItem('cognitrack_guest_profile', JSON.stringify(guestProfile)); } catch (e) {}
     }
 
     /* Clear any prior real assessment run — Check-In precedes a fresh
