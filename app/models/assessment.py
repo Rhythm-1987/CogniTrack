@@ -4,6 +4,10 @@ from ..core.database import db
 
 
 class AssessmentSession(db.Model):
+    """One run through all five modules, from Start Assessment to the final
+    results page. Holds the run-level check-in/score/duration; the five
+    per-module results live in AssessmentResult, one row per domain."""
+
     __tablename__ = 'assessment_sessions'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -61,8 +65,17 @@ class AssessmentSession(db.Model):
         db.Index('ix_assessment_sessions_user_id_status', 'user_id', 'status'),
     )
 
+    def __repr__(self):
+        return f'<AssessmentSession id={self.id} user_id={self.user_id} status={self.status!r}>'
+
 
 class AssessmentResult(db.Model):
+    """One module's outcome (domain, score, accuracy, raw telemetry) within
+    a session. Note: per-module elapsed time is NOT a column here — it's
+    stashed in raw_data[assessment_service._DURATION_KEY] to avoid a schema
+    change for one derived field. That's separate from
+    AssessmentSession.duration, which is the whole run's elapsed time."""
+
     __tablename__ = 'assessment_results'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -95,3 +108,6 @@ class AssessmentResult(db.Model):
             'accuracy IS NULL OR (accuracy >= 0 AND accuracy <= 100)', name='ck_assessment_results_accuracy_range'
         ),
     )
+
+    def __repr__(self):
+        return f'<AssessmentResult id={self.id} assessment_id={self.assessment_id} domain={self.domain!r}>'

@@ -19,17 +19,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (!viewEl || !editEl || !toggleBtn) return;
 
+  function swapPanel(hideEl, showEl) {
+    hideEl.hidden = true;
+    showEl.hidden = false;
+    // Re-trigger the entrance animation (a class already applied once
+    // won't replay) so each toggle fades the revealed panel in.
+    showEl.classList.remove('anim-fade-up');
+    void showEl.offsetWidth;
+    showEl.classList.add('anim-fade-up');
+  }
+
   toggleBtn.addEventListener('click', function () {
-    viewEl.hidden = true;
-    editEl.hidden = false;
+    swapPanel(viewEl, editEl);
     var firstField = document.getElementById('profile-name');
     if (firstField) firstField.focus();
   });
 
   if (cancelBtn) {
     cancelBtn.addEventListener('click', function () {
-      editEl.hidden = true;
-      viewEl.hidden = false;
+      swapPanel(editEl, viewEl);
     });
   }
 

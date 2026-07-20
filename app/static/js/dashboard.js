@@ -1392,6 +1392,9 @@
     var mode        = resolveMode();
     var emptyEl     = document.getElementById('js-dashboard-empty');
     var dashboardEl = document.getElementById('js-dashboard');
+    var loadingEl   = document.getElementById('js-dashboard-loading');
+
+    if (loadingEl) loadingEl.hidden = true;
 
     if (mode === 'empty') {
       if (emptyEl)     emptyEl.hidden     = false;

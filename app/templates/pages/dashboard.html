@@ -11,6 +11,21 @@
 {% block content %}
 
 <!-- ============================================================
+     LOADING STATE
+     Visible by default so a signed-in user never sees a blank
+     page while /api/dashboard + /api/history resolve. JS hides
+     this the moment renderDashboard() picks empty/real/demo —
+     guests and the demo route resolve synchronously, so this
+     never has time to be seen on those paths.
+============================================================ -->
+<section class="dash-loading" id="js-dashboard-loading" aria-label="Loading your dashboard" aria-live="polite">
+  <div class="container">
+    <div class="dash-loading__spinner" aria-hidden="true"></div>
+    <p class="dash-loading__text">Loading your dashboard…</p>
+  </div>
+</section>
+
+<!-- ============================================================
      EMPTY DASHBOARD STATE
      Shown when no real assessment has been completed. JS decides
      whether to reveal this or #js-dashboard — both start in their

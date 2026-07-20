@@ -320,7 +320,12 @@ def get_user_assessment_state(user):
 def get_dashboard_payload(user):
     """Only a fully completed session counts — matches the existing
     sessionStorage-based rule (progress.assessmentCompleted) that decides
-    the empty vs populated dashboard state."""
+    the empty vs populated dashboard state.
+
+    Consumed by GET /api/dashboard, whose response CT.hydrateDashboardData()
+    (static/js/cognitrack-core.js) mirrors into the same sessionStorage keys
+    dashboard.js already reads — see the INIT block atop dashboard.js for
+    the full hydrate-then-render sequence."""
     session = (
         AssessmentSession.query
         .filter_by(user_id=user.id, status='completed')

@@ -46,17 +46,24 @@
         <div class="legal-callout">
           <i data-lucide="lock" aria-hidden="true"></i>
           <p>
-            As a <strong>guest</strong>, everything above stays in your browser's session
+  As a <strong>guest</strong>, everything above stays in your browser's session
             storage — it is never transmitted to a server or written to a database, and is
             erased the moment you close the tab. As a <strong>signed-in user</strong>, your
-            profile details and assessment results are saved to our database against your
-            account, so your dashboard and history are available whenever you log back in
-            from any device.
+            profile details and assessment results are saved to a <strong>PostgreSQL
+            database, hosted on Supabase</strong>, against your account, so your dashboard
+            and history are available whenever you log back in from any device. The
+            application itself runs on <strong>Render</strong>, which serves every page over
+            an encrypted (HTTPS) connection.
           </p>
         </div>
         <p>
           Your account session is tracked with a secure, HTTP-only cookie used solely to keep
           you signed in — it is not used for advertising or cross-site tracking.
+        </p>
+        <p>
+          We keep signed-in account data for as long as your account exists. If you request
+          deletion (see "Clearing Your Data" below), we permanently remove your profile and
+          assessment history from our database — this cannot be undone.
         </p>
 
         <h2>Demo Mode</h2>
