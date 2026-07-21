@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
+from ..core import cci
 from ..core.database import db
 from ..core.versions import ALGORITHM_VERSION, ASSESSMENT_VERSION, GAME_VERSIONS
 from ..models.assessment import AssessmentResult, AssessmentSession
@@ -41,6 +42,7 @@ _STRESS_VALUES = {'low', 'moderate', 'high'}
 _CAFFEINE_VALUES = {'none', 'one-two', 'three-plus'}
 _MOOD_VALUES = {'energized', 'calm', 'neutral', 'tired', 'stressed'}
 _DISTRACTION_VALUES = {'none', 'some', 'significant'}
+_FAMILY_HISTORY_VALUES = {'none', 'some', 'significant'}
 
 
 def _clean_str(value, max_len):
@@ -124,6 +126,7 @@ def _checkin_fields(checkin_data):
         'current_mood': _clean_enum(checkin_data.get('currentMood'), _MOOD_VALUES),
         'wearing_glasses': _clean_bool(checkin_data.get('wearingGlasses')),
         'distractions': _clean_enum(checkin_data.get('distractions'), _DISTRACTION_VALUES),
+        'family_history': _clean_enum(checkin_data.get('familyHistory'), _FAMILY_HISTORY_VALUES),
     }
 
 
@@ -405,10 +408,24 @@ def _shape_dashboard_payload(session, profile):
         'overallScore': session.overall_score,
         'completedAt': session.completed_at.isoformat() if session.completed_at else None,
         'modules': modules,
+        # Computed on read from the data above — never persisted (see
+        # research/Database_Audit.md for why: the original cci/risk_level
+        # columns were dropped as dead code in migration 99f8455a6a47).
+        'cci': cci.compute_cci(session, modules),
     }
 
 
 def get_history(user):
+    """Domain/overall scores here must agree with what the dashboard shows
+    for the same (latest) session — _shape_dashboard_payload prefers the CCI
+    score wherever compute_cci produced one, so this does the same on-read
+    computation for every historical session, not just the newest. Without
+    it, the "latest" point in a trend sparkline (sourced from history) could
+    silently disagree with that same session's score on its own domain card
+    (sourced from get_dashboard_payload) — same session, two different
+    numbers on one page. Falls back to the legacy raw AssessmentResult.score
+    per-domain whenever compute_cci can't produce one (old/incomplete rows),
+    same fallback cci.py already guarantees is never None-unsafe."""
     sessions = (
         AssessmentSession.query
         .options(selectinload(AssessmentSession.results))
@@ -417,16 +434,31 @@ def get_history(user):
         .all()
     )
 
-    return [
-        {
+    out = []
+    for s in sessions:
+        domains = {r.domain: r.score for r in s.results}
+        overall_score = s.overall_score
+
+        modules = {r.domain: {'score': r.score, 'accuracy': r.accuracy, 'avgTime': r.average_time,
+                               'rawData': {k: v for k, v in (r.raw_data or {}).items() if k != _DURATION_KEY}}
+                   for r in s.results}
+        session_cci = cci.compute_cci(s, modules)
+        if session_cci:
+            for domain, entry in session_cci['domains'].items():
+                if entry['score'] is not None:
+                    domains[domain] = entry['score']
+            if session_cci['overall']['score'] is not None:
+                overall_score = session_cci['overall']['score']
+
+        out.append({
             'assessmentId': s.id,
             'completedAt': s.completed_at.isoformat() if s.completed_at else None,
-            'overallScore': s.overall_score,
+            'overallScore': overall_score,
             'duration': s.duration,
-            'domains': {r.domain: r.score for r in s.results},
-        }
-        for s in sessions
-    ]
+            'domains': domains,
+        })
+
+    return out
 
 
 def _profile_payload(profile):

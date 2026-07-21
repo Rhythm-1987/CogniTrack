@@ -104,6 +104,14 @@
             <span class="dash-score-proto-label" id="js-score-change-label">Comparison</span>
             <span class="dash-score-change" id="js-score-change">—</span>
           </div>
+
+          <!-- Confidence — only shown once a CCI payload is available
+               (see app/core/cci.py); never affects the score above, only
+               annotates how much to trust it today. -->
+          <div class="dash-cci-confidence" id="js-cci-confidence" hidden>
+            <span class="dash-cci-confidence__label">Confidence</span>
+            <span class="dash-cci-confidence__badge" id="js-cci-confidence-badge">—</span>
+          </div>
         </div>
 
       </div>

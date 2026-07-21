@@ -8,7 +8,12 @@ rules.
 """
 
 ASSESSMENT_VERSION = '1.0'
-ALGORITHM_VERSION = '1.0'
+# 1.1 = Sprint 9: cci.py hardened (malformed raw_data no longer crashes a
+# dashboard read, a domain with no score no longer shows a confidence badge),
+# attention false-starts added as a confidence factor, dashboard/history now
+# prefer the CCI's domain scores over the legacy per-module scores. See
+# research/CCI_Evidence_Map.md and research/CCI_Metric_Audit.md.
+ALGORITHM_VERSION = '1.1'
 
 # Per-module game version — bumped independently since each of the 5
 # modules can be redesigned on its own schedule. Memory is 2.0 as of the

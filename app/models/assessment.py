@@ -40,6 +40,7 @@ class AssessmentSession(db.Model):
     current_mood = db.Column(db.String(20), nullable=True)
     wearing_glasses = db.Column(db.Boolean, nullable=True)
     distractions = db.Column(db.String(20), nullable=True)
+    family_history = db.Column(db.String(20), nullable=True)
 
     overall_score = db.Column(db.Float, nullable=True)
     duration = db.Column(db.Integer, nullable=True)

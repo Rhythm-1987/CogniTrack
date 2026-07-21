@@ -743,6 +743,13 @@
       Object.keys(dashboardData.modules).forEach(function (domain) {
         sessionStorage.setItem('cognitrack_session_' + domain, JSON.stringify(dashboardData.modules[domain]));
       });
+      /* Computed on read server-side (app/core/cci.py) — never persisted,
+         so this key is only ever as fresh as the last /api/dashboard or
+         /api/guest/dashboard fetch. Absent entirely on older cached
+         payloads; every reader must treat it as optional. */
+      if (dashboardData.cci) {
+        sessionStorage.setItem('cognitrack_cci', JSON.stringify(dashboardData.cci));
+      }
     } catch (e) { return; }
 
     var modules = {

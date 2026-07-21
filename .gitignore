@@ -38,3 +38,8 @@ htmlcov/
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Editor/merge backups, temp exports
+*.bak
+*.tmp
+*.orig

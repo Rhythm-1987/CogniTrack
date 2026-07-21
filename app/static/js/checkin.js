@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var moodEl       = document.getElementById('current-mood');
     var glassesEl    = document.getElementById('wearing-glasses');
     var distractEl   = document.getElementById('distractions');
+    var familyHistEl = document.getElementById('family-history');
     var nameEl       = document.getElementById('guest-name'); /* guests only */
 
     var valid = true;
@@ -94,7 +95,8 @@ document.addEventListener('DOMContentLoaded', function () {
       medication:     medicationEl ? medicationEl.value.trim() : '',
       currentMood:    moodEl     ? moodEl.value     : '',
       wearingGlasses: glassesEl && glassesEl.value ? glassesEl.value === 'yes' : null,
-      distractions:   distractEl ? distractEl.value : ''
+      distractions:   distractEl ? distractEl.value : '',
+      familyHistory:  familyHistEl ? familyHistEl.value : ''
     };
 
     try {

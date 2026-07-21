@@ -1,0 +1,27 @@
+# Memory — Research Notes
+
+Papers: Farrahi et al. 2023 (RAVLT Iranian norms) [TEXT], Kessels et al. 2000 (Corsi Block-Tapping) [IMG]. See References.md.
+
+## Current CogniTrack implementation (memory.js, game_version 2.0, Sprint 8)
+Encoding (20s, 11 words: 5 easy + 6 medium, single study window) → Interference (Corsi-style 3×3 tile grid, 3 rounds, sequence lengths 3/4/5, records taps + per-tap RT + correctness) → Recognition (11 targets + 6 distractors, click every word seen; tracks hits, misses, false positives). Score = recognition accuracy only.
+
+**The "already decided" redesign in the task brief (remove writing stage, go Words → Distraction → Recognition) is already shipped.** No further game redesign needed for this brief's explicit ask.
+
+## RAVLT (Farrahi et al. 2023) — what it actually validates
+- Standard protocol is **List A (15 words) × 5 learning trials, then List B (15 words, interference) × 1 trial, then List A short-delay recall (Trial 6), then a 20–30 min unstructured rest, then List A long-delay recall (Trial 7), then a 50-item recognition list (20 novel foils + all 15 A-words + all 15 B-words)**. CogniTrack's 11-word single-list, single-trial design is a substantial simplification (fewer words, one encoding pass, no separate B-list interference-recall, no long-delay recall) — a scaled-down adaptation, not a faithful replication. Say so plainly in any user-facing methodology text; don't claim RAVLT-equivalence.
+- Recognition is scored in RAVLT as two composite indices: **NPS (Net Positive Score) = hits − false positives**, and **RORS (Recognition Over Recall Score) = hits − Trial-7 recall score**. CogniTrack already collects the raw ingredients for NPS (`hitCount`, `falsePositiveCount` in memory.js) — NPS is a one-line derived metric, not a new data-collection requirement. RORS is not computable (no separate delayed free-recall trial exists in the current game and none is being added back).
+- Foil composition (semantic/phonemic/unrelated) is **not specified** in this paper — do not claim CogniTrack's distractor pool (words from the same theme categories as targets) mirrors a validated foil design; it's a reasonable but unvalidated choice.
+- **Demographic covariates matter and are statistically real** (see Demographics.md for exact stats): age negatively correlates with NPS (r=−.510, p<.01), education positively correlates with NPS (r=.293, p<.05), gender differences are significant (p<.05) on both recognition indices. This is why CogniTrack should never score raw recognition% as a context-free "memory ability" number — age/education/gender must inform normalization (see CCI.md).
+- **No reliability/validity stats for the recognition subtest are reported in this paper itself** — it cites two earlier Iranian validation studies (Jafari et al. 2010; Rezvanfard et al. 2011) without giving exact test-retest coefficients for recognition specifically. Do not cite a specific r-value for RAVLT recognition test-retest reliability; it isn't in this source.
+- **Critical finding for Phase 5**: RAVLT's own interposed task (List B) is a *competing memorization list*, not a distraction/interference game, and the actual long gap (20–30 min before Trial 7) is passive rest with no described activity. **RAVLT provides no scientific backing for a tile-tapping interference game as an interposed task.** CogniTrack's Corsi-style interference stage is grounded in the Corsi paper instead (below), not RAVLT — keep these two claims separate in any documentation.
+
+## Corsi Block-Tapping Task (Kessels et al. 2000) — what it actually validates
+- Standardized nonverbal, visuospatial-analogue of digit span: examiner taps a sequence across 9 spatially arranged blocks, participant taps it back; span = longest sequence reproduced correctly. Normed on healthy adults and validated as sensitive to right-hemisphere/visuospatial impairment.
+- This is a direct, well-established precedent for CogniTrack's interference-stage design: an on-screen 3×3 grid with flash-then-tap-back sequences of increasing length is a faithful digital adaptation of the Corsi paradigm's core mechanic. **This is genuinely strong scientific grounding for the existing interference stage** — cite Kessels et al. 2000 for it, not RAVLT.
+- Standard CBT uses **9 physical blocks in a fixed asymmetric layout** (not a 3×3 grid) — CogniTrack's regular grid is functionally equivalent for span measurement but is a layout simplification; say "modeled on" or "inspired by," not "standardized administration of."
+- The paradigm's actual clinical output is a **span score** (longest correctly-reproduced sequence length) plus total correct trials — CogniTrack already computes `longestCorrectLength` and `correctRounds` in `computeInterferenceStats()` (memory.js). No new instrumentation needed; these two derived values ARE the clinically-meaningful Corsi metrics and are currently computed but not surfaced in score/CCI — see Master_Metrics.md.
+
+## Bottom line for CogniTrack
+- Encoding/Interference/Recognition structure: **keep** — already implemented, already grounded (Corsi for interference, RAVLT-family literature for recognition scoring logic).
+- Add to scoring/CCI inputs (no gameplay change): `hitCount − falsePositiveCount` (NPS-style net recognition), `longestCorrectLength` (Corsi span), `correctRounds` (Corsi accuracy). All three already sit in `raw_data`, unused downstream.
+- Do not claim clinical equivalence to RAVLT or standard CBT in any user-facing copy — both are simplified/adapted versions.

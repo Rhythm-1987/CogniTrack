@@ -93,6 +93,12 @@
     scores:          {},
     overallScore:    0,
 
+    /* CCI (see app/core/cci.py) — computed on read server-side, mirrored
+       into sessionStorage by CT.hydrateDashboardData(). null whenever
+       unavailable (demo mode never has it; older cached payloads may
+       not either) — every reader below must handle that. */
+    cci:             null,
+
     /* Real completed-assessment history, oldest → latest. Populated by
        setHistory() from /api/history for a signed-in user, or backfilled
        to a single real entry by finalizeHistory() for guests/demo (see
@@ -113,6 +119,11 @@
         this.user = raw ? JSON.parse(raw) : null;
       } catch (e) { this.user = null; }
 
+      try {
+        var cciRaw = sessionStorage.getItem(prefix + 'cci');
+        this.cci = cciRaw ? JSON.parse(cciRaw) : null;
+      } catch (e) { this.cci = null; }
+
       DOMAINS.forEach(function (d) {
         try {
           var raw = sessionStorage.getItem(prefix + d.sessionSuffix);
@@ -121,10 +132,28 @@
         } catch (e) { Data.sessions[d.key] = null; }
       });
 
+      /* Prefer the CCI's literature-grounded domain score (see
+         app/core/cci.py) over the legacy per-module `session.score` — e.g.
+         Attention's on-screen score is an arbitrary RT formula and
+         Executive/Processing/Visuospatial's is accuracy-only, all flagged
+         as scientifically weak in research/*.md. Falls back to the legacy
+         score whenever the CCI has no value for that domain (demo mode,
+         older cached sessions, or a domain whose raw_data didn't produce a
+         usable metric) — same graceful-degradation contract this file
+         already applies everywhere else. Same 0-100 scale either way, so
+         every downstream reader (radar, cards, table, recommendations,
+         summary) needs no changes. */
       var total = 0, count = 0;
       DOMAINS.forEach(function (d) {
-        var s = Data.sessions[d.key];
-        if (s && typeof s.score === 'number') {
+        var s   = Data.sessions[d.key];
+        var cciDomain = Data.getDomainConfidence(d.key);
+        var cciScore  = cciDomain && typeof cciDomain.score === 'number' ? cciDomain.score : null;
+
+        if (cciScore !== null) {
+          Data.scores[d.key] = Math.round(cciScore);
+          total += cciScore;
+          count++;
+        } else if (s && typeof s.score === 'number') {
           Data.scores[d.key] = Math.round(s.score);
           total += s.score;
           count++;
@@ -132,7 +161,10 @@
           Data.scores[d.key] = null;
         }
       });
-      this.overallScore = count > 0 ? Math.round(total / count) : 0;
+
+      var cciOverall = this.cci && this.cci.overall && typeof this.cci.overall.score === 'number'
+        ? this.cci.overall.score : null;
+      this.overallScore = cciOverall !== null ? Math.round(cciOverall) : (count > 0 ? Math.round(total / count) : 0);
     },
 
     getRating: function (score) {
@@ -189,6 +221,14 @@
        MODULE_ORDER) — the one place that mapping needs to happen when
        reading history entries. */
     domainHistoryKey: function (key) { return key === 'visual' ? 'spatial' : key; },
+
+    /* This domain's CCI confidence entry (see app/core/cci.py), or null
+       if no CCI payload is available at all. Never returns a score —
+       confidence is a separate, parallel value that never moves score. */
+    getDomainConfidence: function (domainKey) {
+      if (!this.cci || !this.cci.domains) return null;
+      return this.cci.domains[this.domainHistoryKey(domainKey)] || null;
+    },
 
     /* Normalizes the raw /api/history payload (newest-first, per-domain
        scores keyed by the server's domain names) into Data.history:
@@ -440,7 +480,29 @@
         });
       }
 
-      return recs.slice(0, 6);
+      /* Confidence-aware notes (see app/core/cci.py) — placed ahead of the
+         generic tips above so they survive the slice(0,6) cap below. Each
+         one names the domain and the actual observed reason (session
+         check-in factor, trial count, or false-start behavior) rather than
+         a generic warning, and is deliberately hedged ("consider") rather
+         than diagnostic — Phase 5/6 brief. Never shown for High confidence
+         or when no CCI payload exists (demo mode, older cached sessions). */
+      var confRecs = [];
+      DOMAINS.forEach(function (d) {
+        var conf = Data.getDomainConfidence(d.key);
+        if (!conf || !conf.confidenceLabel || conf.confidenceLabel === 'High') return;
+        var reason = (conf.confidenceNotes || [])[0];
+        confRecs.push({
+          text:  'Today’s ' + d.label + ' result carries ' + conf.confidenceLabel.toLowerCase() + ' confidence' +
+                 (reason ? ' (' + reason + ')' : '') +
+                 ' — consider repeating this assessment on a lower-distraction day before drawing conclusions from it.',
+          label: d.label + ' · Confidence',
+          color: d.color,
+          icon:  'info'
+        });
+      });
+
+      return confRecs.concat(recs).slice(0, 6);
     },
 
     /* Dynamic cognitive summary paragraph */
@@ -886,6 +948,8 @@
         }
       }
 
+      UI.cciConfidence();
+
       if (ringEl) {
         var C      = 2 * Math.PI * 80;
         var target = C * (1 - score / 100);
@@ -910,6 +974,26 @@
           ringEl.style.strokeDashoffset = target;
         }, 300);
       }
+    },
+
+    /* ── CCI Confidence (overall) ─────────────────────────────
+       Confidence never changes the score above it — it's a parallel
+       signal about how much to trust today's number (stress, sleep,
+       caffeine, distractions, medication, family history, trial count,
+       practice effects — see app/core/cci.py). Hidden entirely when no
+       CCI payload is available (demo mode, or an older cached session). */
+    cciConfidence: function () {
+      var wrapEl  = document.getElementById('js-cci-confidence');
+      var badgeEl = document.getElementById('js-cci-confidence-badge');
+      if (!wrapEl || !badgeEl) return;
+
+      var overall = Data.cci && Data.cci.overall;
+      if (!overall || overall.confidenceLabel == null) { wrapEl.hidden = true; return; }
+
+      wrapEl.hidden = false;
+      badgeEl.textContent = overall.confidenceLabel;
+      badgeEl.className   = 'dash-cci-confidence__badge dash-cci-confidence__badge--' +
+        overall.confidenceLabel.toLowerCase();
     },
 
     /* ── Domain Cards ──────────────────────────────────────── */
@@ -949,6 +1033,19 @@
                       '</span>';
         }
 
+        /* Confidence badge — only when a CCI payload has this domain
+           (see app/core/cci.py). Purely informational, never affects
+           the score/bar/rating already rendered above. */
+        var confidenceHtml = '';
+        var confidence = Data.getDomainConfidence(d.key);
+        if (confidence && confidence.confidenceLabel) {
+          confidenceHtml = '<span class="dash-domain-confidence dash-domain-confidence--' +
+            confidence.confidenceLabel.toLowerCase() + '" title="' +
+            (confidence.confidenceNotes || []).join(', ') + '">' +
+            confidence.confidenceLabel + ' Confidence' +
+          '</span>';
+        }
+
         card.innerHTML =
           '<div class="dash-domain-card__header">' +
             '<div class="dash-domain-card__icon"><i data-lucide="' + d.icon + '"></i></div>' +
@@ -962,6 +1059,7 @@
           '</div>' +
           '<div class="dash-domain-card__footer">' +
             '<span class="dash-domain-rating dash-domain-rating--' + rating.cls + '">' + rating.label + '</span>' +
+            confidenceHtml +
             trendHtml +
             timeHtml +
           '</div>';

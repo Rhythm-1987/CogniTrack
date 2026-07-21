@@ -1234,6 +1234,39 @@
 
 
 /* ============================================================
+   CCI CONFIDENCE — how much to trust today's score, never a
+   number that changes the score itself (see app/core/cci.py)
+============================================================ */
+
+.dash-cci-confidence {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-content: center;
+  margin-top: var(--space-2);
+}
+
+.dash-cci-confidence__label {
+  font-size: 10px;
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.dash-cci-confidence__badge {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+}
+
+.dash-cci-confidence__badge--high     { background: var(--color-success-bg); color: #15803D; }
+.dash-cci-confidence__badge--moderate { background: var(--color-warning-bg); color: #92400E; }
+.dash-cci-confidence__badge--low      { background: var(--color-danger-bg);  color: #B91C1C; }
+
+
+/* ============================================================
    DOMAIN CARD TREND BADGE
 ============================================================ */
 
@@ -1248,6 +1281,20 @@
 .dash-domain-trend--up   { background: var(--color-success-bg); color: #15803D; }
 .dash-domain-trend--down { background: var(--color-danger-bg);  color: #B91C1C; }
 .dash-domain-trend--flat { background: var(--color-surface-alt); color: var(--color-text-muted); }
+
+/* Same High/Moderate/Low palette as .dash-cci-confidence__badge above,
+   sized to sit inline in a domain card footer next to the rating pill. */
+.dash-domain-confidence {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.02em;
+}
+
+.dash-domain-confidence--high     { background: var(--color-success-bg); color: #15803D; }
+.dash-domain-confidence--moderate { background: var(--color-warning-bg); color: #92400E; }
+.dash-domain-confidence--low      { background: var(--color-danger-bg);  color: #B91C1C; }
 
 
 /* ============================================================
