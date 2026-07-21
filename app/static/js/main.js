@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', function () {
   ---------------------------------------------------------- */
   initDropdownMenu('nav-profile', 'nav-profile-trigger', 'nav-profile-menu');
   initDropdownMenu('nav-account', 'nav-account-trigger', 'nav-account-menu');
+  /* CCI info popover — only present on the dashboard page; initDropdownMenu
+     no-ops safely everywhere else. */
+  initDropdownMenu('cci-info', 'js-cci-info-trigger', 'js-cci-info-panel');
 
   /* ----------------------------------------------------------
      04. SCROLL REVEAL

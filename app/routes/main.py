@@ -34,3 +34,8 @@ def terms():
 @main_bp.route('/support')
 def support():
     return render_template('pages/support.html')
+
+
+@main_bp.route('/methodology')
+def methodology():
+    return render_template('pages/methodology.html')

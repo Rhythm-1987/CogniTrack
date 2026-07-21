@@ -29,7 +29,6 @@ MODULE_ORDER = ['memory', 'attention', 'executive', 'processing', 'spatial']
 _DURATION_KEY = '_duration'
 
 _MAX_RATING_LENGTH = 20
-_MAX_MEDICATION_LENGTH = 200
 
 # Today's Assessment Check-In fields are temporary, per-session state (see
 # models/assessment.py) — never part of the permanent Profile (that's
@@ -42,7 +41,16 @@ _STRESS_VALUES = {'low', 'moderate', 'high'}
 _CAFFEINE_VALUES = {'none', 'one-two', 'three-plus'}
 _MOOD_VALUES = {'energized', 'calm', 'neutral', 'tired', 'stressed'}
 _DISTRACTION_VALUES = {'none', 'some', 'significant'}
-_FAMILY_HISTORY_VALUES = {'none', 'some', 'significant'}
+# Sprint 10.5: was {'none', 'some', 'significant'} — replaced with specific
+# conditions so a report of "some family history" says what it actually is.
+# 'prefer_not_to_say' clamps to None, same as leaving the field blank —
+# see cci.py's _SESSION_DEDUCTIONS for how each value affects confidence.
+_FAMILY_HISTORY_VALUES = {'none', 'alzheimers', 'dementia', 'mci', 'other', 'unsure'}
+# Sprint 10.5: medication was previously free text (`_clean_str`); now a
+# fixed enum, with an optional follow-up (_MEDICATION_EFFECT_VALUES) shown
+# only when 'yes' is selected.
+_MEDICATION_VALUES = {'no', 'yes'}
+_MEDICATION_EFFECT_VALUES = {'yes', 'no', 'unsure'}
 
 
 def _clean_str(value, max_len):
@@ -114,7 +122,7 @@ def _get_owned_session(user, assessment_id):
 
 
 def _checkin_fields(checkin_data):
-    """Cleans the 8 Today's Assessment Check-In fields out of an untrusted
+    """Cleans the Today's Assessment Check-In fields out of an untrusted
     dict, returning only the ones that pass validation — used for both a
     new session and updating an existing (resumed) one."""
     return {
@@ -122,7 +130,12 @@ def _checkin_fields(checkin_data):
         'stress_level': _clean_enum(checkin_data.get('stressLevel'), _STRESS_VALUES),
         'hours_slept': _clean_hours_slept(checkin_data.get('hoursSlept')),
         'caffeine_today': _clean_enum(checkin_data.get('caffeineToday'), _CAFFEINE_VALUES),
-        'medication': _clean_str(checkin_data.get('medication'), _MAX_MEDICATION_LENGTH),
+        'medication': _clean_enum(checkin_data.get('medication'), _MEDICATION_VALUES),
+        # Only meaningful when medication == 'yes'; clamps to None otherwise
+        # same as any other not-applicable field — see cci.py.
+        'medication_cognitive_effect': _clean_enum(
+            checkin_data.get('medicationCognitiveEffect'), _MEDICATION_EFFECT_VALUES
+        ),
         'current_mood': _clean_enum(checkin_data.get('currentMood'), _MOOD_VALUES),
         'wearing_glasses': _clean_bool(checkin_data.get('wearingGlasses')),
         'distractions': _clean_enum(checkin_data.get('distractions'), _DISTRACTION_VALUES),
@@ -443,12 +456,15 @@ def get_history(user):
                                'rawData': {k: v for k, v in (r.raw_data or {}).items() if k != _DURATION_KEY}}
                    for r in s.results}
         session_cci = cci.compute_cci(s, modules)
+        confidence, confidence_label = None, None
         if session_cci:
             for domain, entry in session_cci['domains'].items():
                 if entry['score'] is not None:
                     domains[domain] = entry['score']
             if session_cci['overall']['score'] is not None:
                 overall_score = session_cci['overall']['score']
+            confidence = session_cci['overall']['confidence']
+            confidence_label = session_cci['overall']['confidenceLabel']
 
         out.append({
             'assessmentId': s.id,
@@ -456,6 +472,12 @@ def get_history(user):
             'overallScore': overall_score,
             'duration': s.duration,
             'domains': domains,
+            # Sprint 10.5 — surfaces the same per-session confidence
+            # compute_cci already computes (previously only .score was
+            # read here); None whenever no CCI payload exists for this
+            # session (old/incomplete rows), same as everywhere else.
+            'confidence': confidence,
+            'confidenceLabel': confidence_label,
         })
 
     return out

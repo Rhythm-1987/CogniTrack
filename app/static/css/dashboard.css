@@ -15,9 +15,10 @@
 
 /* ============================================================
    LOADING STATE
-   Shown by default until JS resolves which of empty/dashboard
-   to reveal. Reuses the same spinner treatment as .btn-spinner
-   (style.css §25), just larger and on a static border color.
+   Shown by default until JS resolves which of empty/dashboard to
+   reveal. A lightweight CSS-only skeleton (score ring + card-shaped
+   bars) hinting at the real layout underneath, rather than a plain
+   spinner — no JS, no added dependency, one shimmer keyframe.
 ============================================================ */
 
 .dash-loading {
@@ -35,16 +36,58 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-6);
 }
 
-.dash-loading__spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid var(--color-border);
-  border-top-color: var(--color-primary);
+.dash-skeleton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.dash-skeleton__ring,
+.dash-skeleton__bar {
+  background: linear-gradient(
+    100deg,
+    var(--color-surface-alt) 30%,
+    var(--color-border) 50%,
+    var(--color-surface-alt) 70%
+  );
+  background-size: 200% 100%;
+  animation: dash-skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+.dash-skeleton__ring {
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  animation: btn-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.dash-skeleton__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.dash-skeleton__bar {
+  width: 160px;
+  height: 14px;
+  border-radius: var(--radius-md);
+}
+
+.dash-skeleton__bar--wide { width: 220px; }
+
+@keyframes dash-skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-skeleton__ring,
+  .dash-skeleton__bar {
+    animation: none;
+  }
 }
 
 .dash-loading__text {
@@ -251,6 +294,49 @@
   flex-shrink: 0;
 }
 
+/* Guest banner — real (non-demo) dashboard, no account yet. Friendly,
+   not an alert: same info-tone treatment as the rest of the hero, not
+   a warning color. */
+.dash-guest-banner[hidden] { display: none; }
+
+.dash-guest-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: rgba(37, 99, 235, 0.06);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: var(--radius-md);
+  max-width: 42rem;
+}
+
+.dash-guest-banner i {
+  width: 18px;
+  height: 18px;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.dash-guest-banner p {
+  flex: 1;
+  min-width: 14rem;
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.dash-guest-banner__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
 /* Right side complete badge */
 .dash-hero__right { flex-shrink: 0; }
 
@@ -316,6 +402,94 @@
 
 /* Inside score-text column, gap handles spacing — no need for margin */
 .dash-score-text .dash-label { margin-bottom: 0; }
+
+/* ============================================================
+   CCI INFO POPOVER
+   Reuses the same trigger/root/is-open/aria-hidden pattern as the
+   navbar's nav-profile/nav-account menus (see initDropdownMenu in
+   main.js) — same accessible disclosure behaviour, new content.
+============================================================ */
+
+.dash-cci-info {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: var(--space-1);
+}
+
+.dash-cci-info__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.dash-cci-info__trigger:hover,
+.dash-cci-info__trigger:focus-visible {
+  color: var(--color-primary);
+}
+
+.dash-cci-info__trigger:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.dash-cci-info__trigger i { width: 1rem; height: 1rem; }
+
+.dash-cci-info__panel {
+  position: absolute;
+  top: calc(100% + var(--space-3));
+  left: 0;
+  width: 17rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-4);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity var(--transition-fast), transform var(--transition-fast), visibility 0s var(--transition-fast);
+  z-index: 60;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.dash-cci-info.is-open .dash-cci-info__panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.dash-cci-info__list {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-4);
+  font-size: var(--text-xs);
+  font-weight: var(--font-regular);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.dash-cci-info__list li + li { margin-top: var(--space-2); }
+
+.dash-cci-info__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-primary);
+}
+
+.dash-cci-info__link i { width: 0.875rem; height: 0.875rem; }
 
 /* Section header */
 .dash-section__header {
@@ -1298,6 +1472,63 @@
 
 
 /* ============================================================
+   DOMAIN CARD — "WHY THIS SCORE?"
+   Plain-English metric + confidence explanation, built from data
+   already in the CCI payload (see app/core/cci.py) — never exposes
+   raw JSON or formulas. Native <details>/<summary>: keyboard and
+   screen-reader accessible with no extra ARIA wiring needed.
+============================================================ */
+
+.dash-domain-why {
+  width: 100%;
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.dash-domain-why > summary {
+  cursor: pointer;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-muted);
+  list-style: none;
+}
+
+.dash-domain-why > summary::-webkit-details-marker { display: none; }
+
+.dash-domain-why > summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: var(--space-1);
+  transition: transform 0.15s ease;
+}
+
+.dash-domain-why[open] > summary::before { transform: rotate(90deg); }
+
+.dash-domain-why > summary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.dash-domain-why__metrics {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.dash-domain-why__trend,
+.dash-domain-why__confidence {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+
+/* ============================================================
    TREND GRAPHS GRID
 ============================================================ */
 
@@ -1377,6 +1608,11 @@
 .trend-card__delta--up       { background: var(--color-success-bg); color: #15803D; }
 .trend-card__delta--down     { background: var(--color-danger-bg);  color: #B91C1C; }
 .trend-card__delta--flat     { background: var(--color-surface-alt); color: var(--color-text-muted); }
+
+.trend-card__delta-note {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
 .trend-card__delta--baseline { background: var(--color-surface-alt); color: var(--color-text-secondary); }
 
 .trend-card__score {
@@ -1572,6 +1808,11 @@
 
 .hist-item__date svg { width: 13px; height: 13px; stroke: var(--color-text-muted); }
 
+.hist-item__number {
+  font-weight: var(--font-semibold);
+  color: var(--color-text-muted);
+}
+
 .hist-baseline-badge {
   display: inline-flex;
   align-items: center;
@@ -1635,6 +1876,15 @@
   align-items: center;
   gap: 4px;
   font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+/* Every row in this list is a completed session by construction
+   (get_history() only ever returns status='completed' — see
+   assessment_service.py) — a static label, not computed per row. */
+.hist-item__status {
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
   color: var(--color-text-muted);
 }
 

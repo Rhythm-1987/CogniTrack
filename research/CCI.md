@@ -28,7 +28,9 @@ Confidence starts at 100 and takes documented deductions, source-tagged so nothi
 
 | Factor | Deduction basis | Source type |
 |---|---|---|
-| High stress / poor sleep / significant distractions / caffeine="three-plus" / medication present / family history present | Face-valid state confound | Engineering judgment — no sourced paper quantifies an exact effect size for any of these on any of these 5 tasks |
+| High stress / poor sleep / significant distractions / caffeine="three-plus" | Face-valid state confound | Engineering judgment — no sourced paper quantifies an exact effect size for any of these on any of these 5 tasks |
+| Medication="yes" (+ its own follow-up: does it affect attention/alertness/mood/thinking?) | Face-valid state confound, larger deduction when the follow-up is answered "yes" | Engineering judgment |
+| Family history of a named memory/cognitive condition (Alzheimer's, dementia, MCI, other) vs. "unsure" | Face-valid confound; a named condition deducts more than "unsure" | Engineering judgment — Sprint 10.5 replaced the original 3-value none/some/significant enum with specific conditions, same never-touches-score guarantee |
 | Attention trial count = 5 vs. Deary-Liewald's validated 20 | Fewer trials → noisier mean | Deary-Liewald 2011 (design comparison, not a stated reliability coefficient) |
 | `completion_mode == 'self_healed'` | Session didn't get a clean client-confirmed finish — timing data may be less trustworthy | Engineering judgment (existing `session_metadata` field) |
 | `attempt_number > 1` | Practice effects are real and documented | MacLeod 1991 (practice reduces Stroop interference over repeated exposure — Experiment 3, though that was 8 days of dedicated practice, not a same-day retake; treat as directionally relevant, not a matched effect size) |

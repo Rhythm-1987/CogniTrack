@@ -140,7 +140,12 @@ _SESSION_DEDUCTIONS = (
     ('caffeine_today', {'three-plus': 5}, 'high caffeine intake'),
     ('distractions', {'significant': 15, 'some': 5}, 'distractions during the session'),
     ('current_mood', {'stressed': 10, 'tired': 10}, 'reported mood'),
-    ('family_history', {'significant': 5, 'some': 2}, 'reported family history'),
+    # Sprint 10.5: family_history moved from a 3-value severity enum
+    # ('none'/'some'/'significant') to specific conditions — deduction
+    # magnitudes are carried over in spirit (a named condition ~= old
+    # 'significant', 'unsure' ~= old 'some'), still engineering judgment,
+    # not a literature-sourced effect size.
+    ('family_history', {'alzheimers': 5, 'dementia': 5, 'mci': 3, 'other': 2, 'unsure': 1}, 'reported family history'),
 )
 
 _CONFIDENCE_FLOOR = 30  # never claim zero/near-zero confidence outright
@@ -156,9 +161,21 @@ def _session_confidence(session):
             score -= table[value]
             notes.append(label)
 
-    if getattr(session, 'medication', None):
+    # Sprint 10.5: medication moved from free text (any non-empty string
+    # was truthy here) to an enum — 'no' is a non-empty string too, so this
+    # must check the actual value, not just truthiness (fixes a bug where
+    # answering "No" would have incorrectly deducted confidence).
+    if getattr(session, 'medication', None) == 'yes':
         score -= 5
         notes.append('medication reported')
+
+        effect = getattr(session, 'medication_cognitive_effect', None)
+        if effect == 'yes':
+            score -= 5
+            notes.append('medication reported as affecting attention or mood')
+        elif effect == 'unsure':
+            score -= 2
+            notes.append('uncertain whether medication affects cognition')
 
     metadata = getattr(session, 'session_metadata', None) or {}
     if metadata.get('completion_mode') == 'self_healed':
@@ -269,7 +286,7 @@ def _demo():
         base = dict(
             stress_level=None, sleep_quality=None, caffeine_today=None,
             distractions=None, current_mood=None, family_history=None,
-            medication=None, session_metadata={},
+            medication=None, medication_cognitive_effect=None, session_metadata={},
         )
         base.update(overrides)
         return SimpleNamespace(**base)
@@ -329,8 +346,9 @@ def _demo():
     # Confidence floor is never breached even under maximal deductions.
     worst = compute_cci(
         session(stress_level='high', sleep_quality='poor', caffeine_today='three-plus',
-                distractions='significant', current_mood='stressed', family_history='significant',
-                medication='ibuprofen', session_metadata={'completion_mode': 'self_healed', 'attempt_number': 3}),
+                distractions='significant', current_mood='stressed', family_history='alzheimers',
+                medication='yes', medication_cognitive_effect='yes',
+                session_metadata={'completion_mode': 'self_healed', 'attempt_number': 3}),
         stressed_modules,
     )
     assert worst['domains']['attention']['confidence'] >= _CONFIDENCE_FLOOR

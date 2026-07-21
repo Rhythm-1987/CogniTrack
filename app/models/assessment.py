@@ -36,7 +36,16 @@ class AssessmentSession(db.Model):
     stress_level = db.Column(db.String(20), nullable=True)
     hours_slept = db.Column(db.Float, nullable=True)
     caffeine_today = db.Column(db.String(20), nullable=True)
+    # Column width (200) predates this becoming an enum (No/Yes/Prefer not
+    # to say) — left as-is rather than narrowed by a migration, since a
+    # narrowing ALTER on Postgres would fail against any existing row that
+    # still holds pre-Sprint-10.5 free-text medication names longer than
+    # the new enum values. New writes only ever store the short enum value.
     medication = db.Column(db.String(200), nullable=True)
+    # Follow-up shown only when medication == 'yes': whether the medication
+    # affects attention/alertness/mood/thinking, per the user's own report —
+    # see app/core/cci.py, a CONF-only factor like every other check-in field.
+    medication_cognitive_effect = db.Column(db.String(20), nullable=True)
     current_mood = db.Column(db.String(20), nullable=True)
     wearing_glasses = db.Column(db.Boolean, nullable=True)
     distractions = db.Column(db.String(20), nullable=True)

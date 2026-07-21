@@ -239,26 +239,40 @@
             </label>
             <select class="select" id="family-history" name="family_history">
               <option value="" selected>Prefer not to say</option>
-              <option value="none">None known</option>
-              <option value="some">Some — extended family</option>
-              <option value="significant">Significant — parent or sibling</option>
+              <option value="none">None</option>
+              <option value="alzheimers">Alzheimer's Disease</option>
+              <option value="dementia">Dementia</option>
+              <option value="mci">Mild Cognitive Impairment (MCI)</option>
+              <option value="other">Other Memory Disorder</option>
+              <option value="unsure">Unsure</option>
             </select>
           </div>
 
           <!-- Medication -->
-          <div class="form-group form-grid__full">
+          <div class="form-group">
             <label class="label" for="medication">
               Medication
               <span class="user-label-optional">(optional)</span>
             </label>
-            <input
-              class="input"
-              type="text"
-              id="medication"
-              name="medication"
-              placeholder="e.g. antihistamine, stimulant — anything that may affect focus today"
-              maxlength="200"
-            />
+            <select class="select" id="medication" name="medication">
+              <option value="" selected>Prefer not to say</option>
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </div>
+
+          <!-- Medication Cognitive Effect (follow-up, shown only when Medication = Yes) -->
+          <div class="form-group form-grid__full" id="medication-effect-group" hidden>
+            <label class="label" for="medication-effect">
+              Does this medication affect attention, alertness, mood, or thinking?
+              <span class="user-label-optional">(optional)</span>
+            </label>
+            <select class="select" id="medication-effect" name="medication_cognitive_effect">
+              <option value="" selected>Prefer not to say</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+              <option value="unsure">Unsure</option>
+            </select>
           </div>
 
         </div>

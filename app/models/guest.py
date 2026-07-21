@@ -87,7 +87,10 @@ class GuestAssessmentSession(db.Model):
     stress_level = db.Column(db.String(20), nullable=True)
     hours_slept = db.Column(db.Float, nullable=True)
     caffeine_today = db.Column(db.String(20), nullable=True)
+    # See models/assessment.py's AssessmentSession.medication comment —
+    # same width-predates-the-enum reasoning applies here.
     medication = db.Column(db.String(200), nullable=True)
+    medication_cognitive_effect = db.Column(db.String(20), nullable=True)
     current_mood = db.Column(db.String(20), nullable=True)
     wearing_glasses = db.Column(db.Boolean, nullable=True)
     distractions = db.Column(db.String(20), nullable=True)

@@ -1285,11 +1285,18 @@
 
         '<hr class="ct-finale-rule" aria-hidden="true"/>' +
 
-        /* ── Report generation block ── */
+        /* ── Report generation block ──
+           Each item is marked done in sequence as the progress bar below
+           fills (25/50/75/100%, see the tick() loop) — same 2500ms
+           animation as before, just richer copy than one status line. */
         '<div class="ct-finale-report">' +
-          '<p class="ct-finale-report-label" id="ct-finale-status">' +
-            'Generating Comprehensive Cognitive Performance Report…' +
-          '</p>' +
+          '<p class="ct-finale-report-label">Generating your Cognitive Profile&hellip;</p>' +
+          '<ul class="ct-finale-checklist" id="ct-finale-checklist" aria-live="polite">' +
+            '<li class="ct-finale-checklist__item" data-step="1"><span class="ct-finale-checklist__mark" aria-hidden="true">&#10003;</span>Calculating CCI</li>' +
+            '<li class="ct-finale-checklist__item" data-step="2"><span class="ct-finale-checklist__mark" aria-hidden="true">&#10003;</span>Building Cognitive Profile</li>' +
+            '<li class="ct-finale-checklist__item" data-step="3"><span class="ct-finale-checklist__mark" aria-hidden="true">&#10003;</span>Preparing Recommendations</li>' +
+            '<li class="ct-finale-checklist__item" data-step="4"><span class="ct-finale-checklist__mark" aria-hidden="true">&#10003;</span>Updating Dashboard</li>' +
+          '</ul>' +
           '<div class="ct-finale-progress-wrap">' +
             '<div class="ct-finale-progress-bar"' +
                  ' role="progressbar" aria-valuemin="0" aria-valuemax="100"' +
@@ -1331,6 +1338,7 @@
       if (pctEl && barEl) {
         var dur       = 2500;
         var startTime = performance.now();
+        var checklistItems = document.querySelectorAll('#ct-finale-checklist .ct-finale-checklist__item');
 
         (function tick(now) {
           var p   = Math.min((now - startTime) / dur, 1);
@@ -1338,11 +1346,16 @@
           pctEl.textContent = val + '%';
           barEl.setAttribute('aria-valuenow', val);
 
+          /* Each of the 4 checklist items "completes" at its own 25%
+             threshold of the same progress-bar animation already
+             running — no separate timers, no added delay. */
+          checklistItems.forEach(function (item) {
+            var step = Number(item.getAttribute('data-step'));
+            if (val >= step * 25) { item.classList.add('is-done'); }
+          });
+
           if (p < 1) {
             requestAnimationFrame(tick);
-          } else {
-            var statusEl = document.getElementById('ct-finale-status');
-            if (statusEl) { statusEl.textContent = 'Your cognitive profile is ready.'; }
           }
         }(performance.now()));
       }

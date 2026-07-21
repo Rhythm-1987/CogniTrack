@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Methodology — CogniTrack{% endblock %}
+
+{% block meta_description %}How CogniTrack's five cognitive assessments and Cognitive Composite Index are built, what they measure, what they don't, and the research behind them.{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/legal.css') }}" />
+{% endblock %}
+
+{% block content %}
+
+<section class="legal-section" aria-label="Methodology">
+  <div class="container container--narrow">
+
+    <div class="legal-header anim-fade-up">
+      <span class="badge badge--primary">
+        <i data-lucide="microscope"></i>
+        Methodology
+      </span>
+      <h1 class="legal-header__title">How CogniTrack Works</h1>
+      <p class="legal-header__meta">The research behind the five assessments and the Cognitive Composite Index (CCI)</p>
+    </div>
+
+    <div class="card legal-card scroll-reveal">
+      <div class="legal-prose">
+
+        <h2>About CogniTrack</h2>
+        <p>
+          CogniTrack is a self-guided, five-domain cognitive assessment — Memory Recall,
+          Focus &amp; Attention, Decision Making, Thinking Speed, and Visual Reasoning — built
+          to give you an honest, informational snapshot of how your mind is performing today,
+          and how that changes over time. This page explains how that snapshot is built, so you
+          don't have to take it on faith.
+        </p>
+
+        <h2>Research Philosophy</h2>
+        <p>
+          Every scoring decision in CogniTrack traces back to one of two things: a published
+          study, or an explicit engineering default chosen because no study gave us a better
+          basis to decide. We never blend the two silently. Where a task is grounded in
+          published research, we say which paper and what it found. Where a choice is ours
+          alone — like weighting the five domains equally when scoring your overall profile —
+          we say that too, instead of dressing up a judgment call as science.
+        </p>
+
+        <h2>How the Assessments Work</h2>
+        <p>Each of the five modules is inspired by a well-established cognitive testing paradigm:</p>
+        <ul>
+          <li><strong>Memory Recall</strong> — a recognition-memory and sequence-span task, in the tradition of the Rey Auditory Verbal Learning Test and the Corsi Block-Tapping Task.</li>
+          <li><strong>Focus &amp; Attention</strong> — a simple reaction-time task, in the tradition of the Deary-Liewald reaction time programme.</li>
+          <li><strong>Decision Making</strong> — a colour-word interference task, in the tradition of the Stroop task.</li>
+          <li><strong>Thinking Speed</strong> — a timed symbol-matching task measuring speed and accuracy together.</li>
+          <li><strong>Visual Reasoning</strong> — a mental rotation task, in the tradition of Shepard &amp; Metzler's classic 3-D rotation paradigm.</li>
+        </ul>
+        <p>
+          "In the tradition of" is a deliberate phrase: these are original, browser-based
+          implementations inspired by the cited paradigms, not licensed or clinically validated
+          replications of them. The Scientific Inspiration section below is explicit about
+          what each source paper does and doesn't support.
+        </p>
+
+        <h2>CCI Overview — What the Score Actually Is</h2>
+        <p>
+          The Cognitive Composite Index (CCI) is computed fresh every time you view your
+          dashboard — it's never a hidden formula, and nothing about it is stored as a
+          permanent label on your profile. It's built in four steps:
+        </p>
+        <ol>
+          <li><strong>Raw data</strong> — the numbers your assessment already produced (reaction times, recognition hits, sequence length, and so on).</li>
+          <li><strong>Normalized score (0–100)</strong> — each raw number is scaled to a 0–100 range using a plausible performance range, so a memory score and a reaction-time score can sit on the same axis.</li>
+          <li><strong>Domain score</strong> — where a domain has more than one relevant metric, they're averaged equally. This is a neutral default, not a claim that (say) recognition accuracy matters more or less than sequence span — no source paper ranks them against each other.</li>
+          <li><strong>Overall score</strong> — the five domain scores, averaged equally for the same reason.</li>
+        </ol>
+        <p>
+          <strong>What CCI does not do:</strong> it does not compare you to a population norm
+          or percentile (we don't have a trustworthy normative dataset to compare against), it
+          does not adjust your score based on age, gender, or education (the source papers give
+          correlations, not the regression formulas that would be needed to do that honestly),
+          and it never claims clinical or diagnostic validity for any of the five games.
+        </p>
+
+        <h2>Confidence — Why It Exists</h2>
+        <p>
+          Alongside every score, CogniTrack shows a Confidence level — High, Moderate, or Low.
+          Confidence answers a different question than the score does: not "how did you
+          perform," but "how much should today's number be trusted as representative."
+        </p>
+        <p>
+          Things like stress, sleep quality, caffeine, distractions, medication, and a shorter
+          trial count than the original research protocols used can all make a single session's
+          result noisier — without making you any less capable. That's why these factors are
+          <strong>only ever allowed to move your confidence label, never your score itself.</strong>
+          A stressful day can lower confidence in today's Attention score; it can never lower the
+          score. If you'd like the specific reasons behind a domain's confidence level, expand
+          "Why this score?" on that domain's card on your dashboard.
+        </p>
+
+        <h2>Scientific Inspiration</h2>
+        <p>
+          Seven papers were read in full and directly shaped the design of these assessments.
+          Expand a domain below to see the source, what it established, and how directly it
+          applies to CogniTrack's implementation.
+        </p>
+
+        <div class="faq-list">
+          <details class="faq-item">
+            <summary class="faq-item__q">Memory Recall</summary>
+            <div class="faq-item__a">
+              <p><strong>Kessels et al. (2000)</strong>, The Corsi Block-Tapping Task: Standardization and Normative Data — the direct basis for the sequence-span portion of Memory Recall.</p>
+              <p><strong>Farrahi et al. (2023)</strong>, Rey Auditory Verbal Learning Test normative data — supports the recognition-memory scoring logic; note the original RAVLT list is longer (15+15 words) than CogniTrack's 11-word list.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-item__q">Focus &amp; Attention</summary>
+            <div class="faq-item__a">
+              <p><strong>Deary, Liewald &amp; Nissan (2011)</strong>, the Deary-Liewald reaction time task — the direct basis for measuring mean reaction time; their validated protocol uses 20 scored trials, CogniTrack's uses 5, which is why short trial counts lower confidence rather than the score.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-item__q">Decision Making</summary>
+            <div class="faq-item__a">
+              <p><strong>MacLeod (1991)</strong>, Half a Century of Research on the Stroop Effect — the basis for scoring the interference effect (the slowdown caused by a conflicting cue) as the core measure, rather than raw accuracy, which ceilings too quickly on a simple task to carry much information.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-item__q">Thinking Speed</summary>
+            <div class="faq-item__a">
+              <p><strong>Sandry &amp; Ricker (2022)</strong>, Motor Speed Does Not Impact the Drift Rate — supports scoring a combined speed-and-accuracy "efficiency" measure instead of accuracy alone, since accuracy-only scoring can miss real differences in processing speed.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-item__q">Visual Reasoning</summary>
+            <div class="faq-item__a">
+              <p><strong>Shepard &amp; Metzler (1971)</strong>, Mental Rotation of Three-Dimensional Objects — the classic basis for the mental-rotation paradigm. This module scores an accuracy + response-time composite rather than the paper's true headline measure (how response time scales with rotation angle) — see Limitations below for why.</p>
+            </div>
+          </details>
+        </div>
+
+        <h2>Limitations</h2>
+        <ul>
+          <li>Scores are scaled against an engineering-judgment plausible range, not a population-normed percentile — no source paper supplied a normative dataset trustworthy enough to build one.</li>
+          <li>Several modules use fewer trials than their original research protocols (e.g. 5 attention trials vs. the validated 20), which is reflected as lower confidence, not a lower score.</li>
+          <li>Age, gender, and education are not used to adjust any score — the available research gives correlation coefficients, not the regression equations that would be needed to do so responsibly.</li>
+          <li>Visual Reasoning currently scores an accuracy + speed composite rather than the angle-vs-time rotation rate Shepard &amp; Metzler's paradigm is best known for — with only three angle bands and a handful of trials per band today, that slope would be too statistically fragile to report.</li>
+          <li>None of the five modules are validated clinical or diagnostic instruments. See our <a href="{{ url_for('main.terms') }}">Terms of Use</a>.</li>
+        </ul>
+
+        <h2>Future Validation</h2>
+        <p>
+          Two improvements are on the roadmap once enough data exists to support them
+          responsibly: a <strong>within-user trend</strong> comparing a new session against your
+          own prior average (needs no external norms at all, and is arguably the most
+          defensible number this system could show), and revisiting the Visual Reasoning
+          rotation-rate slope once trial counts are large enough for it to be statistically
+          stable. Neither is available yet — we'd rather ship nothing than ship a number we
+          can't stand behind.
+        </p>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}

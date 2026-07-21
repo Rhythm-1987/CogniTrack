@@ -35,6 +35,20 @@
           <div class="dash-hero__meta" id="js-hero-meta">
             <!-- Date + completion count injected by JS -->
           </div>
+
+          <!-- Guest banner — real (non-demo) dashboard, no account yet.
+               Never blocking; a guest keeps full access to this
+               dashboard either way. -->
+          <div class="dash-guest-banner" id="js-guest-banner" role="note" hidden>
+            <i data-lucide="info" aria-hidden="true"></i>
+            <p>
+              You're browsing as a guest — your results are temporary. Create a free account
+              to save your history and unlock long-term trend tracking.
+            </p>
+            <a href="{{ url_for('auth.register') }}" class="dash-guest-banner__cta">
+              Create Account <i data-lucide="arrow-right" aria-hidden="true"></i>
+            </a>
+          </div>
         </div>
 
         <div class="dash-hero__right anim-fade-up anim-delay-2" aria-hidden="true">
@@ -85,7 +99,34 @@
         </div>
 
         <div class="dash-score-text">
-          <p class="dash-label">Overall Cognitive Score</p>
+          <p class="dash-label">
+            Overall Cognitive Score
+            <span class="dash-cci-info" id="cci-info">
+              <button
+                type="button"
+                class="dash-cci-info__trigger"
+                id="js-cci-info-trigger"
+                aria-haspopup="true"
+                aria-expanded="false"
+                aria-controls="js-cci-info-panel"
+                aria-label="About the Cognitive Composite Index"
+              >
+                <i data-lucide="info" aria-hidden="true"></i>
+              </button>
+              <div class="dash-cci-info__panel" id="js-cci-info-panel" aria-hidden="true" aria-label="About the Cognitive Composite Index">
+                <ul class="dash-cci-info__list">
+                  <li>Measures five domains: memory, attention, decision making, thinking speed, and visual reasoning.</li>
+                  <li>Does not compare you to a population percentile, and does not diagnose any condition.</li>
+                  <li>Five domains are scored and averaged equally — no domain counts more than another.</li>
+                  <li>Confidence reflects things like sleep, stress, or a shorter trial count today — it never changes your score.</li>
+                  <li>CogniTrack is for cognitive monitoring over time, not a diagnostic or medical tool.</li>
+                </ul>
+                <a href="{{ url_for('main.methodology') }}" class="dash-cci-info__link">
+                  Full Methodology <i data-lucide="arrow-right" aria-hidden="true"></i>
+                </a>
+              </div>
+            </span>
+          </p>
 
           <div class="dash-overall-rating">
             <span class="dash-rating-badge" id="js-rating-badge">--</span>
@@ -191,6 +232,32 @@
           </p>
           <p class="dash-summary-disclaimer">
             This summary is for informational purposes only and does not constitute medical advice.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         ROW 4.5: Recommended Next Assessment
+         Hidden by default; JS unhides it only once there's a real
+         completed assessment to base a suggestion on (see
+         Data.getNextAssessmentRecommendation in dashboard.js). Never
+         medical scheduling advice — a suggested check-in window only.
+    ═══════════════════════════════════════════════════════ -->
+    <section class="dash-section anim-fade-up" id="js-next-assessment-section" aria-label="Recommended next assessment" hidden>
+      <div class="dash-section__header">
+        <h2 class="dash-section__title">Recommended Next Assessment</h2>
+        <span class="dash-section__sub">Based on your assessment history and today's confidence</span>
+      </div>
+      <div class="card card--glass dash-summary-card">
+        <div class="dash-summary-icon" aria-hidden="true">
+          <i data-lucide="calendar-clock"></i>
+        </div>
+        <div class="dash-summary-body">
+          <p class="dash-summary-text"><strong id="js-next-assessment-window">—</strong></p>
+          <p class="dash-summary-text" id="js-next-assessment-reason"></p>
+          <p class="dash-summary-disclaimer">
+            This is a suggested check-in window, not medical scheduling advice.
           </p>
         </div>
       </div>

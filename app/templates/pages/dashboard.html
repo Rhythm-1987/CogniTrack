@@ -21,7 +21,15 @@
 ============================================================ -->
 <section class="dash-loading" id="js-dashboard-loading" aria-label="Loading your dashboard" aria-live="polite">
   <div class="container">
-    <div class="dash-loading__spinner" aria-hidden="true"></div>
+    <div class="dash-skeleton" aria-hidden="true">
+      <div class="dash-skeleton__ring"></div>
+      <div class="dash-skeleton__rows">
+        <div class="dash-skeleton__bar dash-skeleton__bar--wide"></div>
+        <div class="dash-skeleton__bar"></div>
+        <div class="dash-skeleton__bar"></div>
+        <div class="dash-skeleton__bar"></div>
+      </div>
+    </div>
     <p class="dash-loading__text">Loading your dashboard…</p>
   </div>
 </section>

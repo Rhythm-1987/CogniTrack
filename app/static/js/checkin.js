@@ -26,6 +26,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var isSubmitting = false;
 
+  /* Medication follow-up ("does it affect attention/alertness/mood/
+     thinking?") only makes sense once Medication = Yes — shown/hidden
+     with the native `hidden` attribute, no animation needed. Runs once
+     at load too, since a resumed check-in or browser back/forward cache
+     can restore Medication's value without firing `change`. */
+  var medicationSelectEl = document.getElementById('medication');
+  var medicationEffectGroupEl = document.getElementById('medication-effect-group');
+  function syncMedicationEffectVisibility() {
+    if (!medicationSelectEl || !medicationEffectGroupEl) return;
+    medicationEffectGroupEl.hidden = medicationSelectEl.value !== 'yes';
+  }
+  if (medicationSelectEl) {
+    medicationSelectEl.addEventListener('change', syncMedicationEffectVisibility);
+    syncMedicationEffectVisibility();
+  }
+
   var REQUIRED_IDS = [
     'sleep-quality', 'stress-level', 'hours-slept',
     'caffeine-today', 'current-mood', 'distractions'
@@ -41,7 +57,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var stressEl     = document.getElementById('stress-level');
     var hoursEl      = document.getElementById('hours-slept');
     var caffeineEl   = document.getElementById('caffeine-today');
-    var medicationEl = document.getElementById('medication');
+    var medicationEl       = document.getElementById('medication');
+    var medicationEffectEl = document.getElementById('medication-effect');
     var moodEl       = document.getElementById('current-mood');
     var glassesEl    = document.getElementById('wearing-glasses');
     var distractEl   = document.getElementById('distractions');
@@ -92,7 +109,9 @@ document.addEventListener('DOMContentLoaded', function () {
       stressLevel:    stressEl   ? stressEl.value   : '',
       hoursSlept:     hoursVal,
       caffeineToday:  caffeineEl ? caffeineEl.value : '',
-      medication:     medicationEl ? medicationEl.value.trim() : '',
+      medication:     medicationEl ? medicationEl.value : '',
+      medicationCognitiveEffect: (medicationEl && medicationEl.value === 'yes' && medicationEffectEl)
+        ? medicationEffectEl.value : '',
       currentMood:    moodEl     ? moodEl.value     : '',
       wearingGlasses: glassesEl && glassesEl.value ? glassesEl.value === 'yes' : null,
       distractions:   distractEl ? distractEl.value : '',

@@ -81,6 +81,41 @@
   /* Radar axis labels (ordered to match DOMAINS) */
   var AXIS_LABELS = ['Memory Recall', 'Focus & Attn', 'Decision Mkg', 'Thinking Spd', 'Visual Rsng'];
 
+  /* Plain-English label + one-line explanation for each normalized metric
+     key app/core/cci.py emits under a domain's `metrics` (see
+     _NORMALIZERS there). Deliberately no numbers/formulas here — this
+     powers "Why this score?" (Data.getDomainExplanation), which names
+     which behavioural signals fed a domain's score without exposing the
+     underlying JSON. Keys must match cci.py's normalizer output keys
+     exactly, but stay flat (not nested per-domain) since every key is
+     already unique across domains. */
+  var METRIC_INFO = {
+    nps: {
+      label: 'Recognition accuracy',
+      blurb: 'How reliably you told previously-seen items apart from new ones.'
+    },
+    corsiSpan: {
+      label: 'Sequence memory span',
+      blurb: 'The longest tile sequence you reproduced correctly, in order.'
+    },
+    reactionSpeed: {
+      label: 'Reaction speed',
+      blurb: 'How quickly you responded once the target appeared.'
+    },
+    interferenceControl: {
+      label: 'Interference control',
+      blurb: 'How little a conflicting cue slowed you down — smaller slowdowns score higher.'
+    },
+    processingEfficiency: {
+      label: 'Processing efficiency',
+      blurb: 'A blend of speed and accuracy across the matching questions.'
+    },
+    rotationComposite: {
+      label: 'Spatial accuracy & speed',
+      blurb: 'A blend of how many rotations you answered correctly and how quickly.'
+    }
+  };
+
 
   /* ══════════════════════════════════════════════════════════
      DATA LAYER
@@ -230,6 +265,32 @@
       return this.cci.domains[this.domainHistoryKey(domainKey)] || null;
     },
 
+    /* "Why this score?" — turns a domain's already-computed `metrics` and
+       `confidenceNotes` (see app/core/cci.py) into plain-English content:
+       which behavioural metrics contributed (via METRIC_INFO) and one
+       readable confidence sentence. Returns null whenever there's nothing
+       to explain (no CCI payload, or this domain never scored) — same
+       null-safety contract as getDomainConfidence above. */
+    getDomainExplanation: function (domainKey) {
+      var conf = this.getDomainConfidence(domainKey);
+      if (!conf || conf.score === null) return null;
+
+      var metrics = Object.keys(conf.metrics || {})
+        .filter(function (k) { return conf.metrics[k] !== null && METRIC_INFO[k]; })
+        .map(function (k) { return METRIC_INFO[k]; });
+
+      var notes = conf.confidenceNotes || [];
+      var joinedNotes = notes.length > 1
+        ? notes.slice(0, -1).join(', ') + ' and ' + notes[notes.length - 1]
+        : notes[0];
+
+      var confidenceSentence = conf.confidenceLabel
+        ? conf.confidenceLabel + ' confidence' + (joinedNotes ? ' — based on ' + joinedNotes + '.' : '.')
+        : null;
+
+      return { metrics: metrics, confidenceSentence: confidenceSentence };
+    },
+
     /* Normalizes the raw /api/history payload (newest-first, per-domain
        scores keyed by the server's domain names) into Data.history:
        oldest → latest, every entry a real completed AssessmentSession.
@@ -239,11 +300,15 @@
     setHistory: function (rawEntries) {
       var normalized = (rawEntries || []).map(function (e) {
         return {
-          assessmentId: e.assessmentId,
-          completedAt:  e.completedAt ? new Date(e.completedAt) : null,
-          overallScore: typeof e.overallScore === 'number' ? Math.round(e.overallScore) : null,
-          duration:     e.duration,
-          domains:      e.domains || {}
+          assessmentId:    e.assessmentId,
+          completedAt:     e.completedAt ? new Date(e.completedAt) : null,
+          overallScore:    typeof e.overallScore === 'number' ? Math.round(e.overallScore) : null,
+          duration:        e.duration,
+          domains:         e.domains || {},
+          /* Per-session CCI confidence (see assessment_service.get_history) —
+             null on older rows with no CCI payload, same null-safety
+             contract as every other confidence reader in this file. */
+          confidenceLabel: e.confidenceLabel || null
         };
       }).filter(function (e) { return e.completedAt && e.overallScore !== null; });
 
@@ -272,11 +337,12 @@
       });
 
       this.history = [{
-        assessmentId: null,
-        completedAt:  new Date(),
-        overallScore: this.overallScore,
-        duration:     this.getTotalDuration(),
-        domains:      domains
+        assessmentId:    null,
+        completedAt:     new Date(),
+        overallScore:    this.overallScore,
+        duration:        this.getTotalDuration(),
+        domains:         domains,
+        confidenceLabel: (this.cci && this.cci.overall && this.cci.overall.confidenceLabel) || null
       }];
       this.assessmentCount = 1;
     },
@@ -306,6 +372,43 @@
       return                              { label: 'Stable',    cls: 'average',       icon: 'minus'          };
     },
 
+    /* Suggested check-in window — never medical scheduling, just a
+       deterministic cadence heuristic from data already on hand (overall
+       CCI confidence, assessment count, and the same trend already
+       computed above). null hides the section entirely when there's
+       nothing completed yet to base a suggestion on. */
+    getNextAssessmentRecommendation: function () {
+      if (this.assessmentCount === 0) return null;
+
+      var overallConfidence = this.cci && this.cci.overall && this.cci.overall.confidenceLabel;
+      if (overallConfidence === 'Low') {
+        return {
+          days: 3,
+          reason: 'Today’s result carries low confidence — repeating sooner, under better conditions, gives a clearer baseline.'
+        };
+      }
+
+      if (this.assessmentCount === 1) {
+        return {
+          days: 14,
+          reason: 'A second assessment establishes whether today’s scores are a stable pattern or a one-off.'
+        };
+      }
+
+      var trend = this.getOverallTrend();
+      if (trend && trend.delta < 0) {
+        return {
+          days: 14,
+          reason: 'Your last two assessments moved in different directions — a sooner check-in helps confirm the trend.'
+        };
+      }
+
+      return {
+        days: 30,
+        reason: 'Regular monthly check-ins are enough to track long-term changes without over-testing.'
+      };
+    },
+
     /* Real assessment history for the History section — one row per real
        completed AssessmentSession, latest first. Each row's trend is
        computed against the assessment immediately before it; the oldest
@@ -317,6 +420,9 @@
         var earlier = list[i + 1]; /* chronologically-previous entry */
         var hasComparison = !!earlier;
         return {
+          /* 1-indexed, oldest = 1 — the list here is latest-first, so
+             the oldest entry (last in `list`) is assessment #1. */
+          number:        list.length - i,
           date:          h.completedAt
             ? h.completedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
             : '—',
@@ -324,6 +430,7 @@
           rating:        rating.label,
           ratingCls:     rating.cls,
           duration:      h.duration,
+          confidenceLabel: h.confidenceLabel,
           isLatest:      i === 0,
           isOldest:      i === list.length - 1,
           hasComparison: hasComparison,
@@ -872,6 +979,18 @@
       el.hidden = (mode !== 'demo');
     },
 
+    /* ── Guest Banner ──────────────────────────────────────────
+       Shown only for a real (non-demo) dashboard belonging to a guest
+       (no account) — never for a signed-in user, never on the demo
+       route. Friendly, not blocking: guests keep full access to their
+       one dashboard, this just explains what an account additionally
+       unlocks (saved history, long-term trends). */
+    guestBanner: function (mode) {
+      var el = document.getElementById('js-guest-banner');
+      if (!el) return;
+      el.hidden = !(mode === 'real' && typeof CT !== 'undefined' && CT.isAuthenticated && !CT.isAuthenticated());
+    },
+
     /* ── Hero ──────────────────────────────────────────────── */
     hero: function () {
       var greeting = Data.getGreeting();
@@ -935,7 +1054,7 @@
         }
       }
 
-      if (changeLblEl) changeLblEl.textContent = trend ? 'vs. Previous Assessment' : 'Comparison';
+      if (changeLblEl) changeLblEl.textContent = trend ? 'Compared with your previous completed assessment' : 'Comparison';
 
       if (changeEl) {
         if (trend) {
@@ -1023,6 +1142,7 @@
            domain something real to compare against — a baseline domain
            card never carries a trend arrow. */
         var trendHtml = '';
+        var trendSentence = null;
         if (series && series.length >= 2) {
           var delta      = series[series.length - 1].score - series[series.length - 2].score;
           var sign       = delta >= 0 ? '+' : '';
@@ -1031,19 +1151,54 @@
           trendHtml = '<span class="dash-domain-trend dash-domain-trend--' + trendCls + '">' +
                       trendIcon + ' ' + sign + delta +
                       '</span>';
+
+          /* One-sentence version of the same comparison, for the "Why
+             this score?" panel below — same data, no fabricated pct
+             when the previous score was 0. */
+          var prevScore = series[series.length - 2].score;
+          var pct = prevScore > 0 ? Math.round((delta / prevScore) * 100) : 0;
+          trendSentence = delta === 0
+            ? 'Stable across your last two completed assessments.'
+            : 'This domain ' + (delta > 0 ? 'improved' : 'declined') + ' by ' + Math.abs(pct) +
+              '% compared with your previous completed assessment.';
         }
 
         /* Confidence badge — only when a CCI payload has this domain
            (see app/core/cci.py). Purely informational, never affects
-           the score/bar/rating already rendered above. */
+           the score/bar/rating already rendered above. No title=
+           tooltip (screen readers largely ignore it) — the full
+           explanation lives in the accessible <details> below instead. */
         var confidenceHtml = '';
         var confidence = Data.getDomainConfidence(d.key);
         if (confidence && confidence.confidenceLabel) {
           confidenceHtml = '<span class="dash-domain-confidence dash-domain-confidence--' +
-            confidence.confidenceLabel.toLowerCase() + '" title="' +
-            (confidence.confidenceNotes || []).join(', ') + '">' +
+            confidence.confidenceLabel.toLowerCase() + '">' +
             confidence.confidenceLabel + ' Confidence' +
           '</span>';
+        }
+
+        /* "Why this score?" — plain-English metric + confidence
+           explanation built entirely from Data.cci (see
+           getDomainExplanation). Native <details>: keyboard and
+           screen-reader accessible with no extra ARIA wiring. Omitted
+           whenever there's nothing to explain. */
+        var whyHtml = '';
+        var explanation = Data.getDomainExplanation(d.key);
+        var hasMetrics = explanation && explanation.metrics.length;
+        var confidenceSentence = explanation && explanation.confidenceSentence;
+        if (hasMetrics || confidenceSentence || trendSentence) {
+          var metricsHtml = hasMetrics ? explanation.metrics.map(function (m) {
+            return '<li><strong>' + UI._escape(m.label) + ':</strong> ' + UI._escape(m.blurb) + '</li>';
+          }).join('') : '';
+          whyHtml =
+            '<details class="dash-domain-why">' +
+              '<summary>Why this score?</summary>' +
+              (metricsHtml ? '<ul class="dash-domain-why__metrics">' + metricsHtml + '</ul>' : '') +
+              (trendSentence ? '<p class="dash-domain-why__trend">' + UI._escape(trendSentence) + '</p>' : '') +
+              (confidenceSentence
+                ? '<p class="dash-domain-why__confidence">' + UI._escape(confidenceSentence) + '</p>'
+                : '') +
+            '</details>';
         }
 
         card.innerHTML =
@@ -1062,7 +1217,8 @@
             confidenceHtml +
             trendHtml +
             timeHtml +
-          '</div>';
+          '</div>' +
+          whyHtml;
 
         grid.appendChild(card);
       });
@@ -1108,6 +1264,7 @@
         Trend.render(svgWrap, series.map(function (p) { return p.score; }), d.color, d.key);
 
         var deltaHtml;
+        var deltaNote = '';
         if (isBaseline) {
           deltaHtml = '<span class="trend-card__delta trend-card__delta--baseline">Baseline</span>';
         } else {
@@ -1119,6 +1276,7 @@
             '<span class="trend-card__delta trend-card__delta--' + trendCls + '">' +
               (delta > 0 ? '▲' : delta < 0 ? '▼' : '—') + ' ' + sign + delta + ' pts' +
             '</span>';
+          deltaNote = '<span class="trend-card__delta-note">Compared with your previous completed assessment</span>';
         }
 
         card.innerHTML =
@@ -1127,6 +1285,7 @@
             '<div class="trend-card__meta">' +
               '<span class="trend-card__label">' + d.label + '</span>' +
               deltaHtml +
+              deltaNote +
             '</div>' +
             '<span class="trend-card__score">' + latest.score + '</span>' +
           '</div>';
@@ -1198,11 +1357,20 @@
           badgeHtml = '<span class="hist-baseline-badge">Baseline</span>';
         }
 
+        var confidenceHtml = h.confidenceLabel
+          ? '<span class="dash-domain-confidence dash-domain-confidence--' + h.confidenceLabel.toLowerCase() + '">' +
+              h.confidenceLabel + ' Confidence' +
+            '</span>'
+          : '';
+
         return (
           '<div class="hist-item' + (h.isLatest ? ' hist-item--latest' : '') + '">' +
             '<div class="hist-item__left">' +
               badgeHtml +
-              '<span class="hist-item__date"><i data-lucide="calendar"></i>' + h.date + '</span>' +
+              '<span class="hist-item__date">' +
+                '<span class="hist-item__number">#' + h.number + '</span>' +
+                '<i data-lucide="calendar"></i>' + h.date +
+              '</span>' +
             '</div>' +
             '<div class="hist-item__center">' +
               '<span class="hist-item__score">' + h.score + '</span>' +
@@ -1211,6 +1379,8 @@
             '</div>' +
             '<div class="hist-item__right">' +
               '<span class="dash-rating-badge dash-rating-badge--' + h.ratingCls + '">' + h.rating + '</span>' +
+              confidenceHtml +
+              '<span class="hist-item__status">Completed</span>' +
               '<span class="hist-item__dur"><i data-lucide="clock"></i>' + UI._dur(h.duration) + '</span>' +
             '</div>' +
           '</div>'
@@ -1223,6 +1393,23 @@
       var el = document.getElementById('js-cognitive-summary');
       if (!el) return;
       el.textContent = Data.getCognitiveSummary();
+    },
+
+    /* ── Recommended Next Assessment ──────────────────────────
+       Hidden entirely when Data.getNextAssessmentRecommendation()
+       has nothing to suggest yet (no completed assessment). */
+    nextAssessment: function () {
+      var sectionEl = document.getElementById('js-next-assessment-section');
+      var windowEl  = document.getElementById('js-next-assessment-window');
+      var reasonEl  = document.getElementById('js-next-assessment-reason');
+      if (!sectionEl) return;
+
+      var rec = Data.getNextAssessmentRecommendation();
+      if (!rec) { sectionEl.hidden = true; return; }
+
+      sectionEl.hidden = false;
+      if (windowEl) windowEl.textContent = 'In about ' + rec.days + ' day' + (rec.days === 1 ? '' : 's');
+      if (reasonEl) reasonEl.textContent = rec.reason;
     },
 
     /* ── Reaction Metrics ──────────────────────────────────── */
@@ -1528,6 +1715,7 @@
     Data.finalizeHistory();
 
     UI.demoBadge(mode);
+    UI.guestBanner(mode);
     UI.hero();
     UI.score();
     UI.reactionMetrics();
@@ -1535,6 +1723,7 @@
     UI.strengths();
     UI.recommendations();
     UI.cognitiveSummary();
+    UI.nextAssessment();
 
     UI.domainCards();
     UI.trendGraphs();
