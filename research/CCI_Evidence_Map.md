@@ -93,6 +93,45 @@ a future reviewer doesn't re-propose (and re-reject) the same idea:
   usable population mean/SD table. Presenting scores as "Nth percentile"
   would require fabricating a distribution.
 
+## Sprint 9.5 literature consolidation (2026-07-21)
+
+12 new papers were reviewed in full — see `research/Literature_Review_2026-07-21.md`
+for the complete per-paper grading. **No score, weight, or normalization bound in
+`cci.py` changed as a result.** Summary of what the new literature actually confirmed:
+
+- **Domain taxonomy strengthened.** Weintraub et al. 2013 (NIH Toolbox, general
+  population ages 3–85, not a clinical cohort) independently validates Memory,
+  Attention, Executive Function, and Processing Speed as standard, recognized
+  cognitive domains — external confirmation beyond the original 7-paper library that
+  CogniTrack's domain choices aren't an ad hoc invention.
+- **Executive's accuracy-ceiling decision reaffirmed, not reversed.** NIH Toolbox's
+  own closest analog to CogniTrack's Executive/Attention games (the Flanker
+  Inhibitory Control task) blends accuracy with RT in its scoring — general
+  confirmation that accuracy+RT blending is a legitimate approach for
+  choice/inhibitory tasks (already used for Processing and Visuospatial) — but its
+  validation sample spans ages 3–85 including children and impaired elderly, where
+  accuracy has real variance CogniTrack's presumed-healthy adult users mostly won't
+  show. The original decision (MacLeod 1991 + Executive.md: accuracy ceilings too
+  fast on a healthy adult's 4-choice manual Stroop) stands.
+- **A real distinction worth stating precisely.** Belleville et al. 2017's
+  meta-analysis found verbal memory to be the strongest *longitudinal predictor* of
+  future MCI-to-dementia conversion, while executive/visuospatial tests were weaker
+  predictors — a different question from Ding et al. 2022's finding that memory and
+  executive measures show the largest *cross-sectional* group differences between
+  MCI and healthy controls. CogniTrack does neither kind of clinical prediction, but
+  the two claims ("detects current difference" vs. "predicts future decline") must
+  never be conflated in any future user-facing copy.
+- **One new documented limitation (untested):** Porta-Mas et al. 2025 found a
+  digital assessment's remote test-retest reliability varied materially by phone
+  operating system (Android ICC=0.70 vs. iOS ICC=0.33 in one study). CogniTrack
+  already collects browser/device metadata in `session_metadata` but has never
+  analyzed it for this purpose — recorded as a documented gap, not fixed, since
+  there's no dataset yet to analyze.
+- **One new Future Work item:** CogniTrack's own five games have never undergone
+  formal self-validation (test-retest reliability, convergent/discriminant validity
+  against a gold standard) — NIH Toolbox's methodology (§ above) is the template if
+  that's ever undertaken. See `Implementation_Checklist.md`.
+
 ## Doc-consistency note (Sprint 9 fix)
 
 `Master_Metrics.md` (row: Attention/Mean RT) and an earlier draft of

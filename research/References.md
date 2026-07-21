@@ -56,3 +56,14 @@ Domain: Visuospatial Ability. **Verdict: YES.**
 
 ### Excluded
 None of the 7 sourced papers were judged irrelevant — all touch at least one of CogniTrack's five domains. No paper was discarded.
+
+### Sprint 9.5 addendum (2026-07-21)
+12 more papers were added to `Papers/papers/` after Sprint 9. All 12 were read in full
+and graded in `research/Literature_Review_2026-07-21.md` — kept as a separate file
+rather than merged into the list above because 10 of the 12 turned out to study
+clinical MCI/dementia diagnosis or biomarker validation in older/impaired cohorts, a
+different population and purpose than CogniTrack's general-population self-assessment
+context, and none changed any conclusion the 7 papers above already established. The
+one genuine population match (Weintraub et al. 2013, NIH Toolbox) confirmed
+CogniTrack's existing domain taxonomy and scoring philosophy rather than requiring a
+change to it. See that file for the full per-paper grading and reasoning.

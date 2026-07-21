@@ -18,6 +18,19 @@ Scoped so High Priority is finishable within the 2-day window. Full justificatio
 - [ ] Within-user trend (this session's domain score vs. their own prior-session mean) once `get_history()` shows ≥2 completed sessions — needs no external norms, most defensible number the system can show, but only relevant to repeat users so it's naturally not a Day-1 blocker.
 - [ ] Visuospatial rotation-rate slope (Δtime/Δangle across the 3 angle bands) as an alternative/upgrade to the v1 accuracy+RT composite — deferred because 3 bands × ~3 trials each is a statistically fragile linear fit; revisit once trial counts can reasonably increase.
 
+## Future Work (Sprint 9.5 additions, 2026-07-21)
+- [ ] Formal self-validation study for CogniTrack's own five games (test-retest
+  reliability via ICC, convergent validity against an established gold-standard test
+  per domain) — CogniTrack's grounding is currently "in the tradition of" cited
+  external paradigms, never validated as an instrument in its own right. NIH
+  Toolbox's methodology (Weintraub et al. 2013 — see `Literature_Review_2026-07-21.md`)
+  is a usable template. Needs a real participant pool CogniTrack doesn't have today.
+- [ ] Investigate whether browser/device type (already collected in
+  `session_metadata`) measurably affects score reliability, once enough sessions
+  exist to analyze — a digital cognitive test's remote test-retest reliability has
+  been shown to vary by phone OS in at least one published study (Porta-Mas et al.
+  2025). Not actionable yet; there's no dataset to analyze.
+
 ## Optional / Out of scope for this sprint
 - Real population-norm percentiles (needs an actual collected dataset, not paper tables — RAVLT's own normative tables were extraction-corrupted and unusable even if we wanted them).
 - DDM-style drift-rate decomposition for Processing/Attention — Sandry & Ricker's own paper found weak convergent validity for this approach vs. traditional scores; not worth the complexity.
